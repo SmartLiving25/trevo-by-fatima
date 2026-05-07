@@ -2677,7 +2677,37 @@
       </div>
     </div>
   </div>
-
+<!-- Checkout Form Modal -->
+<div class="modal-overlay" id="modal-checkoutForm" onclick="closeModalOverlay(event)">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h2>📋 Your Details</h2>
+      <button class="modal-close" onclick="closeModal('checkoutForm')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:20px;">Fill in your details and we'll save your order.</p>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="checkoutName" placeholder="e.g. Ahmed Ali" />
+      </div>
+      <div class="form-group">
+        <label>Complete Address</label>
+        <textarea id="checkoutAddress" placeholder="House No., Street, Area…" style="min-height:80px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label>City</label>
+        <input type="text" id="checkoutCity" placeholder="e.g. Lahore" />
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" id="checkoutPhone" placeholder="e.g. 0300 1234567" />
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="submitCheckoutForm()">
+        ✅ Place Order
+      </button>
+    </div>
+  </div>
+</div>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -2965,7 +2995,81 @@
         setTimeout(() => loader.remove(), 400);
       }
     }
+function openCheckoutForm() {
+  if (!cart.length) return;
+  openModal('checkoutForm');
+}
 
+async function submitCheckoutForm() {
+  const name    = document.getElementById('checkoutName').value.trim();
+  const address = document.getElementById('checkoutAddress').value.trim();
+  const city    = document.getElementById('checkoutCity').value.trim();
+  const phone   = document.getElementById('checkoutPhone').value.trim();
+
+  if (!name || !address || !city || !phone) {
+    showToast('⚠️ Please fill in all fields.');
+    return;
+  }
+
+  const deliveryCost  = getDeliveryCost();
+  const deliveryLabel = selectedDeliveryType === 'urgent'
+    ? 'Urgent Delivery (2–3 days)'
+    : 'Standard Delivery (5–7 days)';
+
+  let idData = null;
+  if (firebaseReady) {
+    idData = await firestoreNextOrderId();
+  }
+  if (!idData) {
+    idData = generateLocalOrderId();
+  }
+
+  const order = {
+    orderId: idData.orderId,
+    orderNum: idData.orderNum,
+    date: new Date().toISOString(),
+    customer: {
+      name,
+      address,
+      city,
+      phone
+    },
+    items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
+    deliveryType: deliveryLabel,
+    subtotal: getTotal(),
+    deliveryCost: deliveryCost,
+    total: getTotal() + deliveryCost,
+    status: 'Pending',
+    source: 'form'
+  };
+
+  // Save to localStorage as backup
+  const localOrders = getLocalOrders();
+  localOrders.push(order);
+  saveLocalOrders(localOrders);
+
+  // Save to Firestore
+  if (firebaseReady) {
+    try {
+      await db.collection('orders').add(order);
+    } catch (err) {
+      console.error('Firestore save failed:', err);
+      showToast('⚠️ Could not save to database. Order saved locally.');
+    }
+  }
+
+  // Clear form fields
+  document.getElementById('checkoutName').value = '';
+  document.getElementById('checkoutAddress').value = '';
+  document.getElementById('checkoutCity').value = '';
+  document.getElementById('checkoutPhone').value = '';
+
+  closeModal('checkoutForm');
+  showToast('✅ Order ' + order.orderId + ' placed successfully!');
+
+  // Uncomment below to clear cart after order is placed:
+  // cart = []; saveCart(); updateCartBadge(); renderCart();
+}
     initStore();
   </script>
 </body>
