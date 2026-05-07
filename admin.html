@@ -414,11 +414,35 @@
       orders.sort((a,b)=>new Date(b.date)-new Date(a.date));
 
       tbody.innerHTML = orders.map(o=>{
-        const d = new Date(o.date);
-        const dateStr = d.toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'}) + '<br><span style="color:var(--text-light);font-size:.75rem;">' + d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) + '</span>';
-        const itemsHtml = o.items.map(i=>'<div><strong>'+i.qty+'x</strong> '+i.name+' <span style="color:var(--text-light)">@ Rs. '+i.price.toLocaleString()+'</span></div>').join('');
-        return '<tr><td style="font-weight:700;color:var(--purple-dark);white-space:nowrap">'+o.orderId+'</td><td>'+dateStr+'</td><td><div class="items-list">'+itemsHtml+'</div></td><td style="white-space:nowrap">'+(o.deliveryType||'Standard')+'<br><span style="color:var(--text-light);font-size:.78rem">Rs. '+(o.deliveryCost||0).toLocaleString()+'</span></td><td style="font-weight:700;white-space:nowrap">Rs. '+(o.total||0).toLocaleString()+'</td><td><span class="status status-'+o.status+'" onclick="cycleStatus(\''+o.orderId+'\')" title="Click to change">● '+o.status+'</span></td><td><button class="delete-btn" onclick="deleteOrder(\''+o.orderId+'\')" title="Delete">🗑</button></td></tr>';
-      }).join('');
+  const d = new Date(o.date);
+  const dateStr = d.toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'}) + '<br><span style="color:var(--text-light);font-size:.75rem;">' + d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) + '</span>';
+  const itemsHtml = o.items.map(i=>'<div><strong>'+i.qty+'x</strong> '+i.name+' <span style="color:var(--text-light)">@ Rs. '+i.price.toLocaleString()+'</span></div>').join('');
+
+  // Customer info (only form orders have this)
+  const customerHtml = o.customer
+    ? '<div style="font-weight:600;color:var(--text);">'+o.customer.name+'</div>' +
+      '<div style="font-size:.78rem;color:var(--text-muted);">📍 '+o.customer.address+'</div>' +
+      '<div style="font-size:.78rem;color:var(--text-muted);">🏙️ '+o.customer.city+'</div>' +
+      '<div style="font-size:.78rem;color:var(--text-muted);">📞 '+o.customer.phone+'</div>'
+    : '<span style="color:var(--text-light);font-size:.8rem;">Via WhatsApp</span>';
+
+  // Source badge
+  const sourceBadge = o.source === 'form'
+    ? '<span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;">📋 Form</span>'
+    : '<span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;">💬 WhatsApp</span>';
+
+  return '<tr>' +
+    '<td style="font-weight:700;color:var(--purple-dark);white-space:nowrap">'+o.orderId+'</td>' +
+    '<td>'+dateStr+'</td>' +
+    '<td style="min-width:160px;">'+customerHtml+'</td>' +
+    '<td><div class="items-list">'+itemsHtml+'</div></td>' +
+    '<td style="white-space:nowrap">'+(o.deliveryType||'Standard')+'<br><span style="color:var(--text-light);font-size:.78rem">Rs. '+(o.deliveryCost||0).toLocaleString()+'</span></td>' +
+    '<td style="font-weight:700;white-space:nowrap">Rs. '+(o.total||0).toLocaleString()+'</td>' +
+    '<td>'+sourceBadge+'</td>' +
+    '<td><span class="status status-'+o.status+'" onclick="cycleStatus(\''+o.orderId+'\')" title="Click to change">● '+o.status+'</span></td>' +
+    '<td><button class="delete-btn" onclick="deleteOrder(\''+o.orderId+'\')" title="Delete">🗑</button></td>' +
+    '</tr>';
+}).join('');
     }
 
     // --- Order Actions (Firestore-first, localStorage fallback) ---
@@ -472,30 +496,35 @@
 
     // --- CSV Export ---
     function exportCSV(){
-      if(!allOrders.length){alert('No orders to export.');return;}
-      const rows = [['Order ID','Date','Items','Quantities','Prices','Delivery Type','Delivery Cost','Subtotal','Total','Status']];
-      allOrders.forEach(o=>{
-        rows.push([
-          o.orderId,
-          new Date(o.date).toLocaleString('en-PK'),
-          o.items.map(i=>i.name).join(' | '),
-          o.items.map(i=>i.qty).join(' | '),
-          o.items.map(i=>i.price).join(' | '),
-          o.deliveryType||'',
-          o.deliveryCost||0,
-          o.subtotal||0,
-          o.total||0,
-          o.status
-        ]);
-      });
-      const csv = rows.map(r=>r.map(c=>'"'+(c+'').replace(/"/g,'""')+'"').join(',')).join('\n');
-      const blob = new Blob([csv],{type:'text/csv'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'trevo_orders_'+new Date().toISOString().slice(0,10)+'.csv';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
+  if(!allOrders.length){alert('No orders to export.');return;}
+  const rows = [['Order ID','Date','Customer Name','Address','City','Phone','Items','Quantities','Prices','Delivery Type','Delivery Cost','Subtotal','Total','Status','Source']];
+  allOrders.forEach(o=>{
+    rows.push([
+      o.orderId,
+      new Date(o.date).toLocaleString('en-PK'),
+      o.customer ? o.customer.name  : '',
+      o.customer ? o.customer.address : '',
+      o.customer ? o.customer.city  : '',
+      o.customer ? o.customer.phone : '',
+      o.items.map(i=>i.name).join(' | '),
+      o.items.map(i=>i.qty).join(' | '),
+      o.items.map(i=>i.price).join(' | '),
+      o.deliveryType||'',
+      o.deliveryCost||0,
+      o.subtotal||0,
+      o.total||0,
+      o.status,
+      o.source||'whatsapp'
+    ]);
+  });
+  const csv = rows.map(r=>r.map(c=>'"'+(c+'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'trevo_orders_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
     // --- CSV Import ---
     function openImportModal(){document.getElementById('importModal').classList.add('open');}
