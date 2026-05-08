@@ -2750,13 +2750,16 @@
     function getTotal() { return cart.reduce((s, i) => s + (i.price * i.qty), 0); }
     function formatPrice(p) { return 'Rs. ' + p.toLocaleString(); }
 
-    function renderProductCard(p) {
-      const badgeHtml = p.badge ? '<span class="badge badge-' + p.badge + '">' + (p.badge === 'sale' ? '% Sale' : p.badge === 'new' ? '★ New' : '🔥 Hot') + '</span>' : '';
-      const oldHtml = p.oldPrice ? '<div style="color:var(--text-light);text-decoration:line-through;font-size:.8rem;">' + formatPrice(p.oldPrice) + '</div>' : '';
-      const imgHtml = p.img ? '<img src="' + p.img + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />' : '<span style="font-size:4rem;">📦</span>';
-      return '<div class="product-card" onclick="openProductDetail(' + p.id + ')"><div class="product-img" style="background:#f5f0fa;">' + badgeHtml + imgHtml + '</div><div class="product-body"><div class="product-category">' + p.category + '</div><div class="product-name">' + p.name + '</div><div class="product-desc">' + p.desc + '</div><div class="product-footer"><div><div class="product-price">' + formatPrice(p.price) + '</div>' + oldHtml + '</div><button class="add-btn" onclick="event.stopPropagation(); addToCart(' + p.id + ',this)">+ Add to Cart</button>
-<button class="add-btn" onclick="event.stopPropagation(); buyNow(' + p.id + ')" style="background:linear-gradient(135deg,var(--purple-mid),var(--purple-dark));color:white;margin-top:6px;">⚡ Buy Now</button></div></div></div>';
-    }
+   function renderProductCard(p) {
+  const badgeHtml = p.badge ? '<span class="badge badge-' + p.badge + '">' + (p.badge === 'sale' ? '% Sale' : p.badge === 'new' ? '★ New' : '🔥 Hot') + '</span>' : '';
+  const oldHtml = p.oldPrice ? '<div style="color:var(--text-light);text-decoration:line-through;font-size:.8rem;">' + formatPrice(p.oldPrice) + '</div>' : '';
+  const imgHtml = p.img ? '<img src="' + p.img + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />' : '<span style="font-size:4rem;">📦</span>';
+  return '<div class="product-card" onclick="openProductDetail(' + p.id + ')"><div class="product-img" style="background:#f5f0fa;">' + badgeHtml + imgHtml + '</div><div class="product-body"><div class="product-category">' + p.category + '</div><div class="product-name">' + p.name + '</div><div class="product-desc">' + p.desc + '</div><div class="product-footer"><div><div class="product-price">' + formatPrice(p.price) + '</div>' + oldHtml + '</div>' +
+  '<div style="display:flex;flex-direction:column;gap:6px;">' +
+  '<button class="add-btn" onclick="event.stopPropagation(); addToCart(' + p.id + ',this)">+ Add to Cart</button>' +
+  '<button class="add-btn" onclick="event.stopPropagation(); buyNow(' + p.id + ')" style="background:linear-gradient(135deg,var(--purple-mid),var(--purple-dark));color:white;">⚡ Buy Now</button>' +
+  '</div></div></div></div>';
+}
 
     function openProductDetail(id) {
       const p = PRODUCTS.find(x => x.id === id);
@@ -3328,11 +3331,9 @@ function clearFieldError(fieldId) {
   const err = document.getElementById(fieldId + '_err');
   if (err) err.remove();
 }
-    function buyNow(id) {
+  function buyNow(id) {
   const p = PRODUCTS.find(p => p.id === id);
   if (!p) return;
-
-  // Add to cart if not already in it
   const existing = cart.find(i => i.id === id);
   if (existing) {
     existing.qty++;
@@ -3341,8 +3342,6 @@ function clearFieldError(fieldId) {
   }
   saveCart();
   updateCartBadge();
-
-  // Go straight to cart
   navigate('cart');
   showToast('⚡ "' + p.name + '" ready for checkout!');
 }
