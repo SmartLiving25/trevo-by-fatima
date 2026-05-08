@@ -3346,29 +3346,34 @@ function clearFieldError(fieldId) {
   showToast('⚡ "' + p.name + '" ready for checkout!');
 }
     function startBuyerCounter() {
-  let count = 127;
+  // Load saved count from localStorage, start from 127 if none saved
+  let count = parseInt(localStorage.getItem('trevoBuyerCount')) || 127;
+
+  // Always show current count immediately on page load
+  const el = document.getElementById('happyBuyers');
+  if (el) el.textContent = count + '+ Happy Buyers';
 
   function randomIncrement() {
-    // Random increase between 1-3
     const increment = Math.floor(Math.random() * 3) + 1;
     count += increment;
 
+    // Save updated count to localStorage
+    localStorage.setItem('trevoBuyerCount', count);
+
     const el = document.getElementById('happyBuyers');
     if (el) {
-      // Flash animation on update
       el.style.transition = 'all 0.3s ease';
       el.style.color = 'var(--purple-dark)';
       el.style.fontWeight = '800';
       el.textContent = count + '+ Happy Buyers';
 
-      // Reset style after flash
       setTimeout(() => {
         el.style.color = '';
         el.style.fontWeight = '';
       }, 600);
     }
 
-    // Next update between 8 to 20 seconds — feels natural not robotic
+    // Next update between 8 to 20 seconds
     const nextUpdate = Math.floor(Math.random() * 12000) + 8000;
     setTimeout(randomIncrement, nextUpdate);
   }
@@ -3376,6 +3381,8 @@ function clearFieldError(fieldId) {
   // Start first update after 10 seconds
   setTimeout(randomIncrement, 10000);
 }
+
+startBuyerCounter();
 
 startBuyerCounter();
     initStore();
