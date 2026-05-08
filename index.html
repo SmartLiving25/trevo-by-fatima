@@ -3018,7 +3018,7 @@
         </div>
       </div>
 
-      <button onclick="closeOrderSuccess()" style="
+      <button onclick="closeOrderSuccess(); renderCart();" style="
         width: 100%;
         padding: 14px;
         background: linear-gradient(135deg, var(--purple-mid), var(--purple-dark));
@@ -3036,7 +3036,7 @@
         🛍️ Continue Shopping
       </button>
 
-      <button onclick="closeOrderSuccess(); navigate('cart')" style="
+      <button onclick="closeOrderSuccess(); navigate('cart'); renderCart();" style="
         width: 100%;
         padding: 12px;
         background: transparent;
