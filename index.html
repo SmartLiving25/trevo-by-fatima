@@ -2939,6 +2939,9 @@
   if (existing) existing.remove();
 
   const popup = document.createElement('div');
+      cart = [];
+      saveCart();
+    updateCartBadge();
   popup.id = 'orderSuccessPopup';
   popup.style.cssText = `
     position: fixed;
