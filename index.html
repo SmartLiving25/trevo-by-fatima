@@ -3008,6 +3008,8 @@ function openCheckoutForm() {
 }
 
 async function submitCheckoutForm() {
+  const submitBtn = document.querySelector('#modal-checkoutForm .btn-primary');
+
   // Grab values
   const name    = document.getElementById('checkoutName').value.trim();
   const address = document.getElementById('checkoutAddress').value.trim();
@@ -3052,7 +3054,7 @@ async function submitCheckoutForm() {
     hasError = true;
   }
 
-  // Phone validation — must be numeric, 10-11 digits, optionally starting with +92
+  // Phone validation
   const phoneClean = phone.replace(/[\s\-()]/g, '');
   const phoneRegex = /^(\+92|0)?[0-9]{10}$/;
   if (!phone) {
@@ -3066,59 +3068,74 @@ async function submitCheckoutForm() {
     hasError = true;
   }
 
+  // Stop here if validation failed — don't disable button yet
   if (hasError) return;
 
-  // ── All valid — save order ──
-  const deliveryCost  = getDeliveryCost();
-  const deliveryLabel = selectedDeliveryType === 'urgent'
-    ? 'Urgent Delivery (2–3 days)'
-    : 'Standard Delivery (5–7 days)';
+  // ── Disable button immediately to prevent double submit ──
+  submitBtn.disabled = true;
+  submitBtn.textContent = '⏳ Placing order…';
+  submitBtn.style.opacity = '0.7';
+  submitBtn.style.cursor = 'not-allowed';
 
-  let idData = null;
-  if (firebaseReady) idData = await firestoreNextOrderId();
-  if (!idData) idData = generateLocalOrderId();
+  try {
+    const deliveryCost  = getDeliveryCost();
+    const deliveryLabel = selectedDeliveryType === 'urgent'
+      ? 'Urgent Delivery (2–3 days)'
+      : 'Standard Delivery (5–7 days)';
 
-  const order = {
-    orderId: idData.orderId,
-    orderNum: idData.orderNum,
-    date: new Date().toISOString(),
-    customer: { name, address, city, phone },
-    items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
-    deliveryType: deliveryLabel,
-    subtotal: getTotal(),
-    deliveryCost,
-    total: getTotal() + deliveryCost,
-    status: 'Pending',
-    source: 'form'
-  };
+    let idData = null;
+    if (firebaseReady) idData = await firestoreNextOrderId();
+    if (!idData) idData = generateLocalOrderId();
 
-  // Save to localStorage backup
-  const localOrders = getLocalOrders();
-  localOrders.push(order);
-  saveLocalOrders(localOrders);
+    const order = {
+      orderId: idData.orderId,
+      orderNum: idData.orderNum,
+      date: new Date().toISOString(),
+      customer: { name, address, city, phone },
+      items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
+      deliveryType: deliveryLabel,
+      subtotal: getTotal(),
+      deliveryCost,
+      total: getTotal() + deliveryCost,
+      status: 'Pending',
+      source: 'form'
+    };
 
-  // Save to Firestore
-  if (firebaseReady) {
-    try {
+    // Save to localStorage backup
+    const localOrders = getLocalOrders();
+    localOrders.push(order);
+    saveLocalOrders(localOrders);
+
+    // Save to Firestore
+    if (firebaseReady) {
       await db.collection('orders').add(order);
-    } catch (err) {
-      console.error('Firestore save failed:', err);
-      showToast('⚠️ Could not save to database. Order saved locally.');
     }
+
+    // ── Success ──
+    document.getElementById('checkoutName').value = '';
+    document.getElementById('checkoutAddress').value = '';
+    document.getElementById('checkoutCity').value = '';
+    document.getElementById('checkoutPhone').value = '';
+    clearFieldError('checkoutName');
+    clearFieldError('checkoutAddress');
+    clearFieldError('checkoutCity');
+    clearFieldError('checkoutPhone');
+
+    const counter = document.getElementById('addressCounter');
+    if (counter) { counter.textContent = '0 / 150'; counter.style.color = 'var(--text-light)'; }
+
+    closeModal('checkoutForm');
+    showToast('✅ Order ' + order.orderId + ' placed successfully!');
+
+  } catch (err) {
+    // ── If anything fails, re-enable button so customer can retry ──
+    console.error('Order submission failed:', err);
+    showToast('⚠️ Something went wrong. Please try again.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = '✅ Place Order';
+    submitBtn.style.opacity = '1';
+    submitBtn.style.cursor = 'pointer';
   }
-
-  // Clear form
-  document.getElementById('checkoutName').value = '';
-  document.getElementById('checkoutAddress').value = '';
-  document.getElementById('checkoutCity').value = '';
-  document.getElementById('checkoutPhone').value = '';
-  clearFieldError('checkoutName');
-  clearFieldError('checkoutAddress');
-  clearFieldError('checkoutCity');
-  clearFieldError('checkoutPhone');
-
-  closeModal('checkoutForm');
-  showToast('✅ Order ' + order.orderId + ' placed successfully!');
 }
 
 // ── Validation helpers ──
