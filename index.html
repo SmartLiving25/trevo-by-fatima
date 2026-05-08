@@ -2691,9 +2691,16 @@
         <input type="text" id="checkoutName" placeholder="e.g. Ahmed Ali" />
       </div>
       <div class="form-group">
-        <label>Complete Address</label>
-        <textarea id="checkoutAddress" placeholder="House No., Street, Area…" style="min-height:80px;"></textarea>
-      </div>
+  <label>Complete Address</label>
+  <textarea id="checkoutAddress"
+    placeholder="House No., Street, Area, Landmark…"
+    style="min-height:80px;"
+    oninput="updateAddressCounter(this)"></textarea>
+  <div id="addressCounter"
+    style="font-size:.75rem;color:var(--text-light);text-align:right;margin-top:4px;">
+    0 / 150
+  </div>
+</div>
       <div class="form-group">
         <label>City</label>
         <input type="text" id="checkoutCity" placeholder="e.g. Lahore" />
@@ -3001,49 +3008,91 @@ function openCheckoutForm() {
 }
 
 async function submitCheckoutForm() {
+  // Grab values
   const name    = document.getElementById('checkoutName').value.trim();
   const address = document.getElementById('checkoutAddress').value.trim();
   const city    = document.getElementById('checkoutCity').value.trim();
   const phone   = document.getElementById('checkoutPhone').value.trim();
 
-  if (!name || !address || !city || !phone) {
-    showToast('⚠️ Please fill in all fields.');
-    return;
+  // Clear previous errors
+  clearFieldError('checkoutName');
+  clearFieldError('checkoutAddress');
+  clearFieldError('checkoutCity');
+  clearFieldError('checkoutPhone');
+
+  let hasError = false;
+
+  // Name validation
+  if (!name) {
+    showFieldError('checkoutName', 'Full name is required.');
+    hasError = true;
+  } else if (name.length < 3) {
+    showFieldError('checkoutName', 'Name must be at least 3 characters.');
+    hasError = true;
   }
 
+  // Address validation
+  if (!address) {
+    showFieldError('checkoutAddress', 'Address is required.');
+    hasError = true;
+  } else if (address.length < 20) {
+    showFieldError('checkoutAddress', 'Please enter a more complete address (at least 20 characters).');
+    hasError = true;
+  } else if (address.length > 150) {
+    showFieldError('checkoutAddress', 'Address must be under 150 characters (' + address.length + '/150).');
+    hasError = true;
+  }
+
+  // City validation
+  if (!city) {
+    showFieldError('checkoutCity', 'City is required.');
+    hasError = true;
+  } else if (city.length < 3) {
+    showFieldError('checkoutCity', 'Please enter a valid city name.');
+    hasError = true;
+  }
+
+  // Phone validation — must be numeric, 10-11 digits, optionally starting with +92
+  const phoneClean = phone.replace(/[\s\-()]/g, '');
+  const phoneRegex = /^(\+92|0)?[0-9]{10}$/;
+  if (!phone) {
+    showFieldError('checkoutPhone', 'Phone number is required.');
+    hasError = true;
+  } else if (!/^[\d\s\-()+]+$/.test(phone)) {
+    showFieldError('checkoutPhone', 'Phone number must contain numbers only.');
+    hasError = true;
+  } else if (!phoneRegex.test(phoneClean)) {
+    showFieldError('checkoutPhone', 'Enter a valid Pakistani number e.g. 0300 1234567.');
+    hasError = true;
+  }
+
+  if (hasError) return;
+
+  // ── All valid — save order ──
   const deliveryCost  = getDeliveryCost();
   const deliveryLabel = selectedDeliveryType === 'urgent'
     ? 'Urgent Delivery (2–3 days)'
     : 'Standard Delivery (5–7 days)';
 
   let idData = null;
-  if (firebaseReady) {
-    idData = await firestoreNextOrderId();
-  }
-  if (!idData) {
-    idData = generateLocalOrderId();
-  }
+  if (firebaseReady) idData = await firestoreNextOrderId();
+  if (!idData) idData = generateLocalOrderId();
 
   const order = {
     orderId: idData.orderId,
     orderNum: idData.orderNum,
     date: new Date().toISOString(),
-    customer: {
-      name,
-      address,
-      city,
-      phone
-    },
+    customer: { name, address, city, phone },
     items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
     deliveryType: deliveryLabel,
     subtotal: getTotal(),
-    deliveryCost: deliveryCost,
+    deliveryCost,
     total: getTotal() + deliveryCost,
     status: 'Pending',
     source: 'form'
   };
 
-  // Save to localStorage as backup
+  // Save to localStorage backup
   const localOrders = getLocalOrders();
   localOrders.push(order);
   saveLocalOrders(localOrders);
@@ -3058,17 +3107,56 @@ async function submitCheckoutForm() {
     }
   }
 
-  // Clear form fields
+  // Clear form
   document.getElementById('checkoutName').value = '';
   document.getElementById('checkoutAddress').value = '';
   document.getElementById('checkoutCity').value = '';
   document.getElementById('checkoutPhone').value = '';
+  clearFieldError('checkoutName');
+  clearFieldError('checkoutAddress');
+  clearFieldError('checkoutCity');
+  clearFieldError('checkoutPhone');
 
   closeModal('checkoutForm');
   showToast('✅ Order ' + order.orderId + ' placed successfully!');
+}
 
-  // Uncomment below to clear cart after order is placed:
-  // cart = []; saveCart(); updateCartBadge(); renderCart();
+// ── Validation helpers ──
+    function updateAddressCounter(el) {
+  const len = el.value.length;
+  const counter = document.getElementById('addressCounter');
+  counter.textContent = len + ' / 150';
+  if (len > 150) {
+    counter.style.color = '#dc2626';
+    counter.style.fontWeight = '600';
+  } else if (len < 20) {
+    counter.style.color = 'var(--text-light)';
+    counter.style.fontWeight = '400';
+  } else {
+    counter.style.color = '#16a34a';
+    counter.style.fontWeight = '400';
+  }
+}
+function showFieldError(fieldId, message) {
+  const field = document.getElementById(fieldId);
+  field.style.borderColor = '#dc2626';
+  field.style.boxShadow = '0 0 0 3px rgba(220,38,38,0.12)';
+  let err = document.getElementById(fieldId + '_err');
+  if (!err) {
+    err = document.createElement('div');
+    err.id = fieldId + '_err';
+    err.style.cssText = 'color:#dc2626;font-size:.78rem;margin-top:4px;font-weight:500;';
+    field.parentNode.appendChild(err);
+  }
+  err.textContent = '⚠️ ' + message;
+}
+
+function clearFieldError(fieldId) {
+  const field = document.getElementById(fieldId);
+  field.style.borderColor = '';
+  field.style.boxShadow = '';
+  const err = document.getElementById(fieldId + '_err');
+  if (err) err.remove();
 }
     initStore();
   </script>
