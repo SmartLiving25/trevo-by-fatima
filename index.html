@@ -2170,7 +2170,7 @@
               <div class="hero-float hero-float-2"><span class="hero-float-icon">💜</span>
                 <div>
                   <div style="font-size:.75rem;color:var(--text-muted)">Orders Today</div>
-                  <div>127+ Happy Buyers</div>
+                  <div id="happyBuyers">127+ Happy Buyers</div>
                 </div>
               </div>
             </div>
@@ -3345,6 +3345,39 @@ function clearFieldError(fieldId) {
   navigate('cart');
   showToast('⚡ "' + p.name + '" ready for checkout!');
 }
+    function startBuyerCounter() {
+  let count = 127;
+
+  function randomIncrement() {
+    // Random increase between 1-3
+    const increment = Math.floor(Math.random() * 3) + 1;
+    count += increment;
+
+    const el = document.getElementById('happyBuyers');
+    if (el) {
+      // Flash animation on update
+      el.style.transition = 'all 0.3s ease';
+      el.style.color = 'var(--purple-dark)';
+      el.style.fontWeight = '800';
+      el.textContent = count + '+ Happy Buyers';
+
+      // Reset style after flash
+      setTimeout(() => {
+        el.style.color = '';
+        el.style.fontWeight = '';
+      }, 600);
+    }
+
+    // Next update between 8 to 20 seconds — feels natural not robotic
+    const nextUpdate = Math.floor(Math.random() * 12000) + 8000;
+    setTimeout(randomIncrement, nextUpdate);
+  }
+
+  // Start first update after 10 seconds
+  setTimeout(randomIncrement, 10000);
+}
+
+startBuyerCounter();
     initStore();
   </script>
 </body>
