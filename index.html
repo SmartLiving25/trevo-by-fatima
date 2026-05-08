@@ -2933,7 +2933,156 @@
       c.appendChild(t);
       setTimeout(() => { t.classList.add('removing'); setTimeout(() => t.remove(), 300); }, 2800);
     }
+    function showOrderSuccess(orderId) {
+  // Remove any existing success popup
+  const existing = document.getElementById('orderSuccessPopup');
+  if (existing) existing.remove();
 
+  const popup = document.createElement('div');
+  popup.id = 'orderSuccessPopup';
+  popup.style.cssText = `
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(29, 5, 48, 0.6);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: fadeIn .25s ease;
+  `;
+
+  popup.innerHTML = `
+    <div style="
+      background: white;
+      border-radius: 24px;
+      padding: 48px 40px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(90,20,110,.25);
+      animation: popUp .35s cubic-bezier(.34,1.56,.64,1) both;
+    ">
+      <div style="
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 2.4rem;
+      ">✅</div>
+
+      <h2 style="
+        font-family: 'Playfair Display', serif;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 10px;
+      ">Order Placed!</h2>
+
+      <p style="
+        color: var(--text-muted);
+        font-size: .95rem;
+        line-height: 1.7;
+        margin-bottom: 8px;
+      ">Your order <strong style="color:var(--purple-dark);">${orderId}</strong> has been successfully placed.</p>
+
+      <p style="
+        color: var(--text-muted);
+        font-size: .88rem;
+        line-height: 1.7;
+        margin-bottom: 28px;
+      ">We will contact you shortly on your provided phone number to confirm delivery details. 🚚</p>
+
+      <div style="
+        background: var(--purple-light);
+        border-radius: 14px;
+        padding: 16px 20px;
+        margin-bottom: 28px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-align: left;
+      ">
+        <span style="font-size:1.6rem;">💬</span>
+        <div>
+          <div style="font-weight:700;font-size:.88rem;color:var(--purple-dark);margin-bottom:2px;">Need help?</div>
+          <div style="font-size:.82rem;color:var(--text-muted);">Chat with us anytime on WhatsApp at +92 300 704 1451</div>
+        </div>
+      </div>
+
+      <button onclick="closeOrderSuccess()" style="
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, var(--purple-mid), var(--purple-dark));
+        color: white;
+        border: none;
+        border-radius: var(--radius-full);
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(123,45,139,.38);
+        transition: all .2s;
+        margin-bottom: 12px;
+      " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        🛍️ Continue Shopping
+      </button>
+
+      <button onclick="closeOrderSuccess(); navigate('cart')" style="
+        width: 100%;
+        padding: 12px;
+        background: transparent;
+        color: var(--text-muted);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-full);
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 600;
+        font-size: .88rem;
+        cursor: pointer;
+        transition: all .2s;
+      " onmouseover="this.style.borderColor='var(--purple)';this.style.color='var(--purple-dark)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+        View Cart
+      </button>
+    </div>
+  `;
+
+  // Close on backdrop click
+  popup.addEventListener('click', function(e) {
+    if (e.target === popup) closeOrderSuccess();
+  });
+
+  document.body.appendChild(popup);
+
+  // Inject animation keyframes once
+  if (!document.getElementById('orderSuccessStyles')) {
+    const style = document.createElement('style');
+    style.id = 'orderSuccessStyles';
+    style.textContent = `
+      @keyframes popUp {
+        from { opacity: 0; transform: scale(.85) translateY(20px); }
+        to   { opacity: 1; transform: scale(1)  translateY(0);     }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
+function closeOrderSuccess() {
+  const popup = document.getElementById('orderSuccessPopup');
+  if (!popup) return;
+  popup.style.opacity = '0';
+  popup.style.transition = 'opacity .2s ease';
+  setTimeout(() => popup.remove(), 200);
+}
     function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('open'); }
     function closeMobileMenu(e) { if (e.target === document.getElementById('mobileMenu')) toggleMobileMenu(); }
     window.addEventListener('scroll', () => { document.getElementById('header').classList.toggle('scrolled', window.scrollY > 10); });
@@ -3124,8 +3273,8 @@ async function submitCheckoutForm() {
     const counter = document.getElementById('addressCounter');
     if (counter) { counter.textContent = '0 / 150'; counter.style.color = 'var(--text-light)'; }
 
-    closeModal('checkoutForm');
-    showToast('✅ Order ' + order.orderId + ' placed successfully!');
+   closeModal('checkoutForm');
+showOrderSuccess(order.orderId);
 
   } catch (err) {
     // ── If anything fails, re-enable button so customer can retry ──
