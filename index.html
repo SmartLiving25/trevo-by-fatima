@@ -60,12 +60,15 @@
         <div class="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-sage-600/10 blur-[120px] pointer-events-none"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-rosegold/10 blur-[100px] pointer-events-none"></div>
 
-        <header class="w-full max-w-7xl mx-auto flex justify-center sm:justify-between items-center py-4 z-10">
-            <div class="flex flex-col items-center sm:items-start select-none">
-                <span class="font-heading text-3xl font-black tracking-widest text-gray-950">TREVO</span>
-                <span class="text-[9px] tracking-[0.35em] text-rosegold uppercase -mt-1 font-semibold">Premium Handbags</span>
+        <header class="w-full max-w-7xl mx-auto flex flex-col sm:flex-row justify-center sm:justify-between items-center py-4 z-10 gap-4">
+            <div class="flex items-center select-none">
+                <img src="logo.png" alt="TREVO Logo" class="h-12 sm:h-16 w-auto object-contain transition duration-300" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="hidden flex-col items-center sm:items-start">
+                    <span class="font-heading text-3xl font-black tracking-widest text-gray-950">TREVO</span>
+                    <span class="text-[9px] tracking-[0.35em] text-rosegold uppercase -mt-1 font-semibold">Premium Handbags</span>
+                </div>
             </div>
-            <span class="hidden sm:inline-block text-[10px] tracking-widest uppercase bg-white/80 border border-blush-200 px-4 py-1.5 rounded-full font-medium shadow-sm text-sage-700">
+            <span class="text-[10px] tracking-widest uppercase bg-white/80 border border-blush-200 px-4 py-1.5 rounded-full font-medium shadow-sm text-sage-700">
                 ✨ Digital Transmutation Phase
             </span>
         </header>
@@ -129,9 +132,14 @@
             </div>
         </main>
 
-        <footer class="w-full max-w-7xl mx-auto text-center py-4 z-10 text-[10px] tracking-widest text-gray-400 uppercase font-light space-y-2">
-            <div>&copy; 2026 TREVO. Engineered with Timeless Character. All Rights Reserved.</div>
-            <div class="text-[8px] text-rosegold tracking-[0.2em] font-medium">System Matrix Phase: Alpha Deployment Node</div>
+        <footer class="w-full max-w-7xl mx-auto text-center py-4 z-10 text-[10px] tracking-widest text-gray-400 uppercase font-light space-y-4">
+            <div class="flex justify-center items-center opacity-40 hover:opacity-70 transition duration-300">
+                <img src="logo.png" alt="TREVO Logo" class="h-8 w-auto object-contain">
+            </div>
+            <div class="space-y-1">
+                <div>&copy; 2026 TREVO. Engineered with Timeless Character. All Rights Reserved.</div>
+                <div class="text-[8px] text-rosegold tracking-[0.2em] font-medium">System Matrix Phase: Alpha Deployment Node</div>
+            </div>
         </footer>
 
     </div>
@@ -158,29 +166,4 @@
 
                     const d = Math.floor(difference / (1000 * 60 * 60 * 24));
                     const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-                    const s = Math.floor((difference % (1000 * 60)) / 1000);
-
-                    countdown.value = {
-                        days: d < 10 ? '0' + d : d,
-                        hours: h < 10 ? '0' + h : h,
-                        minutes: m < 10 ? '0' + m : m,
-                        seconds: s < 10 ? '0' + s : s
-                    };
-                };
-
-                const handleSubscription = () => {
-                    alert('💎 Access Authorized. Your address vector has been prioritized for the deployment sequence.');
-                };
-
-                onMounted(() => {
-                    updateTimer();
-                    setInterval(updateTimer, 1000);
-                });
-
-                return { countdown, handleSubscription };
-            }
-        }).mount('#app');
-    </script>
-</body>
-</html>
+                    const m = Math.floor((difference % (1000 * 60 * 60))
