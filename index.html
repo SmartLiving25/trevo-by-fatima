@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TREVO | Elevating Elegance — Coming Soon</title>
+    <!-- Tailwind CSS for modern utility layout execution -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Playfair Display for headers, Poppins for body elements -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     
     <script>
         tailwind.config = {
@@ -44,22 +45,17 @@
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(233, 199, 199, 0.4);
         }
-        .animate-pulse-slow {
-            animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .6; }
-        }
     </style>
 </head>
 <body class="bg-gradient-to-tr from-sage-100 via-ivory to-blush-100 text-gray-800 font-sans min-h-screen flex flex-col justify-between antialiased selection:bg-blush-200">
 
-    <div id="app" class="flex-grow flex flex-col justify-between p-4 sm:p-8 relative overflow-hidden">
+    <div class="flex-grow flex flex-col justify-between p-4 sm:p-8 relative overflow-hidden">
         
+        <!-- Subtle Premium Background Elements -->
         <div class="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-sage-600/10 blur-[120px] pointer-events-none"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-rosegold/10 blur-[100px] pointer-events-none"></div>
 
+        <!-- Top Header Minimal Brand Bar -->
         <header class="w-full max-w-7xl mx-auto flex flex-col sm:flex-row justify-center sm:justify-between items-center py-4 z-10 gap-4">
             <div class="flex items-center select-none">
                 <img src="logo.png" alt="TREVO Logo" class="h-12 sm:h-16 w-auto object-contain transition duration-300" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -73,14 +69,17 @@
             </span>
         </header>
 
+        <!-- Main Workspace Hero Showcase Card -->
         <main class="w-full max-w-3xl mx-auto my-auto py-12 z-10">
             <div class="glass-panel p-8 sm:p-12 rounded-3xl shadow-xl text-center space-y-8 relative">
                 
+                <!-- Status Pill Accent -->
                 <div class="inline-flex items-center space-x-2 bg-sage-600/10 px-3 py-1 rounded-full text-sage-700 text-[10px] tracking-widest uppercase font-bold">
                     <span class="w-2 h-2 rounded-full bg-sage-600 animate-pulse"></span>
                     <span>Curating Luxury Architecture</span>
                 </div>
 
+                <!-- Core Dynamic Message Block -->
                 <div class="space-y-4">
                     <h1 class="font-heading text-4xl sm:text-5xl lg:text-6xl text-gray-950 font-normal leading-tight">
                         Elegance is <span class="italic text-sage-600 font-light">Evolving</span>
@@ -90,28 +89,30 @@
                     </p>
                 </div>
 
+                <!-- Native Standard Countdown Component Matrix -->
                 <div class="grid grid-cols-4 gap-2 sm:gap-4 max-w-md mx-auto py-4 border-y border-blush-200/60">
                     <div class="bg-white/80 rounded-xl p-2 sm:p-4 shadow-sm border border-sage-50">
-                        <span class="block font-heading text-2xl sm:text-3xl font-bold text-gray-900">{{ countdown.days }}</span>
+                        <span id="timer-days" class="block font-heading text-2xl sm:text-3xl font-bold text-gray-900">00</span>
                         <span class="text-[9px] tracking-widest text-gray-400 uppercase font-medium">Days</span>
                     </div>
                     <div class="bg-white/80 rounded-xl p-2 sm:p-4 shadow-sm border border-sage-50">
-                        <span class="block font-heading text-2xl sm:text-3xl font-bold text-gray-900">{{ countdown.hours }}</span>
+                        <span id="timer-hours" class="block font-heading text-2xl sm:text-3xl font-bold text-gray-900">00</span>
                         <span class="text-[9px] tracking-widest text-gray-400 uppercase font-medium">Hours</span>
                     </div>
                     <div class="bg-white/80 rounded-xl p-2 sm:p-4 shadow-sm border border-sage-50">
-                        <span class="block font-heading text-2xl sm:text-3xl font-bold text-gray-900">{{ countdown.minutes }}</span>
+                        <span id="timer-minutes" class="block font-heading text-2xl sm:text-3xl font-bold text-gray-900">00</span>
                         <span class="text-[9px] tracking-widest text-gray-400 uppercase font-medium">Mins</span>
                     </div>
                     <div class="bg-white/80 rounded-xl p-2 sm:p-4 shadow-sm border border-sage-50">
-                        <span class="block font-heading text-2xl sm:text-3xl font-bold text-gray-900">{{ countdown.seconds }}</span>
+                        <span id="timer-seconds" class="block font-heading text-2xl sm:text-3xl font-bold text-gray-900">00</span>
                         <span class="text-[9px] tracking-widest text-gray-400 uppercase font-medium">Secs</span>
                     </div>
                 </div>
 
+                <!-- Priority Newsletter Ingestion Interface Form -->
                 <div class="space-y-3 max-w-md mx-auto pt-2">
                     <p class="text-[11px] text-gray-400 font-medium tracking-wide">Secure pre-launch notification protocols & priority drop keys:</p>
-                    <form @submit.prevent="handleSubscription" class="flex flex-col sm:flex-row gap-2">
+                    <form id="subscribe-form" class="flex flex-col sm:flex-row gap-2">
                         <input type="email" required placeholder="Enter premium email handle..." 
                                class="flex-grow bg-white/90 border border-gray-200 text-xs px-4 py-3 rounded-xl focus:outline-none focus:border-sage-600 shadow-inner">
                         <button type="submit" class="bg-sage-600 text-white text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-sage-700 transition shadow-md whitespace-nowrap">
@@ -120,6 +121,7 @@
                     </form>
                 </div>
 
+                <!-- Direct Concierge Chat Alternative Vector (WhatsApp Engagement) -->
                 <div class="pt-4 flex justify-center items-center space-x-4 text-xs text-gray-500 font-light">
                     <span>Need immediate booking allocations?</span>
                     <a href="https://wa.me/923000000000?text=Hello%20TREVO%2C%20I%20am%20inquiring%20about%20your%20upcoming%20handbag%20collections." 
@@ -132,6 +134,7 @@
             </div>
         </main>
 
+        <!-- Minimal Footnote Copyright Metric Bar with Integrated Footer Logo -->
         <footer class="w-full max-w-7xl mx-auto text-center py-4 z-10 text-[10px] tracking-widest text-gray-400 uppercase font-light space-y-4">
             <div class="flex justify-center items-center opacity-40 hover:opacity-70 transition duration-300">
                 <img src="logo.png" alt="TREVO Logo" class="h-8 w-auto object-contain">
@@ -144,26 +147,49 @@
 
     </div>
 
+    <!-- Clean Native Engine Script -->
     <script>
-        const { createApp, ref, onMounted } = Vue;
+        document.addEventListener('DOMContentLoaded', () => {
+            // Automatically establish launch horizon to exactly 8 days out
+            const launchTarget = new Date();
+            launchTarget.setDate(launchTarget.getDate() + 8);
 
-        createApp({
-            setup() {
-                // Configure countdown to 14 days out automatically from current clock
-                const targetDate = new Date();
-                targetDate.setDate(targetDate.getDate() + 14);
+            const daysEl = document.getElementById('timer-days');
+            const hoursEl = document.getElementById('timer-hours');
+            const minsEl = document.getElementById('timer-minutes');
+            const secsEl = document.getElementById('timer-seconds');
 
-                const countdown = ref({ days: '00', hours: '00', minutes: '00', seconds: '00' });
+            function updateMetrics() {
+                const now = new Date().getTime();
+                const windowRemaining = launchTarget.getTime() - now;
 
-                const updateTimer = () => {
-                    const now = new Date().getTime();
-                    const difference = targetDate.getTime() - now;
+                if (windowRemaining <= 0) {
+                    clearInterval(clockInterval);
+                    return;
+                }
 
-                    if (difference <= 0) {
-                        countdown.value = { days: '00', hours: '00', minutes: '00', seconds: '00' };
-                        return;
-                    }
+                const d = Math.floor(windowRemaining / (1000 * 60 * 60 * 24));
+                const h = Math.floor((windowRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((windowRemaining % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((windowRemaining % (1000 * 60)) / 1000);
 
-                    const d = Math.floor(difference / (1000 * 60 * 60 * 24));
-                    const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const m = Math.floor((difference % (1000 * 60 * 60))
+                daysEl.textContent = d < 10 ? '0' + d : d;
+                hoursEl.textContent = h < 10 ? '0' + h : h;
+                minsEl.textContent = m < 10 ? '0' + m : m;
+                secsEl.textContent = s < 10 ? '0' + s : s;
+            }
+
+            // Fire immediate cycle and sequence the loop
+            updateMetrics();
+            const clockInterval = setInterval(updateMetrics, 1000);
+
+            // Interface Interception Form Handler
+            document.getElementById('subscribe-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                alert('💎 Access Authorized. Your address vector has been prioritized for the deployment sequence.');
+                e.target.reset();
+            });
+        });
+    </script>
+</body>
+</html>
