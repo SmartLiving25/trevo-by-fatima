@@ -69,10 +69,6 @@
 <body class="bg-ivory text-gray-800 font-sans antialiased selection:bg-blush-200">
 
     <div id="app" class="min-h-screen flex flex-col justify-between">
-        <!-- Top Announcement Bar -->
-        <div class="bg-sage-600 text-ivory text-xs tracking-widest uppercase text-center py-2 px-4 font-medium">
-            ✨ Free Nationwide Delivery on All Orders This Week • Order Easily Through WhatsApp
-        </div>
 <!-- Navigation Header -->
         <header class="sticky top-0 z-40 w-full border-b border-sage-100 glass smooth-transition">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -644,25 +640,58 @@
 
                 <!-- Footer Summary Mathematical Calculation Matrix Block -->
                 <div v-if="cart.length > 0" class="border-t border-gray-100 pt-4 space-y-4">
-                    <div class="space-y-1.5 text-xs text-gray-600 font-light">
-                        <div class="flex justify-between">
-                            <span>Subtotal</span>
-                            <span>PKR {{ formatPrice(cartSubtotal) }}</span>
+                    <div class="space-y-4">
+                        <div class="rounded-xl border border-sage-100 bg-white p-4">
+                            <h4 class="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-800">Delivery Method</h4>
+                            <div class="mt-3 space-y-2">
+                                <label class="flex items-start gap-3 cursor-pointer rounded-lg border p-3"
+                                       :class="checkout.delivery === 'Standard Delivery' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
+                                    <input type="radio" value="Standard Delivery" v-model="checkout.delivery" class="mt-0.5">
+                                    <span>
+                                        <span class="block text-xs font-semibold text-gray-800">Standard Delivery</span>
+                                        <span class="block text-[10px] text-gray-500 mt-1">PKR 200 — Free at PKR 1,500 or above</span>
+                                    </span>
+                                </label>
+                                <label class="flex items-start gap-3 cursor-pointer rounded-lg border p-3"
+                                       :class="checkout.delivery === 'Urgent Delivery' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
+                                    <input type="radio" value="Urgent Delivery" v-model="checkout.delivery" class="mt-0.5">
+                                    <span>
+                                        <span class="block text-xs font-semibold text-gray-800">Urgent Delivery</span>
+                                        <span class="block text-[10px] text-gray-500 mt-1">PKR 400 — Free at PKR 1,500 or above</span>
+                                    </span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="flex justify-between">
-                            <span>Delivery</span>
-                            <span :class="deliveryCharge === 0 ? 'text-sage-600 font-semibold' : ''">
-                                {{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}
-                            </span>
+
+                        <div class="rounded-xl border border-sage-100 bg-white p-4">
+                            <h4 class="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-800">Payment Method</h4>
+                            <div class="mt-3 space-y-2">
+                                <label class="flex items-start gap-3 cursor-pointer rounded-lg border p-3"
+                                       :class="checkout.paymentMethod === 'Advance Payment' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
+                                    <input type="radio" value="Advance Payment" v-model="checkout.paymentMethod" class="mt-0.5">
+                                    <span>
+                                        <span class="block text-xs font-semibold text-gray-800">Advance Payment</span>
+                                        <span class="block text-[10px] text-gray-500 mt-1">No extra charge</span>
+                                    </span>
+                                </label>
+                                <label class="flex items-start gap-3 cursor-pointer rounded-lg border p-3"
+                                       :class="checkout.paymentMethod === 'Cash on Delivery' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
+                                    <input type="radio" value="Cash on Delivery" v-model="checkout.paymentMethod" class="mt-0.5">
+                                    <span>
+                                        <span class="block text-xs font-semibold text-gray-800">Cash on Delivery</span>
+                                        <span class="block text-[10px] text-gray-500 mt-1">COD charge: PKR 100</span>
+                                    </span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="flex justify-between border-t border-gray-100 pt-2 text-sm font-bold text-gray-900">
-                            <span>Total</span>
-                            <span>PKR {{ formatPrice(cartTotal) }}</span>
-                        </div>
-                        <div class="rounded-lg bg-sage-50 border border-sage-100 p-3 text-[10px] text-gray-600 leading-relaxed">
-                            <strong class="text-sage-700">Delivery policy:</strong>
-                            Standard delivery is PKR 200. Standard delivery is free when the product subtotal is above PKR 1,500.
-                            Urgent delivery is PKR 400 on every order.
+
+                        <div class="rounded-xl bg-sage-50 border border-sage-100 p-4 text-xs text-gray-700 space-y-2">
+                            <div class="flex justify-between"><span>Items Subtotal</span><strong>PKR {{ formatPrice(cartSubtotal) }}</strong></div>
+                            <div class="flex justify-between"><span>Delivery Charges</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
+                            <div class="flex justify-between"><span>COD Charges</span><strong>{{ codCharge === 0 ? 'PKR 0' : 'PKR ' + formatPrice(codCharge) }}</strong></div>
+                            <div class="flex justify-between border-t border-sage-200 pt-2 text-sm text-gray-900">
+                                <span class="font-bold">Order Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong>
+                            </div>
                         </div>
                     </div>
 
@@ -702,13 +731,22 @@
                         City *
                         <input v-model.trim="checkout.city" type="text" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="City">
                     </label>
-                    <label class="text-xs font-semibold text-gray-700">
-                        Delivery Method
-                        <select v-model="checkout.delivery" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600 bg-white">
-                            <option value="Standard Delivery">Standard Delivery — PKR 200 / Free above PKR 1,500</option>
-                            <option value="Urgent Delivery">Urgent Delivery — PKR 400</option>
-                        </select>
-                    </label>
+                    <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label class="text-xs font-semibold text-gray-700">
+                            Delivery Method
+                            <select v-model="checkout.delivery" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600 bg-white">
+                                <option value="Standard Delivery">Standard Delivery</option>
+                                <option value="Urgent Delivery">Urgent Delivery</option>
+                            </select>
+                        </label>
+                        <label class="text-xs font-semibold text-gray-700">
+                            Payment Method
+                            <select v-model="checkout.paymentMethod" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600 bg-white">
+                                <option value="Advance Payment">Advance Payment</option>
+                                <option value="Cash on Delivery">Cash on Delivery (+ PKR 100)</option>
+                            </select>
+                        </label>
+                    </div>
                     <label class="text-xs font-semibold text-gray-700 sm:col-span-2">
                         Complete Address *
                         <textarea v-model.trim="checkout.address" rows="3" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="House/Street, Area, City"></textarea>
@@ -720,9 +758,11 @@
                 </div>
 
                 <div class="mt-6 rounded-xl bg-sage-50 p-4 text-xs">
-                    <div class="flex justify-between"><span>Items</span><strong>{{ cartCount }}</strong></div>
-                    <div class="flex justify-between mt-2"><span>Delivery</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
-                    <div class="flex justify-between mt-2"><span>Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong></div>
+                    <div class="flex justify-between"><span>Items Subtotal</span><strong>PKR {{ formatPrice(cartSubtotal) }}</strong></div>
+                    <div class="flex justify-between mt-2"><span>Delivery Charges</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
+                    <div class="flex justify-between mt-2"><span>Payment</span><strong>{{ checkout.paymentMethod }}</strong></div>
+                    <div class="flex justify-between mt-2"><span>COD Charges</span><strong>{{ codCharge === 0 ? 'PKR 0' : 'PKR ' + formatPrice(codCharge) }}</strong></div>
+                    <div class="flex justify-between mt-3 pt-3 border-t border-sage-200 text-sm"><span class="font-bold">Order Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong></div>
                 </div>
 
                 <button @click="sendCheckoutToWhatsApp" class="mt-5 w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg hover:opacity-90 transition">
@@ -868,6 +908,7 @@
                     city: '',
                     address: '',
                     delivery: 'Standard Delivery',
+                    paymentMethod: 'Cash on Delivery',
                     notes: ''
                 });
 
@@ -875,7 +916,7 @@
                 const selectedColor = ref('');
                 const quantity = ref(1);
                 const firebaseConnected = ref(false);
-                const firebaseMessage = ref('Connecting to live product catalog…');
+                const firebaseMessage = ref('');
 
                 // System Active Configuration Reactive Filter Object Matrix
                 const filters = ref({
@@ -1118,9 +1159,7 @@
                         const variantCount = liveProducts.reduce(
                             (sum, product) => sum + (product.variants?.length || 0), 0
                         );
-                        firebaseMessage.value = liveProducts.length
-                            ? `${liveProducts.length} products and ${variantCount} variants loaded live from Firebase.`
-                            : 'Firebase is connected, but the products collection is empty.';
+                        firebaseMessage.value = '';
                     }, error => {
                         console.error('Firebase product listener error:', error);
                         firebaseConnected.value = false;
@@ -1178,11 +1217,18 @@
                 const cartCount = computed(() => cart.value.reduce((total, item) => total + item.quantity, 0));
                 const cartSubtotal = computed(() => cart.value.reduce((total, item) => total + (item.price * item.quantity), 0));
                 const deliveryCharge = computed(() => {
-                    if (checkout.value.delivery === 'Urgent Delivery') return 400;
-                    return cartSubtotal.value > 1500 ? 0 : 200;
+                    if (cartSubtotal.value >= 1500) return 0;
+                    return checkout.value.delivery === 'Urgent Delivery' ? 400 : 200;
                 });
+
+                const codCharge = computed(() => {
+                    return checkout.value.paymentMethod === 'Cash on Delivery' ? 100 : 0;
+                });
+
                 const cartDiscount = computed(() => 0);
-                const cartTotal = computed(() => cartSubtotal.value + deliveryCharge.value);
+                const cartTotal = computed(() =>
+                    cartSubtotal.value + deliveryCharge.value + codCharge.value
+                );
 
                 // SYSTEM ACTION INTERFACE OPERATIONS METHODS
                 const navigateTo = (page) => {
@@ -1378,15 +1424,19 @@
                 };
 
                 const buyNow = (product) => {
-                    product = productWithSelectedVariant(product);
-                    if (!product.inStock || product.quantity <= 0) {
+                    const selectedProduct = productWithSelectedVariant(product);
+                    if (!selectedProduct.inStock || selectedProduct.quantity <= 0) {
                         alert('This product is currently out of stock.');
                         return;
                     }
+
                     cart.value = [];
-                    addToCart(product);
-                    cartDrawerOpen.value = false;
-                    checkoutOpen.value = true;
+                    addToCart(selectedProduct);
+
+                    setTimeout(() => {
+                        cartDrawerOpen.value = false;
+                        checkoutOpen.value = true;
+                    }, 50);
                 };
 
                 const buyConfiguredNow = () => {
@@ -1539,7 +1589,10 @@
                         subtotal: cartSubtotal.value,
                         discount: cartDiscount.value,
                         subtotal: cartSubtotal.value,
+                        deliveryMethod: checkout.value.delivery,
                         deliveryCharge: deliveryCharge.value,
+                        paymentMethod: checkout.value.paymentMethod,
+                        codCharge: codCharge.value,
                         total: cartTotal.value,
                         status: 'Pending',
                         source: 'Website WhatsApp Checkout'
