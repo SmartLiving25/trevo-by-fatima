@@ -192,7 +192,10 @@
                                 <div class="absolute inset-0 bg-sage-600/5 opacity-0 group-hover:opacity-100 transition duration-300"></div>
                             </div>
                             <div class="flex items-center justify-between px-1">
-                                <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-800">{{ cat.name }}</h3>
+                                <div>
+                                    <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-800">{{ cat.name }}</h3>
+                                    <p class="text-[10px] text-gray-400 mt-1">{{ cat.count }} product<span v-if="cat.count !== 1">s</span></p>
+                                </div>
                                 <span class="text-rosegold group-hover:translate-x-1 smooth-transition text-xs">&rarr;</span>
                             </div>
                         </div>
@@ -244,9 +247,12 @@
                                     </div>
 
                                     <!-- Quick Add Action Layer -->
-                                    <div class="pt-3">
-                                        <button @click="addToCart(product)" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white text-xs font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                    <div class="pt-3 grid grid-cols-2 gap-2">
+                                        <button @click="addToCart(product)" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
                                             Add To Cart
+                                        </button>
+                                        <button @click="buyNow(product)" class="w-full bg-sage-600 text-white hover:bg-sage-700 text-[10px] sm:text-xs font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                            Buy Now
                                         </button>
                                     </div>
                                 </div>
@@ -328,7 +334,8 @@
                                 </label>
                                 <label v-for="cat in categories" :key="cat.name" class="flex items-center space-x-2 text-gray-600 cursor-pointer">
                                     <input type="radio" :value="cat.name" v-model="filters.category" class="accent-sage-600">
-                                    <span>{{ cat.name }}</span>
+                                    <span class="flex-grow">{{ cat.name }}</span>
+                                    <span class="text-[10px] text-gray-400">{{ cat.count }}</span>
                                 </label>
                             </div>
                         </div>
@@ -339,7 +346,7 @@
                                 <h4 class="font-bold text-gray-800 uppercase tracking-wide">Maximum Price</h4>
                                 <span class="text-sage-600 font-bold">PKR {{ formatPrice(filters.priceRange) }}</span>
                             </div>
-                            <input type="range" min="3000" max="25000" step="500" v-model="filters.priceRange" class="w-full accent-sage-600">
+                            <input type="range" min="0" max="25000" step="100" v-model="filters.priceRange" class="w-full accent-sage-600">
                         </div>
 
                         <!-- Color Filter Matrix -->
@@ -367,9 +374,49 @@
 
                     <!-- Catalog Workspace Results Grid -->
                     <div class="flex-grow space-y-6">
+                        <!-- Dynamic Collection Tabs -->
+                        <div class="bg-white border border-sage-50 rounded-2xl p-4">
+                            <div class="flex items-center justify-between gap-4 mb-3">
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-[0.3em] text-rosegold font-bold">Shop by Collection</p>
+                                    <p class="text-xs text-gray-400 mt-1">Choose a collection or view the complete TREVO catalog.</p>
+                                </div>
+                                <button v-if="activeCollection !== 'All' || filters.category"
+                                        @click="resetFilters"
+                                        class="text-[10px] uppercase tracking-wider font-semibold text-sage-600 hover:underline">
+                                    Show All
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto pb-1">
+                              <div class="flex gap-2 min-w-max">
+                                <button
+                                    @click="activeCollection = 'All'; filters.category=''; searchQuery=''"
+                                    :class="activeCollection === 'All' ? 'bg-sage-600 text-white' : 'bg-ivory text-gray-700 hover:bg-sage-50'"
+                                    class="px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition">
+                                    All Products
+                                </button>
+                                <button
+                                    v-for="collection in collectionTabs"
+                                    :key="collection"
+                                    @click="activeCollection = collection; filters.category=''; searchQuery=''"
+                                    :class="activeCollection === collection ? 'bg-sage-600 text-white' : 'bg-ivory text-gray-700 hover:bg-sage-50'"
+                                    class="px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition">
+                                    {{ collection }}
+                                    <span class="ml-1 opacity-70">
+                                        ({{ products.filter(product => product.collection === collection).length }})
+                                    </span>
+                                </button>
+                              </div>
+                            </div>
+                        </div>
                         <!-- Top Sort Actions Layout -->
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-xl border border-sage-50/60 gap-4">
-                            <p class="text-xs text-gray-500 font-light">Showing <span class="font-bold text-gray-800">{{ filteredProducts.length }}</span> products matching your selection.</p>
+                            <p class="text-xs text-gray-500 font-light">
+                                Showing <span class="font-bold text-gray-800">{{ filteredProducts.length }}</span>
+                                product<span v-if="filteredProducts.length !== 1">s</span>
+                                <span v-if="activeCollection !== 'All'"> in <strong>{{ activeCollection }}</strong></span>
+                                <span v-else-if="filters.category"> in <strong>{{ filters.category }}</strong></span>.
+                            </p>
                             
                             <div class="flex items-center space-x-3 text-xs self-end sm:self-auto">
                                 <span class="text-gray-400 font-light">Sort by:</span>
@@ -409,9 +456,15 @@
                                         <span v-if="product.oldPrice" class="text-[10px] text-gray-400 line-through">PKR {{ formatPrice(product.oldPrice) }}</span>
                                     </div>
 
-                                    <div class="pt-3">
-                                        <button @click="addToCart(product)" :disabled="!product.inStock" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 text-[11px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
-                                            {{ product.inStock ? 'Add To Cart' : 'Restocking Soon' }}
+                                    <div class="pt-2 text-[10px] font-semibold" :class="product.inStock ? 'text-sage-600' : 'text-rosegold'">
+                                        {{ product.inStock ? product.quantity + ' unit(s) available' : 'Currently out of stock' }}
+                                    </div>
+                                    <div class="pt-2 grid grid-cols-2 gap-2">
+                                        <button @click="addToCart(product)" :disabled="!product.inStock" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                            {{ product.inStock ? 'Add To Cart' : 'Restocking' }}
+                                        </button>
+                                        <button @click="buyNow(product)" :disabled="!product.inStock" class="w-full bg-sage-600 text-white hover:bg-sage-700 disabled:bg-gray-300 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                            Buy Now
                                         </button>
                                     </div>
                                 </div>
@@ -520,10 +573,11 @@
                     </div>
 
                     <!-- Primary Actions Core Stack -->
-                    <div class="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
-                        <button @click="addConfiguredToCart" :disabled="!quickViewProduct.inStock" class="w-full bg-sage-600 disabled:bg-gray-300 text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-sage-700 smooth-transition">Add To Cart</button>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-gray-100">
+                        <button @click="addConfiguredToCart" :disabled="!quickViewProduct.inStock" class="w-full bg-white border border-sage-600 text-sage-600 disabled:bg-gray-100 disabled:text-gray-400 text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-sage-50 smooth-transition">Add To Cart</button>
+                        <button @click="buyConfiguredNow" :disabled="!quickViewProduct.inStock" class="w-full bg-sage-600 disabled:bg-gray-300 text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-sage-700 smooth-transition">Buy Now</button>
                         <button @click="instantWhatsAppCheckout(quickViewProduct)" class="w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:opacity-90 smooth-transition flex items-center justify-center space-x-1">
-                            <span>Order WhatsApp</span>
+                            <span>WhatsApp</span>
                         </button>
                     </div>
                 </div>
@@ -581,14 +635,19 @@
                             <span>Subtotal</span>
                             <span>PKR {{ formatPrice(cartSubtotal) }}</span>
                         </div>
-                        <div class="flex justify-between text-rosegold font-medium">
-                            <span>Launch Discount (10%)</span>
-                            <span>- PKR {{ formatPrice(cartDiscount) }}</span>
+                        <div class="flex justify-between">
+                            <span>Delivery</span>
+                            <span :class="deliveryCharge === 0 ? 'text-sage-600 font-semibold' : ''">
+                                {{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}
+                            </span>
                         </div>
                         <div class="flex justify-between border-t border-gray-100 pt-2 text-sm font-bold text-gray-900">
                             <span>Total</span>
                             <span>PKR {{ formatPrice(cartTotal) }}</span>
                         </div>
+                        <p class="text-[10px] text-gray-400">
+                            Standard delivery is PKR 200. Orders above PKR 1,500 receive free standard delivery. Urgent delivery is PKR 400.
+                        </p>
                     </div>
 
                     <!-- Checkout Integration Stack Options -->
@@ -630,8 +689,8 @@
                     <label class="text-xs font-semibold text-gray-700">
                         Delivery Method
                         <select v-model="checkout.delivery" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600 bg-white">
-                            <option>Standard Delivery</option>
-                            <option>Urgent Delivery</option>
+                            <option value="Standard Delivery">Standard Delivery — PKR 200 / Free above PKR 1,500</option>
+                            <option value="Urgent Delivery">Urgent Delivery — PKR 400</option>
                         </select>
                     </label>
                     <label class="text-xs font-semibold text-gray-700 sm:col-span-2">
@@ -646,6 +705,7 @@
 
                 <div class="mt-6 rounded-xl bg-sage-50 p-4 text-xs">
                     <div class="flex justify-between"><span>Items</span><strong>{{ cartCount }}</strong></div>
+                    <div class="flex justify-between mt-2"><span>Delivery</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
                     <div class="flex justify-between mt-2"><span>Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong></div>
                 </div>
 
@@ -769,6 +829,7 @@
                 const currentPage = ref('home');
                 const searchQuery = ref('');
                 const sortBy = ref('newest');
+                const activeCollection = ref('All');
                 
                 // Modals Visibility Triggers States
                 const cartDrawerOpen = ref(false);
@@ -801,17 +862,29 @@
                 // Structured Static Static Categories Vector Source Array
                 const categoryEmoji = (name) => {
                     const n = String(name || '').toLowerCase();
+                    if (n.includes('cross')) return '✨';
                     if (n.includes('tote')) return '👜';
                     if (n.includes('box')) return '💼';
-                    if (n.includes('cross')) return '✨';
-                    if (n.includes('lux') || n.includes('premium')) return '👑';
+                    if (n.includes('lux')) return '👑';
                     if (n.includes('pearl')) return '🤍';
                     return '👜';
                 };
 
                 const categories = computed(() => {
-                    const names = [...new Set(products.value.map(p => p.category).filter(Boolean))];
-                    return names.map(name => ({ name, emoji: categoryEmoji(name) }));
+                    const order = ['Cross Body', 'Tote Bags', 'Box Bag', 'Luxury Collection'];
+                    return order.map(name => ({
+                        name,
+                        count: products.value.filter(product => product.category === name).length,
+                        emoji: categoryEmoji(name)
+                    }));
+                });
+
+                const collectionTabs = computed(() => {
+                    return [...new Set(
+                        products.value
+                            .map(product => product.collection)
+                            .filter(Boolean)
+                    )].sort((a, b) => a.localeCompare(b));
                 });
 
                 // Global Color Options Matrix cataloged across designs
@@ -819,15 +892,9 @@
                     return [...new Set(products.value.flatMap(p => p.colors || []).filter(Boolean))];
                 });
 
-                // Fallback catalog shown only when Firebase is unavailable or empty
-                const fallbackProducts = [
-                    { id: 101, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2003_56_40%20PM.png', name: 'Aura Classic Textured Tote', category: 'Tote Bags', price: 6800, oldPrice: 8500, discount: 20, isNew: true, inStock: true, colors: ['Sage Green', 'Ivory'], popular: true },
-                    { id: 102, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_41_09%20PM.png', name: 'Seraphina Sculpted Box Bag', category: 'Box Bags', price: 9200, oldPrice: 11000, discount: 15, isNew: true, inStock: true, colors: ['Blush Pink', 'Rose Gold'], popular: true },
-                    { id: 103, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_44_46%20PM.png', name: 'Elysian Minimalist Crossbody', category: 'Crossbody Bags', price: 5400, oldPrice: 5400, discount: 0, isNew: false, inStock: true, colors: ['Ivory', 'Classic Onyx'], popular: false },
-                    { id: 104, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_47_53%20PM.png', name: 'Imperia Gold-Clasp Luxury Satchel', category: 'Luxury Collection', price: 18500, oldPrice: 22000, discount: 16, isNew: true, inStock: true, colors: ['Rose Gold', 'Classic Onyx'], popular: true },
-                    { id: 105, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_50_20%20PM.png', name: 'Heritage Structured Over-Shoulder Tote', category: 'Tote Bags', price: 7900, oldPrice: 7900, discount: 0, isNew: false, inStock: false, colors: ['Sage Green', 'Classic Onyx'], popular: false },
-                    { id: 106, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_51_53%20PM.png', name: 'Monarch Geometric Box Clutch', category: 'Box Bags', price: 12000, oldPrice: 14500, discount: 17, isNew: false, inStock: true, colors: ['Rose Gold', 'Ivory'], popular: true }
-                ];
+                // Exact TREVO catalog used while Firebase connects.
+                // Firebase replaces this data in real time when connected.
+                const fallbackProducts = [{"id":"TRV-CW-001","sku":"TRV-CW-001","name":"Trevo Monochrome Cow Print Tote","collection":"Urban Print Collection","category":"Tote Bags","subCategory":"Fashion Tote","style":"Shoulder Tote","colors":["Black & White"],"material":"Textured Faux Leather","pattern":"Cow Print","hardwareColor":"Gold","description":"Bold black-and-white cow-print tote with long shoulder handles and side buckle accents.","features":["Long handles","Side buckle details","Roomy tote shape"],"careInstructions":"Wipe clean with soft cloth; avoid prolonged sunlight.","slug":"trevo-monochrome-cow-print-tote","seoKeywords":"Trevo Monochrome Cow Print Tote, TREVO bags Pakistan, Fashion Tote, Shoulder Tote","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #FashionTote","img":"","variants":[{"sku":"TRV-CW-001-BW","color":"Black & White","barcode":"TRV0100001","stock":0,"status":"Active"}],"price":2600.0,"salePrice":2600.0,"_docId":"TRV-CW-001","regularPrice":3200.0,"oldPrice":3200.0,"discount":19,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Bold black-and-white cow-print tote with long shoulder handles and side buckle accents.","isNew":false,"popular":false},{"id":"TRV-HJ-001","sku":"TRV-HJ-001","name":"Trevo Noor Mini Handbag","collection":"Noor Collection","category":"Box Bag","subCategory":"Mini Handbag","style":"Top Handle","colors":["Mustard","Maroon"],"material":"Faux Leather","pattern":"Illustrated Hijab Print","hardwareColor":"Gold","description":"Compact top-handle handbag featuring an elegant modest-fashion illustration.","features":["Dual handles","Zip closure","Structured body"],"careInstructions":"Wipe gently with a soft dry cloth; keep away from moisture and direct heat.","slug":"trevo-noor-mini-handbag","seoKeywords":"Trevo Noor Mini Handbag, TREVO bags Pakistan, Mini Handbag, Top Handle, women handbags, online bags Pakistan","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #MiniHandbag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_td0mxktd0mxktd0m.png","variants":[{"sku":"TRV-HJ-001-MST","color":"Mustard","barcode":"TRV0010001","stock":0,"status":"Active"},{"sku":"TRV-HJ-001-MRN","color":"Maroon","barcode":"TRV0010002","stock":0,"status":"Active"}],"price":1200.0,"salePrice":1200.0,"_docId":"TRV-HJ-001","regularPrice":1400.0,"oldPrice":1400.0,"discount":14,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Compact top-handle handbag featuring an elegant modest-fashion illustration.","isNew":false,"popular":false},{"id":"TRV-RG-001","sku":"TRV-RG-001","name":"Trevo Marble Ring Handle Bag","collection":"Marble Luxe Collection","category":"Box Bag","subCategory":"Top Handle Bag","style":"Ring Handle","colors":["Ivory","Berry/Maroon","Champagne","Mauve"],"material":"Textured Fabric","pattern":"Marble Vein","hardwareColor":"Gold","description":"Elegant ring-handle handbag with metallic marble-vein detailing.","features":["Round metal handles","Structured body","Formal styling"],"careInstructions":"Spot clean only; protect metallic print from abrasion.","slug":"trevo-marble-ring-handle-bag","seoKeywords":"Trevo Marble Ring Handle Bag, TREVO bags Pakistan, Top Handle Bag, Ring Handle, women handbags","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #TopHandleBag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8k3y198k3y198k3y.png","variants":[{"sku":"TRV-RG-001-IVR","color":"Ivory","barcode":"TRV0030003","stock":0,"status":"Active"},{"sku":"TRV-RG-001-BRY","color":"Berry/Maroon","barcode":"TRV0030001","stock":0,"status":"Active"},{"sku":"TRV-RG-001-CHP","color":"Champagne","barcode":"TRV0030002","stock":0,"status":"Active"},{"sku":"TRV-RG-001-MVE","color":"Mauve","barcode":"TRV0030004","stock":0,"status":"Active"}],"price":1200.0,"salePrice":1200.0,"_docId":"TRV-RG-001","regularPrice":1400.0,"oldPrice":1400.0,"discount":14,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Elegant ring-handle handbag with metallic marble-vein detailing.","isNew":false,"popular":false},{"id":"TRV-PB-001","sku":"TRV-PB-001","name":"Trevo Forever Young Phone Wallet","collection":"Forever Young Collection","category":"Cross Body","subCategory":"Phone Bag & Wallet","style":"Crossbody Phone Bag","colors":["Lavender","Sky Blue","Dusted Pink"],"material":"PU Leather","pattern":"Solid / Croc Embossed","hardwareColor":"Gold","description":"Two-in-one phone bag and wallet with secure phone pocket and detachable strap.","features":["Phone pocket","Zip wallet","Detachable crossbody strap"],"careInstructions":"Avoid overloading; wipe with soft cloth; keep hardware dry.","slug":"trevo-forever-young-phone-wallet","seoKeywords":"Trevo Forever Young Phone Wallet, TREVO bags Pakistan, Phone Bag, Wallet, Crossbody","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #PhoneBag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.33.06%20PM.jpeg","variants":[{"sku":"TRV-PB-001-LAV","color":"Lavender","barcode":"TRV0080002","stock":0,"status":"Active"},{"sku":"TRV-PB-001-SKY","color":"Sky Blue","barcode":"TRV0080003","stock":0,"status":"Active"},{"sku":"TRV-PB-001-PNK","color":"Dusted Pink","barcode":"TRV0080001","stock":0,"status":"Active"}],"price":1200.0,"salePrice":1200.0,"_docId":"TRV-PB-001","regularPrice":1400.0,"oldPrice":1400.0,"discount":14,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Two-in-one phone bag and wallet with secure phone pocket and detachable strap.","isNew":false,"popular":false},{"id":"TRV-WL-001","sku":"TRV-WL-001","name":"Trevo CK Multi-Compartment Bag","collection":"Cloe Collection","category":"Luxury Collection","subCategory":"Organizer Wallet","style":"Clutch Wallet","colors":["Beige","Yellow","Black"],"material":"Faux Leather","pattern":"Quilted Front Panel","hardwareColor":"Tone-on-tone / Gold","description":"Slim organizer wallet with multiple divided sections and rear slip pocket.","features":["Two inner pockets","Divided sections","Rear slip pocket"],"careInstructions":"Keep dry; clean with non-abrasive cloth; do not overfill.","slug":"trevo-cloe-multi-compartment-wallet","seoKeywords":"Trevo Cloe Multi-Compartment Wallet, TREVO bags Pakistan, Organizer Wallet, Clutch Wallet","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #OrganizerWallet","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.32.44%20PM.jpeg","variants":[{"sku":"TRV-WL-001-BGE","color":"Beige","barcode":"TRV0060002","stock":0,"status":"Active"},{"sku":"TRV-WL-001-YLW","color":"Yellow","barcode":"TRV0060001","stock":0,"status":"Active"},{"sku":"TRV-WL-001-BLK","color":"Black","barcode":"TRV0060003","stock":0,"status":"Active"}],"price":3700.0,"salePrice":3700.0,"_docId":"TRV-WL-001","regularPrice":4700.0,"oldPrice":4700.0,"discount":21,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Slim organizer wallet with multiple divided sections and rear slip pocket.","isNew":false,"popular":false},{"id":"TRV-DT-001","sku":"TRV-DT-001","name":"Trevo Pastel Premium Tote","collection":"Premium Tote Collection","category":"Tote Bags","subCategory":"Tote Bag","style":"Structured Tote","colors":["Pastel Multi","Mint","Aqua","Pink"],"material":"Quilted Faux Leather","pattern":"Pastel Chevron / Abstract","hardwareColor":"Gold / Black","description":"Spacious premium tote with pastel quilted pattern and reinforced handles.","features":["Large capacity","Chain or top handles","Structured base"],"careInstructions":"Wipe clean; do not machine wash; retain shape with stuffing.","slug":"trevo-pastel-premium-tote","seoKeywords":"Trevo Pastel Premium Tote, TREVO bags Pakistan, Tote Bag, Structured Tote, women handbags","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #ToteBag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_qz0oddqz0oddqz0o.png","variants":[{"sku":"TRV-DT-001-PST","color":"Pastel Multi","barcode":"TRV0040001","stock":0,"status":"Active"},{"sku":"TRV-DT-001-MNT","color":"Mint","barcode":"TRV0040004","stock":0,"status":"Active"},{"sku":"TRV-DT-001-AQU","color":"Aqua","barcode":"TRV0040002","stock":0,"status":"Active"},{"sku":"TRV-DT-001-PNK","color":"Pink","barcode":"TRV0040003","stock":0,"status":"Active"}],"price":2200.0,"salePrice":2200.0,"_docId":"TRV-DT-001","regularPrice":2600.0,"oldPrice":2600.0,"discount":15,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Spacious premium tote with pastel quilted pattern and reinforced handles.","isNew":false,"popular":false},{"id":"TRV-PC-001","sku":"TRV-PC-001","name":"Trevo Pearl Grace Shoulder Bag","collection":"Pearl Grace Collection","category":"Luxury Collection","subCategory":"Shoulder Bag","style":"Shoulder / Evening","colors":["Emerald Green","Navy Blue","Black","Plum"],"material":"Fabric / Faux Leather","pattern":"Solid Pleated","hardwareColor":"Gold & Pearl","description":"Soft shoulder bag decorated with pearl and layered chain details.","features":["Pearl chain","Layered metal chains","Compact evening shape"],"careInstructions":"Store in a dust bag; avoid perfume, water and rough surfaces.","slug":"trevo-pearl-grace-shoulder-bag","seoKeywords":"Trevo Pearl Grace Shoulder Bag, TREVO bags Pakistan, Shoulder Bag, women handbags, online bags Pakistan","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #ShoulderBag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_yd44sqyd44sqyd44%20%281%29.png","variants":[{"sku":"TRV-PC-001-EMR","color":"Emerald Green","barcode":"TRV0020003","stock":0,"status":"Active"},{"sku":"TRV-PC-001-NVY","color":"Navy Blue","barcode":"TRV0020002","stock":0,"status":"Active"},{"sku":"TRV-PC-001-BLK","color":"Black","barcode":"TRV0020001","stock":0,"status":"Active"},{"sku":"TRV-PC-001-PLM","color":"Plum","barcode":"TRV0020004","stock":0,"status":"Active"}],"price":1200.0,"salePrice":1200.0,"_docId":"TRV-PC-001","regularPrice":1400.0,"oldPrice":1400.0,"discount":14,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Soft shoulder bag decorated with pearl and layered chain details.","isNew":false,"popular":false},{"id":"TRV-PT-001","sku":"TRV-PT-001","name":"Trevo Heritage Printed Tote","collection":"Heritage Tote Collection","category":"Tote Bags","subCategory":"Printed Tote","style":"Everyday Tote","colors":["City & Sailing","Burgundy Mosaic","Geometric Patchwork","Route 66 Travel","Green Heritage Tile"],"material":"Printed Fabric / Faux Leather","pattern":"Tile / Geometric / Travel / Mosaic","hardwareColor":"Gold / Bronze","description":"Everyday tote collection featuring artistic heritage-inspired prints.","features":["Long handles","Roomy interior","Lightweight body"],"careInstructions":"Use a soft damp cloth on exterior; avoid soaking printed fabric.","slug":"trevo-heritage-printed-tote","seoKeywords":"Trevo Heritage Printed Tote, TREVO bags Pakistan, Printed Tote, Everyday Tote, women handbags","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #PrintedTote","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_a5wgm3a5wgm3a5wg.png","variants":[{"sku":"TRV-PT-001-CTY","color":"City & Sailing","barcode":"TRV0050001","stock":0,"status":"Active"},{"sku":"TRV-PT-001-MOS","color":"Burgundy Mosaic","barcode":"TRV0050002","stock":0,"status":"Active"},{"sku":"TRV-PT-001-GEO","color":"Geometric Patchwork","barcode":"TRV0050003","stock":0,"status":"Active"},{"sku":"TRV-PT-001-R66","color":"Route 66 Travel","barcode":"TRV0050004","stock":0,"status":"Active"},{"sku":"TRV-PT-001-TIL","color":"Green Heritage Tile","barcode":"TRV0050005","stock":0,"status":"Active"}],"price":1200.0,"salePrice":1200.0,"_docId":"TRV-PT-001","regularPrice":1400.0,"oldPrice":1400.0,"discount":14,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Everyday tote collection featuring artistic heritage-inspired prints.","isNew":false,"popular":false},{"id":"TRV-RD-001","sku":"TRV-RD-001","name":"Trevo Mandala Round Art Bag","collection":"Mandala Art Collection","category":"Cross Body","subCategory":"Round Bag","style":"Crossbody","colors":["Grey","Blue","Maroon"],"material":"Textured Fabric","pattern":"Embroidered Mandala","hardwareColor":"Gold","description":"Statement round bag with vibrant mandala-style embroidered artwork.","features":["Round silhouette","Colorful embroidery","Crossbody format"],"careInstructions":"Spot clean embroidery carefully; do not rub or bleach.","slug":"trevo-mandala-round-art-bag","seoKeywords":"Trevo Mandala Round Art Bag, TREVO bags Pakistan, Round Bag, Crossbody, embroidered bag","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #RoundBag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_rw5t4rw5t4rw5t4r.png","variants":[{"sku":"TRV-RD-001-GRY","color":"Grey","barcode":"TRV0090003","stock":0,"status":"Active"},{"sku":"TRV-RD-001-BLU","color":"Blue","barcode":"TRV0090001","stock":0,"status":"Active"},{"sku":"TRV-RD-001-BRG","color":"Maroon","barcode":"TRV0090002","stock":0,"status":"Active"}],"price":1754.0,"salePrice":1754.0,"_docId":"TRV-RD-001","regularPrice":2192.0,"oldPrice":2192.0,"discount":20,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Statement round bag with vibrant mandala-style embroidered artwork.","isNew":false,"popular":false},{"id":"TRV-ST-001","sku":"TRV-ST-001","name":"Trevo Aura Structured Satchel","collection":"Aura Satchel Collection","category":"Luxury Collection","subCategory":"Satchel Bag","style":"Top Handle / Shoulder","colors":["Dark Navy","Crimson Red"],"material":"Pebbled Faux Leather","pattern":"Solid Pebbled","hardwareColor":"Gold","description":"Structured satchel with premium pebbled finish and detachable shoulder strap.","features":["Top handles","Detachable strap","Zip closure","Metal feet"],"careInstructions":"Use leather-safe cleaner only; store upright in dust bag.","slug":"trevo-aura-structured-satchel","seoKeywords":"Trevo Aura Structured Satchel, TREVO bags Pakistan, Satchel Bag, Top Handle, Shoulder","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #SatchelBag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.42.52%20PM.jpeg","variants":[{"sku":"TRV-ST-001-NVY","color":"Dark Navy","barcode":"TRV0070002","stock":0,"status":"Active"},{"sku":"TRV-ST-001-RED","color":"Crimson Red","barcode":"TRV0070001","stock":0,"status":"Active"}],"price":4600.0,"salePrice":4600.0,"_docId":"TRV-ST-001","regularPrice":5800.0,"oldPrice":5800.0,"discount":21,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Structured satchel with premium pebbled finish and detachable shoulder strap.","isNew":false,"popular":false},{"id":"TRV-TT-001","sku":"TRV-TT-001","name":"Trevo Executive Office Tote","collection":"Executive Collection","category":"Tote Bags","subCategory":"Office Tote","style":"Structured Work Tote","colors":["Pink","Grey","Sage"],"material":"Smooth Faux Leather","pattern":"Solid Minimal","hardwareColor":"Gold","description":"Minimal structured office tote designed for documents, essentials and daily work use.","features":["Multiple compartments","Reinforced handles","Structured profile"],"careInstructions":"Clean with damp cloth; store filled to preserve shape.","slug":"trevo-executive-office-tote","seoKeywords":"Trevo Executive Office Tote, TREVO bags Pakistan, Office Tote, Structured Work Tote","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #OfficeTote","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_fqxdxifqxdxifqxd.png","variants":[{"sku":"TRV-TT-001-PNK","color":"Pink","barcode":"TRV0110003","stock":0,"status":"Active"},{"sku":"TRV-TT-001-GRY","color":"Grey","barcode":"TRV0110001","stock":0,"status":"Active"},{"sku":"TRV-TT-001-SGE","color":"Sage","barcode":"TRV0110002","stock":0,"status":"Active"}],"price":2500.0,"salePrice":2500.0,"_docId":"TRV-TT-001","regularPrice":3000.0,"oldPrice":3000.0,"discount":17,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Minimal structured office tote designed for documents, essentials and daily work use.","isNew":false,"popular":false}];
                 const products = ref([...fallbackProducts]);
 
                 // Static Trusted Testimonial Voice Arrays
@@ -917,7 +984,23 @@
                         id: String(data.id ?? docId ?? index + 1),
                         sku: String(data.sku || data.id || docId || index + 1),
                         name: data.name || data.title || 'TREVO Handbag',
-                        category: data.category || data.collection || 'Handbags',
+                        category: (() => {
+                            const id = String(data.id || data.sku || docId || '');
+                            const map = {
+                                'TRV-PB-001': 'Cross Body',
+                                'TRV-RD-001': 'Cross Body',
+                                'TRV-CW-001': 'Tote Bags',
+                                'TRV-DT-001': 'Tote Bags',
+                                'TRV-PT-001': 'Tote Bags',
+                                'TRV-TT-001': 'Tote Bags',
+                                'TRV-HJ-001': 'Box Bag',
+                                'TRV-RG-001': 'Box Bag',
+                                'TRV-PC-001': 'Luxury Collection',
+                                'TRV-WL-001': 'Luxury Collection',
+                                'TRV-ST-001': 'Luxury Collection'
+                            };
+                            return map[id] || data.category || 'Luxury Collection';
+                        })(),
                         price: displayPrice,
                         regularPrice,
                         salePrice: salePrice > 0 ? salePrice : null,
@@ -942,7 +1025,7 @@
                 const connectFirebaseProducts = () => {
                     if (typeof firebaseReady === 'undefined' || !firebaseReady || typeof db === 'undefined') {
                         firebaseConnected.value = false;
-                        firebaseMessage.value = 'Firebase is not connected. Showing sample products.';
+                        firebaseMessage.value = 'Firebase is not connected. Showing the saved TREVO catalog. Check firebase-config.js and Firestore permissions for live prices and stock.';
                         return;
                     }
 
@@ -967,7 +1050,7 @@
                     }, error => {
                         console.error('Firebase product listener error:', error);
                         firebaseConnected.value = false;
-                        firebaseMessage.value = 'Could not load live products. Check Firestore permissions and firebase-config.js.';
+                        firebaseMessage.value = 'Could not load live Firebase products. Showing the saved TREVO catalog. Check Firestore permissions and firebase-config.js.';
                         products.value = [...fallbackProducts];
                     });
                 };
@@ -985,7 +1068,10 @@
                         output = output.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
                     }
 
-                    // 2. Active Sidebar Filters Vector validation
+                    // 2. Dynamic collection and sidebar filters
+                    if (activeCollection.value && activeCollection.value !== 'All') {
+                        output = output.filter(p => p.collection === activeCollection.value);
+                    }
                     if (filters.value.category) {
                         output = output.filter(p => p.category === filters.value.category);
                     }
@@ -1017,12 +1103,21 @@
                 // Cart Computations aggregates matrix
                 const cartCount = computed(() => cart.value.reduce((total, item) => total + item.quantity, 0));
                 const cartSubtotal = computed(() => cart.value.reduce((total, item) => total + (item.price * item.quantity), 0));
-                const cartDiscount = computed(() => Math.round(cartSubtotal.value * 0.10)); // 10% computed promotion code value
-                const cartTotal = computed(() => cartSubtotal.value - cartDiscount.value);
+                const deliveryCharge = computed(() => {
+                    if (checkout.value.delivery === 'Urgent Delivery') return 400;
+                    return cartSubtotal.value > 1500 ? 0 : 200;
+                });
+                const cartDiscount = computed(() => 0);
+                const cartTotal = computed(() => cartSubtotal.value + deliveryCharge.value);
 
                 // SYSTEM ACTION INTERFACE OPERATIONS METHODS
                 const navigateTo = (page) => {
                     currentPage.value = page;
+                    if (page === 'shop') {
+                        searchQuery.value = '';
+                        activeCollection.value = 'All';
+                        filters.value.category = '';
+                    }
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 };
 
@@ -1035,6 +1130,8 @@
                 };
 
                 const selectCategory = (categoryName) => {
+                    activeCollection.value = 'All';
+                    searchQuery.value = '';
                     filters.value.category = categoryName;
                     currentPage.value = 'shop';
                     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1103,6 +1200,29 @@
                         });
                     }
                     cartDrawerOpen.value = true;
+                };
+
+                const buyNow = (product) => {
+                    if (!product.inStock || product.quantity <= 0) {
+                        alert('This product is currently out of stock.');
+                        return;
+                    }
+                    cart.value = [];
+                    addToCart(product);
+                    cartDrawerOpen.value = false;
+                    checkoutOpen.value = true;
+                };
+
+                const buyConfiguredNow = () => {
+                    const previousCart = [...cart.value];
+                    cart.value = [];
+                    addConfiguredToCart();
+                    if (!cart.value.length) {
+                        cart.value = previousCart;
+                        return;
+                    }
+                    cartDrawerOpen.value = false;
+                    checkoutOpen.value = true;
                 };
 
                 const addConfiguredToCart = () => {
@@ -1242,6 +1362,8 @@
                         })),
                         subtotal: cartSubtotal.value,
                         discount: cartDiscount.value,
+                        subtotal: cartSubtotal.value,
+                        deliveryCharge: deliveryCharge.value,
                         total: cartTotal.value,
                         status: 'Pending',
                         source: 'Website WhatsApp Checkout'
@@ -1322,7 +1444,7 @@ Subtotal: PKR ${formatPrice(cartSubtotal.value)}
                 };
 
                 return {
-                    currentPage, searchQuery, sortBy, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
+                    currentPage, searchQuery, sortBy, activeCollection, collectionTabs, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
                     selectedColor, quantity, filters, categories, availableColors, products, reviews, valueProps,
                     cart, wishlist, filteredProducts, cartCount, cartSubtotal, cartDiscount, cartTotal,
                     navigateTo, setFilter, selectCategory, scrollToSection, formatPrice, addToCart, addConfiguredToCart,
