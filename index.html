@@ -92,7 +92,7 @@
                 </button>
 
                 <!-- Responsive Storefront Navigation -->
-                <nav class="flex-1 mx-4 overflow-x-auto scrollbar-hide">
+                <nav class="flex-1 mx-2 md:mx-4 overflow-x-auto md:overflow-visible scrollbar-hide">
                     <div class="flex md:justify-center gap-2 md:gap-6 min-w-max text-[11px] md:text-xs font-semibold uppercase tracking-[0.16em] text-gray-600">
                         <button @click="scrollToStoreSection('home-section')"
                                 class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition">
@@ -103,23 +103,30 @@
                             Complete Range
                         </button>
 
-                        <div class="relative group">
-                            <button class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition flex items-center gap-1">
+                        <div class="relative" @mouseleave="featuredMenuOpen = false">
+                            <button @click.stop="featuredMenuOpen = !featuredMenuOpen"
+                                    :aria-expanded="featuredMenuOpen"
+                                    class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition flex items-center gap-1">
                                 Featured Collection
-                                <span class="text-[9px]">▼</span>
+                                <span class="text-[9px] transition-transform" :class="featuredMenuOpen ? 'rotate-180' : ''">▼</span>
                             </button>
-                            <div class="absolute left-0 md:left-1/2 md:-translate-x-1/2 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition z-50">
-                                <div class="w-56 bg-white border border-sage-100 rounded-2xl shadow-xl p-2">
+                            <div v-if="featuredMenuOpen"
+                                 class="absolute left-0 md:left-1/2 md:-translate-x-1/2 top-full pt-2 z-[100]">
+                                <div class="w-64 bg-white border border-sage-100 rounded-2xl shadow-2xl p-2">
+                                    <p class="px-3 pt-2 pb-1 text-[9px] uppercase tracking-[0.22em] text-rosegold font-bold">
+                                        Shop by Category
+                                    </p>
                                     <button v-for="cat in categories"
                                             :key="'nav-'+cat.name"
-                                            @click="openFeaturedCategory(cat.name)"
-                                            class="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-sage-50 text-left normal-case tracking-normal">
-                                        <img v-if="cat.img" :src="cat.img" :alt="cat.name" class="w-10 h-10 rounded-lg object-cover">
-                                        <span v-else class="w-10 h-10 rounded-lg bg-sage-50 flex items-center justify-center">{{ cat.emoji }}</span>
-                                        <span>
+                                            @click.stop="openFeaturedCategory(cat.name); featuredMenuOpen = false"
+                                            class="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-sage-50 text-left normal-case tracking-normal transition">
+                                        <img v-if="cat.img" :src="cat.img" :alt="cat.name" class="w-11 h-11 rounded-lg object-cover border border-sage-50">
+                                        <span v-else class="w-11 h-11 rounded-lg bg-sage-50 flex items-center justify-center">{{ cat.emoji }}</span>
+                                        <span class="flex-1">
                                             <span class="block text-xs font-semibold text-gray-800">{{ cat.name }}</span>
-                                            <span class="block text-[10px] text-gray-400">{{ cat.count }} products</span>
+                                            <span class="block text-[10px] text-gray-400">{{ cat.count }} product<span v-if="cat.count !== 1">s</span></span>
                                         </span>
+                                        <span class="text-sage-500">→</span>
                                     </button>
                                 </div>
                             </div>
@@ -237,7 +244,7 @@
                                 <div class="grid grid-cols-2 gap-1 w-full h-full p-2">
                                     <img v-for="product in products.slice(0,4)"
                                          :key="product.id"
-                                         :src="product.img"
+                                         :src="selectedProductImage(product)"
                                          :alt="product.name"
                                          class="w-full h-full object-cover rounded-md bg-sage-50"
                                          loading="lazy">
@@ -448,39 +455,27 @@
 
                     <!-- Catalog Workspace Results Grid -->
                     <div class="flex-grow space-y-6">
-                        <!-- Dynamic Collection Tabs -->
-                        <div class="bg-white border border-sage-50 rounded-2xl p-4">
-                            <div class="flex items-center justify-between gap-4 mb-3">
+                        <!-- Professional Catalog Heading -->
+                        <div class="bg-white border border-sage-50 rounded-2xl px-5 py-5 md:px-7">
+                            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                                 <div>
-                                    <p class="text-[10px] uppercase tracking-[0.3em] text-rosegold font-bold">Shop by Collection</p>
-                                    <p class="text-xs text-gray-400 mt-1">Choose a collection or view the complete TREVO catalog.</p>
+                                    <p class="text-[9px] uppercase tracking-[0.28em] text-rosegold font-bold">
+                                        {{ shopMode === 'complete' ? 'The Complete TREVO Range' : 'Featured Collection' }}
+                                    </p>
+                                    <h2 class="font-heading text-2xl md:text-3xl font-bold text-gray-900 mt-1">
+                                        {{ shopMode === 'complete' ? 'All Handbags' : (filters.category || 'All Handbags') }}
+                                    </h2>
+                                    <p class="text-xs text-gray-500 mt-2 max-w-2xl leading-relaxed">
+                                        {{ shopMode === 'complete'
+                                            ? 'Explore all 11 TREVO handbag designs. Choose your preferred colour directly beneath each product.'
+                                            : 'A carefully selected range arranged in a clean, easy-to-shop product grid.' }}
+                                    </p>
                                 </div>
-                                <button v-if="activeCollection !== 'All' || filters.category"
-                                        @click="resetFilters"
-                                        class="text-[10px] uppercase tracking-wider font-semibold text-sage-600 hover:underline">
-                                    Show All
+                                <button v-if="filters.category"
+                                        @click="openCompleteRange"
+                                        class="self-start md:self-auto px-4 py-2 rounded-full border border-sage-200 text-sage-700 text-[10px] uppercase tracking-wider font-bold hover:bg-sage-50 transition">
+                                    View Complete Range
                                 </button>
-                            </div>
-                            <div class="overflow-x-auto pb-1">
-                              <div class="flex gap-2 min-w-max">
-                                <button
-                                    @click="shopMode='all'; activeCollection = 'All'; filters.category=''; filters.color=''; filters.inStockOnly=false; filters.priceRange=25000; searchQuery=''"
-                                    :class="activeCollection === 'All' ? 'bg-sage-600 text-white' : 'bg-ivory text-gray-700 hover:bg-sage-50'"
-                                    class="px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition">
-                                    All Products
-                                </button>
-                                <button
-                                    v-for="collection in collectionTabs"
-                                    :key="collection"
-                                    @click="shopMode='collection'; activeCollection = collection; filters.category=''; filters.color=''; filters.inStockOnly=false; filters.priceRange=25000; searchQuery=''"
-                                    :class="activeCollection === collection ? 'bg-sage-600 text-white' : 'bg-ivory text-gray-700 hover:bg-sage-50'"
-                                    class="px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition">
-                                    {{ collection }}
-                                    <span class="ml-1 opacity-70">
-                                        ({{ products.filter(product => product.collection === collection).length }})
-                                    </span>
-                                </button>
-                              </div>
                             </div>
                         </div>
                         <!-- Top Sort Actions Layout -->
@@ -505,9 +500,9 @@
                         </div>
 
                         <!-- Grid Render Block -->
-                        <div v-if="filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <div v-for="product in filteredProducts" :key="product.id" class="group bg-white rounded-2xl p-4 border border-sage-50 shadow-sm hover:shadow-xl smooth-transition relative">
-                                <div class="aspect-[4/5] bg-sage-50 rounded-xl overflow-hidden relative mb-4 flex items-center justify-center">
+                        <div v-if="filteredProducts.length > 0" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+                            <div v-for="product in filteredProducts" :key="product.id" class="group bg-white rounded-2xl p-3 border border-sage-50 shadow-sm hover:shadow-lg smooth-transition relative min-w-0">
+                                <div class="aspect-[4/5] bg-sage-50 rounded-xl overflow-hidden relative mb-3 flex items-center justify-center">
                                     <img v-if="product.img" :src="product.img" :alt="product.name" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'">
                                     <div v-else class="text-5xl">👜</div>
                                     <span v-if="product.isNew" class="absolute top-3 left-3 bg-sage-600 text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">New</span>
@@ -527,18 +522,39 @@
                                     <p class="text-[9px] tracking-wider text-sage-600 uppercase font-bold">{{ product.category }}</p>
                                     <h3 class="text-xs font-semibold text-gray-800 tracking-wide line-clamp-1">{{ product.name }}</h3>
                                     <div class="flex items-center space-x-2 pt-0.5">
-                                        <span class="text-xs font-bold text-gray-900">PKR {{ formatPrice(product.price) }}</span>
+                                        <span class="text-xs font-bold text-gray-900">PKR {{ formatPrice(selectedProductPrice(product)) }}</span>
                                         <span v-if="product.oldPrice" class="text-[10px] text-gray-400 line-through">PKR {{ formatPrice(product.oldPrice) }}</span>
                                     </div>
 
-                                    <div class="pt-2 text-[10px] font-semibold" :class="product.inStock ? 'text-sage-600' : 'text-rosegold'">
-                                        {{ product.inStock ? product.quantity + ' unit(s) available' : 'Currently out of stock' }}
+                                    <div v-if="product.variants && product.variants.length" class="pt-2">
+                                        <p class="text-[9px] uppercase tracking-wider text-gray-400 mb-1.5">
+                                            Choose Colour
+                                        </p>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <button v-for="variant in product.variants"
+                                                    :key="variant.sku || variant.color"
+                                                    @click="selectCardVariant(product, variant)"
+                                                    :class="selectedVariantSku(product) === (variant.sku || variant.color)
+                                                        ? 'border-sage-600 bg-sage-600 text-white'
+                                                        : 'border-sage-100 bg-ivory text-gray-600 hover:border-sage-300'"
+                                                    class="px-2 py-1 rounded-md border text-[9px] font-semibold transition"
+                                                    :title="variant.color">
+                                                {{ variant.color }}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-2 text-[10px] font-semibold"
+                                         :class="selectedProductStock(product) > 0 ? 'text-sage-600' : 'text-rosegold'">
+                                        {{ selectedProductStock(product) > 0
+                                            ? selectedProductStock(product) + ' unit(s) available'
+                                            : 'Currently out of stock' }}
                                     </div>
                                     <div class="pt-2 grid grid-cols-2 gap-2">
-                                        <button @click="addToCart(product)" :disabled="!product.inStock" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
-                                            {{ product.inStock ? 'Add To Cart' : 'Restocking' }}
+                                        <button @click="addToCart(product)" :disabled="selectedProductStock(product) <= 0" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                            {{ selectedProductStock(product) > 0 ? 'Add To Cart' : 'Restocking' }}
                                         </button>
-                                        <button @click="buyNow(product)" :disabled="!product.inStock" class="w-full bg-sage-600 text-white hover:bg-sage-700 disabled:bg-gray-300 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                        <button @click="buyNow(product)" :disabled="selectedProductStock(product) <= 0" class="w-full bg-sage-600 text-white hover:bg-sage-700 disabled:bg-gray-300 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
                                             Buy Now
                                         </button>
                                     </div>
@@ -915,6 +931,8 @@
                 const sortBy = ref('newest');
                 const activeCollection = ref('All');
                 const shopMode = ref('all');
+                const featuredMenuOpen = ref(false);
+                const cardVariantSelections = ref({});
                 
                 // Modals Visibility Triggers States
                 const cartDrawerOpen = ref(false);
@@ -1193,7 +1211,7 @@
 
                 // COMPUTED LOGIC ENGINES: Search, Filters, Sort pipelines
                 const filteredProducts = computed(() => {
-                    let output = shopMode.value === 'complete' ? [...completeRangeVariants.value] : [...products.value];
+                    let output = [...products.value];
 
                     // 1. Text Search query Vector checking
                     if (searchQuery.value.trim() !== '') {
@@ -1350,7 +1368,57 @@
                     return product.inStock ? (product.colors || []) : [];
                 };
 
+                const defaultVariantForProduct = (product) => {
+                    if (!product?.variants?.length) return null;
+                    const savedSku = cardVariantSelections.value[product.id];
+                    return product.variants.find(v => (v.sku || v.color) === savedSku)
+                        || product.variants.find(v => Number(v.stock || 0) > 0)
+                        || product.variants[0];
+                };
+
+                const selectCardVariant = (product, variant) => {
+                    cardVariantSelections.value = {
+                        ...cardVariantSelections.value,
+                        [product.id]: variant.sku || variant.color
+                    };
+                };
+
+                const selectedVariantSku = (product) => {
+                    const variant = defaultVariantForProduct(product);
+                    return variant ? (variant.sku || variant.color) : '';
+                };
+
+                const selectedProductStock = (product) => {
+                    const variant = defaultVariantForProduct(product);
+                    return variant ? Number(variant.stock || 0) : Number(product.quantity || product.stock || 0);
+                };
+
+                const selectedProductPrice = (product) => {
+                    const variant = defaultVariantForProduct(product);
+                    return Number(variant?.salePrice || variant?.price || product.price || 0);
+                };
+
+                const selectedProductImage = (product) => {
+                    const variant = defaultVariantForProduct(product);
+                    return variant?.img || product.img || '';
+                };
+
+                const productWithSelectedVariant = (product) => {
+                    const variant = defaultVariantForProduct(product);
+                    if (!variant) return product;
+                    return {
+                        ...product,
+                        selectedVariantColor: variant.color,
+                        price: Number(variant.salePrice || variant.price || product.price || 0),
+                        quantity: Number(variant.stock || 0),
+                        stock: Number(variant.stock || 0),
+                        inStock: Number(variant.stock || 0) > 0,
+                        img: variant.img || product.img
+                    };
+                };
+
                 const addToCart = (product) => {
+                    product = productWithSelectedVariant(product);
                     if (!product.inStock || product.quantity <= 0) {
                         alert('This product is currently out of stock.');
                         return;
@@ -1387,6 +1455,7 @@
                 };
 
                 const buyNow = (product) => {
+                    product = productWithSelectedVariant(product);
                     if (!product.inStock || product.quantity <= 0) {
                         alert('This product is currently out of stock.');
                         return;
@@ -1628,10 +1697,10 @@ Subtotal: PKR ${formatPrice(cartSubtotal.value)}
                 };
 
                 return {
-                    currentPage, searchQuery, sortBy, activeCollection, shopMode, collectionTabs, completeRangeVariants, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
+                    currentPage, searchQuery, sortBy, activeCollection, shopMode, featuredMenuOpen, cardVariantSelections, collectionTabs, completeRangeVariants, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
                     selectedColor, quantity, filters, categories, availableColors, products, reviews, valueProps,
                     cart, wishlist, filteredProducts, cartCount, cartSubtotal, cartDiscount, cartTotal,
-                    navigateTo, setFilter, selectCategory, scrollToSection, scrollToStoreSection, openCompleteRange, openFeaturedCategory, formatPrice, addToCart, addConfiguredToCart,
+                    navigateTo, setFilter, selectCategory, scrollToSection, scrollToStoreSection, openCompleteRange, openFeaturedCategory, formatPrice, selectCardVariant, selectedVariantSku, selectedProductStock, selectedProductPrice, selectedProductImage, addToCart, addConfiguredToCart,
                     updateQty, removeFromCart, toggleWishlist, isInWishlist, openQuickView, closeQuickView,
                     toggleCartDrawer, toggleWishlistModal, resetFilters, handleSubscribe, alertModal,
                     compileAndSendWhatsAppCheckout, openCheckout, sendCheckoutToWhatsApp, instantWhatsAppCheckout, triggerMockSecureCheckout,
