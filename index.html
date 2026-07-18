@@ -183,19 +183,46 @@
                         <div class="w-12 h-[2px] bg-blush-200 mx-auto mt-3"></div>
                     </div>
 
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="grid grid-cols-2 lg:grid-cols-5 gap-6">
+                        <div @click="navigateTo('shop')"
+                             class="group cursor-pointer bg-white rounded-2xl p-4 shadow-sm hover:shadow-xl smooth-transition transform hover:-translate-y-1 border border-sage-50/50">
+                            <div class="aspect-square bg-gradient-to-br from-blush-50 via-white to-sage-50 rounded-xl flex flex-col items-center justify-center relative overflow-hidden mb-4">
+                                <div class="grid grid-cols-2 gap-1 w-full h-full p-2">
+                                    <img v-for="product in products.slice(0,4)"
+                                         :key="product.id"
+                                         :src="product.img"
+                                         :alt="product.name"
+                                         class="w-full h-full object-cover rounded-md bg-sage-50"
+                                         loading="lazy">
+                                </div>
+                                <div class="absolute inset-0 bg-black/10"></div>
+                                <span class="absolute bottom-3 left-3 bg-white/90 text-gray-800 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
+                                    {{ products.length }} products
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between px-1">
+                                <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-800">All Products</h3>
+                                <span class="text-rosegold group-hover:translate-x-1 smooth-transition text-xs">&rarr;</span>
+                            </div>
+                        </div>
+
                         <div v-for="cat in categories" :key="cat.name" 
                              @click="selectCategory(cat.name)"
                              class="group cursor-pointer bg-white rounded-2xl p-4 shadow-sm hover:shadow-xl smooth-transition transform hover:-translate-y-1 border border-sage-50/50">
                             <div class="aspect-square bg-gradient-to-br from-sage-50 to-ivory rounded-xl flex flex-col items-center justify-center relative overflow-hidden mb-4">
-                                <div class="text-4xl group-hover:scale-110 transition duration-300">{{ cat.emoji }}</div>
-                                <div class="absolute inset-0 bg-sage-600/5 opacity-0 group-hover:opacity-100 transition duration-300"></div>
+                                <img v-if="cat.img"
+                                     :src="cat.img"
+                                     :alt="cat.productName"
+                                     class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                                     loading="lazy">
+                                <div v-else class="text-4xl group-hover:scale-110 transition duration-300">{{ cat.emoji }}</div>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-60"></div>
+                                <span class="absolute bottom-3 left-3 bg-white/90 text-gray-800 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
+                                    {{ cat.count }} product<span v-if="cat.count !== 1">s</span>
+                                </span>
                             </div>
                             <div class="flex items-center justify-between px-1">
-                                <div>
-                                    <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-800">{{ cat.name }}</h3>
-                                    <p class="text-[10px] text-gray-400 mt-1">{{ cat.count }} product<span v-if="cat.count !== 1">s</span></p>
-                                </div>
+                                <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-800">{{ cat.name }}</h3>
                                 <span class="text-rosegold group-hover:translate-x-1 smooth-transition text-xs">&rarr;</span>
                             </div>
                         </div>
@@ -390,7 +417,7 @@
                             <div class="overflow-x-auto pb-1">
                               <div class="flex gap-2 min-w-max">
                                 <button
-                                    @click="activeCollection = 'All'; filters.category=''; searchQuery=''"
+                                    @click="activeCollection = 'All'; filters.category=''; filters.color=''; filters.inStockOnly=false; filters.priceRange=25000; searchQuery=''"
                                     :class="activeCollection === 'All' ? 'bg-sage-600 text-white' : 'bg-ivory text-gray-700 hover:bg-sage-50'"
                                     class="px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition">
                                     All Products
@@ -398,7 +425,7 @@
                                 <button
                                     v-for="collection in collectionTabs"
                                     :key="collection"
-                                    @click="activeCollection = collection; filters.category=''; searchQuery=''"
+                                    @click="activeCollection = collection; filters.category=''; filters.color=''; filters.inStockOnly=false; filters.priceRange=25000; searchQuery=''"
                                     :class="activeCollection === collection ? 'bg-sage-600 text-white' : 'bg-ivory text-gray-700 hover:bg-sage-50'"
                                     class="px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition">
                                     {{ collection }}
@@ -645,9 +672,11 @@
                             <span>Total</span>
                             <span>PKR {{ formatPrice(cartTotal) }}</span>
                         </div>
-                        <p class="text-[10px] text-gray-400">
-                            Standard delivery is PKR 200. Orders above PKR 1,500 receive free standard delivery. Urgent delivery is PKR 400.
-                        </p>
+                        <div class="rounded-lg bg-sage-50 border border-sage-100 p-3 text-[10px] text-gray-600 leading-relaxed">
+                            <strong class="text-sage-700">Delivery policy:</strong>
+                            Standard delivery is PKR 200. Standard delivery is free when the product subtotal is above PKR 1,500.
+                            Urgent delivery is PKR 400 on every order.
+                        </div>
                     </div>
 
                     <!-- Checkout Integration Stack Options -->
@@ -872,11 +901,19 @@
 
                 const categories = computed(() => {
                     const order = ['Cross Body', 'Tote Bags', 'Box Bag', 'Luxury Collection'];
-                    return order.map(name => ({
-                        name,
-                        count: products.value.filter(product => product.category === name).length,
-                        emoji: categoryEmoji(name)
-                    }));
+
+                    return order.map(name => {
+                        const categoryProducts = products.value.filter(product => product.category === name);
+                        const imageProduct = categoryProducts.find(product => product.img) || categoryProducts[0];
+
+                        return {
+                            name,
+                            count: categoryProducts.length,
+                            emoji: categoryEmoji(name),
+                            img: imageProduct?.img || '',
+                            productName: imageProduct?.name || name
+                        };
+                    });
                 });
 
                 const collectionTabs = computed(() => {
@@ -1116,7 +1153,12 @@
                     if (page === 'shop') {
                         searchQuery.value = '';
                         activeCollection.value = 'All';
-                        filters.value.category = '';
+                        filters.value = {
+                            category: '',
+                            priceRange: 25000,
+                            color: '',
+                            inStockOnly: false
+                        };
                     }
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 };
@@ -1132,7 +1174,12 @@
                 const selectCategory = (categoryName) => {
                     activeCollection.value = 'All';
                     searchQuery.value = '';
-                    filters.value.category = categoryName;
+                    filters.value = {
+                        category: categoryName,
+                        priceRange: 25000,
+                        color: '',
+                        inStockOnly: false
+                    };
                     currentPage.value = 'shop';
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 };
