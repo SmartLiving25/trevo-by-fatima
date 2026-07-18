@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TREVO | Advanced Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+tailwind.config={theme:{extend:{fontFamily:{heading:['"Playfair Display"','serif'],sans:['Poppins','sans-serif']},colors:{sage:{50:'#f4f6f4',100:'#e6ebe5',600:'#7D8F7A',700:'#677764'},blush:{50:'#fdf8f8',100:'#f7e7e7',200:'#E9C7C7'},ivory:'#FAF9F5',rosegold:'#B76E79'}}}}
+</script>
+<style>
+[v-cloak]{display:none}.glass{background:rgba(255,255,255,.82);backdrop-filter:blur(14px)}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:#FAF9F5}::-webkit-scrollbar-thumb{background:#7D8F7A;border-radius:9px}
+.fade{animation:fade .25s ease}@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body class="bg-ivory text-gray-800 font-sans antialiased">
+<div id="app" v-cloak>
+  <div v-if="!loggedIn" class="min-h-screen bg-gradient-to-br from-sage-50 via-ivory to-blush-100 flex items-center justify-center p-6">
+    <form @submit.prevent="login" class="w-full max-w-md bg-white/90 glass border border-sage-100 shadow-2xl rounded-3xl p-8 text-center">
+      <div class="font-heading text-4xl font-black tracking-widest">TREVO</div>
+      <div class="text-[10px] tracking-[.35em] text-rosegold uppercase mt-1">Store Management</div>
+      <h1 class="font-heading text-2xl mt-8">Welcome Back</h1>
+      <p class="text-sm text-gray-500 mt-2 mb-6">Manage products, pricing, inventory and orders.</p>
+      <input v-model="password" type="password" placeholder="Admin password" class="w-full bg-ivory border border-sage-100 rounded-xl px-4 py-3 outline-none focus:border-sage-600">
+      <p v-if="loginError" class="text-red-600 text-xs mt-3">{{loginError}}</p>
+      <button class="w-full bg-sage-600 hover:bg-sage-700 text-white rounded-xl py-3 mt-5 font-semibold tracking-wider uppercase text-xs">Open Dashboard</button>
+    </form>
+  </div>
+
+  <div v-else class="min-h-screen">
+    <div class="bg-sage-600 text-white text-[11px] tracking-widest uppercase text-center py-2">
+      {{firebaseConnected ? '● Live Firebase Connected' : '○ Firebase Offline — check firebase-config.js'}}
+    </div>
+    <header class="sticky top-0 z-30 glass border-b border-sage-100">
+      <div class="max-w-[1500px] mx-auto px-4 lg:px-6 h-20 flex items-center justify-between">
+        <div>
+          <div class="font-heading text-3xl font-black tracking-widest">TREVO</div>
+          <div class="text-[9px] tracking-[.3em] text-rosegold uppercase -mt-1">Advanced Admin</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="index.html" target="_blank" class="hidden sm:inline-flex border border-sage-100 bg-white rounded-full px-4 py-2 text-xs font-semibold hover:border-sage-600">View Store ↗</a>
+          <button @click="logout" class="text-xs text-gray-500 hover:text-rosegold">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid lg:grid-cols-[230px_1fr] gap-6">
+      <aside class="bg-white border border-sage-100 rounded-2xl p-3 h-fit lg:sticky lg:top-28">
+        <button v-for="item in nav" :key="item.id" @click="tab=item.id"
+          :class="tab===item.id?'bg-sage-600 text-white shadow-md':'hover:bg-sage-50 text-gray-600'"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-left transition">
+          <span>{{item.icon}}</span><span>{{item.label}}</span>
+        </button>
+      </aside>
+
+      <main class="min-w-0">
+        <section v-if="tab==='dashboard'" class="fade space-y-6">
+          <div class="flex flex-wrap items-end justify-between gap-3">
+            <div><p class="text-[10px] uppercase tracking-[.35em] text-rosegold font-bold">Business Overview</p><h1 class="font-heading text-3xl mt-1">Dashboard</h1></div>
+            <button @click="importWorkbookCatalog" class="bg-sage-600 hover:bg-sage-700 text-white rounded-xl px-5 py-3 text-xs font-semibold">Import Workbook Catalog</button>
+          </div>
+          <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div v-for="k in kpis" :key="k.label" class="bg-white border border-sage-100 rounded-2xl p-5 shadow-sm">
+              <div class="text-2xl">{{k.icon}}</div><div class="text-[10px] uppercase tracking-widest text-gray-400 mt-3">{{k.label}}</div>
+              <div class="font-heading text-3xl mt-1">{{k.value}}</div><div class="text-xs text-gray-400 mt-1">{{k.note}}</div>
+            </div>
+          </div>
+          <div class="grid xl:grid-cols-3 gap-6">
+            <div class="xl:col-span-2 bg-white border border-sage-100 rounded-2xl p-5">
+              <div class="flex justify-between items-center mb-5"><h2 class="font-heading text-xl">Inventory Health</h2><span class="text-xs text-gray-400">{{products.length}} products</span></div>
+              <div class="space-y-4">
+                <div v-for="p in lowStockProducts.slice(0,8)" :key="p.id" class="flex items-center gap-4">
+                  <img :src="p.img||fallbackImage" class="w-12 h-12 rounded-xl object-cover bg-sage-50">
+                  <div class="min-w-0 flex-1"><div class="text-sm font-semibold truncate">{{p.name}}</div><div class="text-xs text-gray-400">{{p.sku}} • {{p.quantity}} units</div></div>
+                  <span :class="p.quantity===0?'bg-red-50 text-red-600':'bg-amber-50 text-amber-600'" class="px-3 py-1 rounded-full text-[10px] font-bold">{{p.quantity===0?'OUT':'LOW'}}</span>
+                </div>
+                <p v-if="!lowStockProducts.length" class="text-sm text-gray-400 py-8 text-center">All products have healthy stock.</p>
+              </div>
+            </div>
+            <div class="bg-white border border-sage-100 rounded-2xl p-5">
+              <h2 class="font-heading text-xl mb-5">Recent Orders</h2>
+              <div class="space-y-4">
+                <div v-for="o in orders.slice(0,6)" :key="o.orderId" class="border-b border-sage-50 pb-3">
+                  <div class="flex justify-between gap-3"><span class="text-sm font-semibold">{{o.orderId}}</span><span class="text-xs text-rosegold">Rs. {{money(o.total)}}</span></div>
+                  <div class="text-xs text-gray-400 mt-1">{{customerName(o)}} • {{o.status||'Pending'}}</div>
+                </div>
+                <p v-if="!orders.length" class="text-sm text-gray-400 py-8 text-center">No orders yet.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="tab==='products'" class="fade space-y-5">
+          <div class="flex flex-wrap gap-3 justify-between items-end">
+            <div><p class="text-[10px] uppercase tracking-[.35em] text-rosegold font-bold">Live Store Catalog</p><h1 class="font-heading text-3xl mt-1">Products & Prices</h1></div>
+            <div class="flex gap-2"><button @click="exportProducts" class="border border-sage-100 bg-white rounded-xl px-4 py-3 text-xs">Export CSV</button><button @click="openProduct()" class="bg-sage-600 text-white rounded-xl px-5 py-3 text-xs font-semibold">+ Add Product</button></div>
+          </div>
+          <div class="bg-white border border-sage-100 rounded-2xl p-4 flex flex-wrap gap-3">
+            <input v-model="productSearch" placeholder="Search product, SKU or category..." class="flex-1 min-w-[220px] bg-ivory border border-sage-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-sage-600">
+            <select v-model="categoryFilter" class="bg-ivory border border-sage-100 rounded-xl px-4 py-3 text-sm">
+              <option value="">All categories</option><option v-for="c in categories" :key="c">{{c}}</option>
+            </select>
+          </div>
+          <div class="bg-white border border-sage-100 rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full min-w-[950px] text-sm">
+                <thead class="bg-sage-50 text-[10px] uppercase tracking-widest text-gray-500"><tr>
+                  <th class="p-4 text-left">Product</th><th class="p-4 text-left">SKU</th><th class="p-4 text-left">Category</th>
+                  <th class="p-4 text-right">Price</th><th class="p-4 text-right">Sale</th><th class="p-4 text-center">Stock</th><th class="p-4 text-center">Status</th><th class="p-4"></th>
+                </tr></thead>
+                <tbody>
+                  <tr v-for="p in filteredProducts" :key="p.id" class="border-t border-sage-50 hover:bg-ivory/50">
+                    <td class="p-4"><div class="flex items-center gap-3"><img :src="p.img||fallbackImage" class="w-14 h-14 rounded-xl object-cover bg-sage-50"><div><div class="font-semibold">{{p.name}}</div><div class="text-xs text-gray-400">{{p.collection||p.style}}</div></div></div></td>
+                    <td class="p-4 text-gray-500">{{p.sku||p.id}}</td><td class="p-4">{{p.category}}</td>
+                    <td class="p-4 text-right font-semibold">Rs. {{money(p.price)}}</td><td class="p-4 text-right text-rosegold">{{p.salePrice?('Rs. '+money(p.salePrice)):'—'}}</td>
+                    <td class="p-4 text-center"><input type="number" min="0" :value="p.quantity" @change="quickStock(p,$event.target.value)" class="w-20 text-center border border-sage-100 rounded-lg px-2 py-2"></td>
+                    <td class="p-4 text-center"><span :class="p.quantity>0?'bg-green-50 text-green-700':'bg-red-50 text-red-600'" class="text-[10px] font-bold px-3 py-1 rounded-full">{{p.quantity>0?'IN STOCK':'OUT'}}</span></td>
+                    <td class="p-4 text-right"><button @click="openProduct(p)" class="text-sage-600 font-semibold mr-3">Edit</button><button @click="deleteProduct(p)" class="text-red-500">Delete</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-if="!filteredProducts.length" class="text-center text-gray-400 py-14">No matching products.</div>
+          </div>
+        </section>
+
+        <section v-if="tab==='inventory'" class="fade space-y-5">
+          <div><p class="text-[10px] uppercase tracking-[.35em] text-rosegold font-bold">Stock Control</p><h1 class="font-heading text-3xl mt-1">Inventory & Variants</h1></div>
+          <div class="grid sm:grid-cols-3 gap-4">
+            <div class="bg-white border border-sage-100 rounded-2xl p-5"><p class="text-xs text-gray-400">Total Units</p><p class="font-heading text-3xl mt-2">{{totalUnits}}</p></div>
+            <div class="bg-white border border-sage-100 rounded-2xl p-5"><p class="text-xs text-gray-400">Retail Stock Value</p><p class="font-heading text-3xl mt-2">Rs. {{money(retailValue)}}</p></div>
+            <div class="bg-white border border-sage-100 rounded-2xl p-5"><p class="text-xs text-gray-400">Low / Out of Stock</p><p class="font-heading text-3xl mt-2">{{lowStockProducts.length}}</p></div>
+          </div>
+          <div class="bg-white border border-sage-100 rounded-2xl overflow-hidden">
+            <div v-for="p in products" :key="p.id" class="border-b border-sage-50 p-5">
+              <div class="flex flex-wrap justify-between gap-3">
+                <div class="flex gap-3"><img :src="p.img||fallbackImage" class="w-14 h-14 rounded-xl object-cover"><div><div class="font-semibold">{{p.name}}</div><div class="text-xs text-gray-400">{{p.sku}} • Total {{p.quantity}}</div></div></div>
+                <button @click="openProduct(p)" class="text-xs border border-sage-100 rounded-xl px-4 py-2">Manage variants</button>
+              </div>
+              <div v-if="p.variants?.length" class="grid sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-4">
+                <div v-for="v in p.variants" :key="v.sku" class="bg-ivory rounded-xl p-3 flex justify-between"><div><div class="text-sm font-medium">{{v.color}}</div><div class="text-[10px] text-gray-400">{{v.sku}}</div></div><div class="font-semibold">{{Number(v.stock||0)}}</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="tab==='orders'" class="fade space-y-5">
+          <div><p class="text-[10px] uppercase tracking-[.35em] text-rosegold font-bold">Customer Orders</p><h1 class="font-heading text-3xl mt-1">Orders</h1></div>
+          <div class="bg-white border border-sage-100 rounded-2xl p-4 flex flex-wrap gap-3">
+            <input v-model="orderSearch" placeholder="Search order, customer or phone..." class="flex-1 min-w-[220px] bg-ivory border border-sage-100 rounded-xl px-4 py-3 text-sm">
+            <select v-model="orderFilter" class="bg-ivory border border-sage-100 rounded-xl px-4 py-3 text-sm"><option value="">All statuses</option><option v-for="s in statuses" :key="s">{{s}}</option></select>
+          </div>
+          <div class="space-y-4">
+            <div v-for="o in filteredOrders" :key="o.orderId" class="bg-white border border-sage-100 rounded-2xl p-5">
+              <div class="flex flex-wrap justify-between gap-4">
+                <div><div class="font-semibold">{{o.orderId}}</div><div class="text-xs text-gray-400 mt-1">{{customerName(o)}} • {{customerPhone(o)}} • {{o.city||o.customer?.city||''}}</div></div>
+                <div class="text-right"><div class="font-heading text-xl">Rs. {{money(o.total)}}</div><select :value="o.status||'Pending'" @change="changeOrderStatus(o,$event.target.value)" class="mt-2 border border-sage-100 rounded-lg px-3 py-2 text-xs"><option v-for="s in statuses" :key="s">{{s}}</option></select></div>
+              </div>
+              <div class="grid md:grid-cols-2 gap-3 mt-4">
+                <div v-for="item in o.items||[]" :key="item.id+item.color" class="bg-ivory rounded-xl p-3 text-sm flex justify-between"><span>{{item.name}} <span class="text-gray-400">× {{item.qty||item.quantity||1}}</span></span><span>Rs. {{money(Number(item.price||0)*Number(item.qty||item.quantity||1))}}</span></div>
+              </div>
+            </div>
+            <div v-if="!filteredOrders.length" class="bg-white border border-sage-100 rounded-2xl text-center py-16 text-gray-400">No orders found.</div>
+          </div>
+        </section>
+
+        <section v-if="tab==='images'" class="fade space-y-5">
+          <div><p class="text-[10px] uppercase tracking-[.35em] text-rosegold font-bold">Approved GitHub Images</p><h1 class="font-heading text-3xl mt-1">Image Library</h1></div>
+          <p class="text-sm text-gray-500">These are the real image links you supplied. Click any image to copy its URL.</p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <button v-for="url in imageLibrary" :key="url" @click="copyUrl(url)" class="bg-white border border-sage-100 rounded-2xl p-2 hover:shadow-lg transition text-left">
+              <img :src="url" class="w-full aspect-square object-cover rounded-xl bg-sage-50"><div class="text-[10px] text-gray-400 truncate mt-2">Copy image URL</div>
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Product Editor -->
+  <div v-if="productModal" class="fixed inset-0 z-50 bg-black/40 p-3 sm:p-6 overflow-y-auto" @click.self="closeProduct">
+    <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden fade">
+      <div class="bg-gradient-to-r from-sage-50 to-blush-50 border-b border-sage-100 p-6 flex justify-between">
+        <div><p class="text-[10px] tracking-[.3em] uppercase text-rosegold font-bold">Catalog Editor</p><h2 class="font-heading text-2xl">{{editing._docId?'Edit Product':'Add Product'}}</h2></div>
+        <button @click="closeProduct" class="text-2xl text-gray-400">×</button>
+      </div>
+      <form @submit.prevent="saveProduct" class="p-6 space-y-7">
+        <div class="grid md:grid-cols-[220px_1fr] gap-6">
+          <div>
+            <img :src="editing.img||fallbackImage" class="w-full aspect-square object-cover rounded-2xl bg-sage-50 border border-sage-100">
+            <button type="button" @click="imagePicker=true" class="w-full mt-3 border border-sage-100 rounded-xl py-3 text-xs font-semibold">Choose from Image Library</button>
+            <input v-model="editing.img" placeholder="Or paste image URL" class="w-full mt-2 border border-sage-100 rounded-xl px-3 py-3 text-xs">
+          </div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <label class="sm:col-span-2 text-xs">Product Name<input required v-model="editing.name" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">SKU<input required v-model="editing.sku" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Category<input v-model="editing.category" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Collection<input v-model="editing.collection" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Style<input v-model="editing.style" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Regular Price (PKR)<input required type="number" min="0" v-model.number="editing.price" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Sale Price (PKR)<input type="number" min="0" v-model.number="editing.salePrice" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Wholesale Cost<input type="number" min="0" v-model.number="editing.wholesaleCost" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Stock Quantity<input type="number" min="0" v-model.number="editing.quantity" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs sm:col-span-2">Colors (comma separated)<input v-model="editing.colorsText" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs sm:col-span-2">Description<textarea v-model="editing.description" rows="3" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></textarea></label>
+            <label class="text-xs">Material<input v-model="editing.material" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Pattern<input v-model="editing.pattern" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs sm:col-span-2">Features (semicolon separated)<input v-model="editing.featuresText" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs sm:col-span-2">Care Instructions<textarea v-model="editing.careInstructions" rows="2" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></textarea></label>
+            <label class="text-xs sm:col-span-2">SEO Keywords<input v-model="editing.seoKeywords" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center"><h3 class="font-heading text-xl">Color Variants</h3><button type="button" @click="addVariant" class="text-xs text-sage-600 font-semibold">+ Add Variant</button></div>
+          <div class="space-y-3 mt-3">
+            <div v-for="(v,i) in editing.variants" :key="i" class="grid sm:grid-cols-5 gap-2 bg-ivory p-3 rounded-xl">
+              <input v-model="v.color" placeholder="Color" class="border border-sage-100 rounded-lg px-3 py-2 text-xs">
+              <input v-model="v.sku" placeholder="Variant SKU" class="border border-sage-100 rounded-lg px-3 py-2 text-xs">
+              <input v-model="v.barcode" placeholder="Barcode" class="border border-sage-100 rounded-lg px-3 py-2 text-xs">
+              <input type="number" min="0" v-model.number="v.stock" placeholder="Stock" class="border border-sage-100 rounded-lg px-3 py-2 text-xs">
+              <button type="button" @click="editing.variants.splice(i,1)" class="text-red-500 text-xs">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-3 border-t border-sage-50 pt-5">
+          <button type="button" @click="closeProduct" class="border border-sage-100 rounded-xl px-5 py-3 text-xs">Cancel</button>
+          <button :disabled="saving" class="bg-sage-600 text-white rounded-xl px-6 py-3 text-xs font-semibold disabled:opacity-50">{{saving?'Saving…':'Save to Firebase'}}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Image Picker -->
+  <div v-if="imagePicker" class="fixed inset-0 z-[60] bg-black/50 p-4 overflow-y-auto" @click.self="imagePicker=false">
+    <div class="max-w-5xl mx-auto bg-white rounded-3xl p-6">
+      <div class="flex justify-between mb-5"><h2 class="font-heading text-2xl">Select Product Image</h2><button @click="imagePicker=false" class="text-2xl">×</button></div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+        <button v-for="url in imageLibrary" :key="url" @click="selectImage(url)" class="border border-sage-100 rounded-xl p-2 hover:border-sage-600"><img :src="url" class="w-full aspect-square rounded-lg object-cover"></button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="toast" class="fixed bottom-5 right-5 z-[70] bg-gray-900 text-white px-5 py-3 rounded-xl shadow-xl text-sm">{{toast}}</div>
+</div>
+
+<script>
+const {createApp,ref,computed,onMounted}=Vue;
+const WORKBOOK_PRODUCTS=[{"id": "TRV-HJ-001", "sku": "TRV-HJ-001", "name": "Trevo Noor Mini Handbag", "collection": "Noor Collection", "category": "Handbags", "subCategory": "Mini Handbag", "style": "Top Handle", "colors": ["Mustard", "Maroon"], "material": "Faux Leather", "pattern": "Illustrated Hijab Print", "hardwareColor": "Gold", "description": "Compact top-handle handbag featuring an elegant modest-fashion illustration.", "features": ["Dual handles", "Zip closure", "Structured body"], "careInstructions": "Wipe gently with a soft dry cloth; keep away from moisture and direct heat.", "slug": "trevo-noor-mini-handbag", "seoKeywords": "Trevo Noor Mini Handbag, TREVO bags Pakistan, Mini Handbag, Top Handle, women handbags, online bags Pakistan", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #MiniHandbag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_td0mxktd0mxktd0m.png", "variants": [{"sku": "TRV-HJ-001-MST", "color": "Mustard", "barcode": "TRV0010001", "stock": 0, "status": "Active"}, {"sku": "TRV-HJ-001-MRN", "color": "Maroon", "barcode": "TRV0010002", "stock": 0, "status": "Active"}]}, {"id": "TRV-PC-001", "sku": "TRV-PC-001", "name": "Trevo Pearl Grace Shoulder Bag", "collection": "Pearl Grace Collection", "category": "Handbags", "subCategory": "Shoulder Bag", "style": "Shoulder / Evening", "colors": ["Black", "Navy Blue", "Emerald Green", "Plum"], "material": "Fabric / Faux Leather", "pattern": "Solid Pleated", "hardwareColor": "Gold & Pearl", "description": "Soft shoulder bag decorated with pearl and layered chain details.", "features": ["Pearl chain", "Layered metal chains", "Compact evening shape"], "careInstructions": "Store in a dust bag; avoid perfume, water and rough surfaces.", "slug": "trevo-pearl-grace-shoulder-bag", "seoKeywords": "Trevo Pearl Grace Shoulder Bag, TREVO bags Pakistan, Shoulder Bag, women handbags, online bags Pakistan", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #ShoulderBag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_yd44sqyd44sqyd44%20%281%29.png", "variants": [{"sku": "TRV-PC-001-BLK", "color": "Black", "barcode": "TRV0020001", "stock": 0, "status": "Active"}, {"sku": "TRV-PC-001-NVY", "color": "Navy Blue", "barcode": "TRV0020002", "stock": 0, "status": "Active"}, {"sku": "TRV-PC-001-EMR", "color": "Emerald Green", "barcode": "TRV0020003", "stock": 0, "status": "Active"}, {"sku": "TRV-PC-001-PLM", "color": "Plum", "barcode": "TRV0020004", "stock": 0, "status": "Active"}]}, {"id": "TRV-RG-001", "sku": "TRV-RG-001", "name": "Trevo Marble Ring Handle Bag", "collection": "Marble Luxe Collection", "category": "Handbags", "subCategory": "Top Handle Bag", "style": "Ring Handle", "colors": ["Berry", "Champagne", "Ivory", "Mauve"], "material": "Textured Fabric", "pattern": "Marble Vein", "hardwareColor": "Gold", "description": "Elegant ring-handle handbag with metallic marble-vein detailing.", "features": ["Round metal handles", "Structured body", "Formal styling"], "careInstructions": "Spot clean only; protect metallic print from abrasion.", "slug": "trevo-marble-ring-handle-bag", "seoKeywords": "Trevo Marble Ring Handle Bag, TREVO bags Pakistan, Top Handle Bag, Ring Handle, women handbags", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #TopHandleBag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8k3y198k3y198k3y.png", "variants": [{"sku": "TRV-RG-001-BRY", "color": "Berry", "barcode": "TRV0030001", "stock": 0, "status": "Active"}, {"sku": "TRV-RG-001-CHP", "color": "Champagne", "barcode": "TRV0030002", "stock": 0, "status": "Active"}, {"sku": "TRV-RG-001-IVR", "color": "Ivory", "barcode": "TRV0030003", "stock": 0, "status": "Active"}, {"sku": "TRV-RG-001-MVE", "color": "Mauve", "barcode": "TRV0030004", "stock": 0, "status": "Active"}]}, {"id": "TRV-DT-001", "sku": "TRV-DT-001", "name": "Trevo Pastel Premium Tote", "collection": "Premium Tote Collection", "category": "Handbags", "subCategory": "Tote Bag", "style": "Structured Tote", "colors": ["Pastel Multi", "Aqua", "Pink", "Mint"], "material": "Quilted Faux Leather", "pattern": "Pastel Chevron / Abstract", "hardwareColor": "Gold / Black", "description": "Spacious premium tote with pastel quilted pattern and reinforced handles.", "features": ["Large capacity", "Chain or top handles", "Structured base"], "careInstructions": "Wipe clean; do not machine wash; retain shape with stuffing.", "slug": "trevo-pastel-premium-tote", "seoKeywords": "Trevo Pastel Premium Tote, TREVO bags Pakistan, Tote Bag, Structured Tote, women handbags", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #ToteBag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_qz0oddqz0oddqz0o.png", "variants": [{"sku": "TRV-DT-001-PST", "color": "Pastel Multi", "barcode": "TRV0040001", "stock": 0, "status": "Active"}, {"sku": "TRV-DT-001-AQU", "color": "Aqua", "barcode": "TRV0040002", "stock": 0, "status": "Active"}, {"sku": "TRV-DT-001-PNK", "color": "Pink", "barcode": "TRV0040003", "stock": 0, "status": "Active"}, {"sku": "TRV-DT-001-MNT", "color": "Mint", "barcode": "TRV0040004", "stock": 0, "status": "Active"}]}, {"id": "TRV-PT-001", "sku": "TRV-PT-001", "name": "Trevo Heritage Printed Tote", "collection": "Heritage Tote Collection", "category": "Handbags", "subCategory": "Printed Tote", "style": "Everyday Tote", "colors": ["Assorted Prints"], "material": "Printed Fabric / Faux Leather", "pattern": "Tile / Geometric / Travel / Mosaic", "hardwareColor": "Gold / Bronze", "description": "Everyday tote collection featuring artistic heritage-inspired prints.", "features": ["Long handles", "Roomy interior", "Lightweight body"], "careInstructions": "Use a soft damp cloth on exterior; avoid soaking printed fabric.", "slug": "trevo-heritage-printed-tote", "seoKeywords": "Trevo Heritage Printed Tote, TREVO bags Pakistan, Printed Tote, Everyday Tote, women handbags", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #PrintedTote", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_a5wgm3a5wgm3a5wg.png", "variants": []}, {"id": "TRV-WL-001", "sku": "TRV-WL-001", "name": "Trevo Cloe Multi-Compartment Wallet", "collection": "Cloe Collection", "category": "Wallets", "subCategory": "Organizer Wallet", "style": "Clutch Wallet", "colors": ["Yellow", "Beige", "Black"], "material": "Faux Leather", "pattern": "Quilted Front Panel", "hardwareColor": "Tone-on-tone / Gold", "description": "Slim organizer wallet with multiple divided sections and rear slip pocket.", "features": ["Two inner pockets", "Divided sections", "Rear slip pocket"], "careInstructions": "Keep dry; clean with non-abrasive cloth; do not overfill.", "slug": "trevo-cloe-multi-compartment-wallet", "seoKeywords": "Trevo Cloe Multi-Compartment Wallet, TREVO bags Pakistan, Organizer Wallet, Clutch Wallet", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #OrganizerWallet", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.32.44%20PM.jpeg", "variants": [{"sku": "TRV-WL-001-YLW", "color": "Yellow", "barcode": "TRV0060001", "stock": 0, "status": "Active"}, {"sku": "TRV-WL-001-BGE", "color": "Beige", "barcode": "TRV0060002", "stock": 0, "status": "Active"}, {"sku": "TRV-WL-001-BLK", "color": "Black", "barcode": "TRV0060003", "stock": 0, "status": "Active"}]}, {"id": "TRV-ST-001", "sku": "TRV-ST-001", "name": "Trevo Aura Structured Satchel", "collection": "Aura Satchel Collection", "category": "Handbags", "subCategory": "Satchel Bag", "style": "Top Handle / Shoulder", "colors": ["Crimson Red", "Dark Navy"], "material": "Pebbled Faux Leather", "pattern": "Solid Pebbled", "hardwareColor": "Gold", "description": "Structured satchel with premium pebbled finish and detachable shoulder strap.", "features": ["Top handles", "Detachable strap", "Zip closure", "Metal feet"], "careInstructions": "Use leather-safe cleaner only; store upright in dust bag.", "slug": "trevo-aura-structured-satchel", "seoKeywords": "Trevo Aura Structured Satchel, TREVO bags Pakistan, Satchel Bag, Top Handle, Shoulder", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #SatchelBag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.42.52%20PM.jpeg", "variants": [{"sku": "TRV-ST-001-RED", "color": "Crimson Red", "barcode": "TRV0070001", "stock": 0, "status": "Active"}, {"sku": "TRV-ST-001-NVY", "color": "Dark Navy", "barcode": "TRV0070002", "stock": 0, "status": "Active"}]}, {"id": "TRV-PB-001", "sku": "TRV-PB-001", "name": "Trevo Forever Young Phone Wallet", "collection": "Forever Young Collection", "category": "Wallets", "subCategory": "Phone Bag & Wallet", "style": "Crossbody Phone Bag", "colors": ["Dusted Pink", "Lavender"], "material": "PU Leather", "pattern": "Solid / Croc Embossed", "hardwareColor": "Gold", "description": "Two-in-one phone bag and wallet with secure phone pocket and detachable strap.", "features": ["Phone pocket", "Zip wallet", "Detachable crossbody strap"], "careInstructions": "Avoid overloading; wipe with soft cloth; keep hardware dry.", "slug": "trevo-forever-young-phone-wallet", "seoKeywords": "Trevo Forever Young Phone Wallet, TREVO bags Pakistan, Phone Bag, Wallet, Crossbody", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #PhoneBag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.33.06%20PM.jpeg", "variants": [{"sku": "TRV-PB-001-PNK", "color": "Dusted Pink", "barcode": "TRV0080001", "stock": 0, "status": "Active"}, {"sku": "TRV-PB-001-LAV", "color": "Lavender", "barcode": "TRV0080002", "stock": 0, "status": "Active"}]}, {"id": "TRV-RD-001", "sku": "TRV-RD-001", "name": "Trevo Mandala Round Art Bag", "collection": "Mandala Art Collection", "category": "Handbags", "subCategory": "Round Bag", "style": "Crossbody", "colors": ["Blue", "Burgundy", "Grey"], "material": "Textured Fabric", "pattern": "Embroidered Mandala", "hardwareColor": "Gold", "description": "Statement round bag with vibrant mandala-style embroidered artwork.", "features": ["Round silhouette", "Colorful embroidery", "Crossbody format"], "careInstructions": "Spot clean embroidery carefully; do not rub or bleach.", "slug": "trevo-mandala-round-art-bag", "seoKeywords": "Trevo Mandala Round Art Bag, TREVO bags Pakistan, Round Bag, Crossbody, embroidered bag", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #RoundBag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_rw5t4rw5t4rw5t4r.png", "variants": [{"sku": "TRV-RD-001-BLU", "color": "Blue", "barcode": "TRV0090001", "stock": 0, "status": "Active"}, {"sku": "TRV-RD-001-BRG", "color": "Burgundy", "barcode": "TRV0090002", "stock": 0, "status": "Active"}, {"sku": "TRV-RD-001-GRY", "color": "Grey", "barcode": "TRV0090003", "stock": 0, "status": "Active"}]}, {"id": "TRV-CW-001", "sku": "TRV-CW-001", "name": "Trevo Monochrome Cow Print Tote", "collection": "Urban Print Collection", "category": "Handbags", "subCategory": "Fashion Tote", "style": "Shoulder Tote", "colors": ["Black & White"], "material": "Textured Faux Leather", "pattern": "Cow Print", "hardwareColor": "Gold", "description": "Bold black-and-white cow-print tote with long shoulder handles and side buckle accents.", "features": ["Long handles", "Side buckle details", "Roomy tote shape"], "careInstructions": "Wipe clean with soft cloth; avoid prolonged sunlight.", "slug": "trevo-monochrome-cow-print-tote", "seoKeywords": "Trevo Monochrome Cow Print Tote, TREVO bags Pakistan, Fashion Tote, Shoulder Tote", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #FashionTote", "img": "", "variants": [{"sku": "TRV-CW-001-BW", "color": "Black & White", "barcode": "TRV0100001", "stock": 0, "status": "Active"}]}, {"id": "TRV-TT-001", "sku": "TRV-TT-001", "name": "Trevo Executive Office Tote", "collection": "Executive Collection", "category": "Handbags", "subCategory": "Office Tote", "style": "Structured Work Tote", "colors": ["Grey", "Sage"], "material": "Smooth Faux Leather", "pattern": "Solid Minimal", "hardwareColor": "Gold", "description": "Minimal structured office tote designed for documents, essentials and daily work use.", "features": ["Multiple compartments", "Reinforced handles", "Structured profile"], "careInstructions": "Clean with damp cloth; store filled to preserve shape.", "slug": "trevo-executive-office-tote", "seoKeywords": "Trevo Executive Office Tote, TREVO bags Pakistan, Office Tote, Structured Work Tote", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #OfficeTote", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_fqxdxifqxdxifqxd.png", "variants": [{"sku": "TRV-TT-001-GRY", "color": "Grey", "barcode": "TRV0110001", "stock": 0, "status": "Active"}, {"sku": "TRV-TT-001-SGE", "color": "Sage", "barcode": "TRV0110002", "stock": 0, "status": "Active"}]}];
+const APPROVED_IMAGES=["https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2003_56_40%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_41_09%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_44_46%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_47_53%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_50_20%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_51_53%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_54_10%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_56_56%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_58_43%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_59_53%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2005_06_04%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2005_10_41%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2005_14_41%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_4mmsk34mmsk34mms.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_6jb13e6jb13e6jb1.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_6k2zs46k2zs46k2z.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_86kkdv86kkdv86kk.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8a0od78a0od78a0o.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8k3y198k3y198k3y.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8mia8a8mia8a8mia.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_a5wgm3a5wgm3a5wg.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_etwllretwllretwl.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_fqxdxifqxdxifqxd.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_llu79sllu79sllu7.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_ocwp1kocwp1kocwp.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_p74fqqp74fqqp74f.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_po50igpo50igpo50.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_qdqv73qdqv73qdqv.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_qz0oddqz0oddqz0o.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_rw5t4rw5t4rw5t4r.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_sp6czcsp6czcsp6c.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_td0mxktd0mxktd0m.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_tjbljhtjbljhtjbl.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_u4mg36u4mg36u4mg.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_vqei0wvqei0wvqei.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_xse5wjxse5wjxse5.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_y9j4q4y9j4q4y9j4.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_yd44sqyd44sqyd44%20%281%29.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_ykwihxykwihxykwi.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_yyj4wdyyj4wdyyj4%20%281%29.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-11%20at%205.13.02%20PM%20%281%29.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-11%20at%205.13.02%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.32.44%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.33.06%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.42.52%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.45.54%20PM.jpeg"];
+const ADMIN_HASH='11b1545980adcbeeec9672ef356395b20d2b0fe9edd486e2e5e3ed864a7a29e8';
+
+createApp({
+setup(){
+  const loggedIn=ref(sessionStorage.getItem('trevoAdmin')==='1'),password=ref(''),loginError=ref('');
+  const firebaseConnected=ref(false),tab=ref('dashboard'),products=ref([]),orders=ref([]),toast=ref('');
+  const productModal=ref(false),imagePicker=ref(false),saving=ref(false),editing=ref({});
+  const productSearch=ref(''),categoryFilter=ref(''),orderSearch=ref(''),orderFilter=ref('');
+  const statuses=['Pending','Confirmed','Shipped','Delivered','Cancelled'];
+  const nav=[{id:'dashboard',icon:'✦',label:'Dashboard'},{id:'products',icon:'👜',label:'Products & Prices'},{id:'inventory',icon:'📦',label:'Inventory & Variants'},{id:'orders',icon:'🧾',label:'Orders'},{id:'images',icon:'🖼️',label:'Image Library'}];
+  const imageLibrary=APPROVED_IMAGES;
+  const fallbackImage='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500"><rect width="100%" height="100%" fill="#f4f6f4"/><text x="50%" y="48%" text-anchor="middle" font-size="70">👜</text><text x="50%" y="62%" text-anchor="middle" font-family="Arial" font-size="18" fill="#7D8F7A">Choose product image</text></svg>`);
+  let unProducts=null,unOrders=null;
+
+  const dbReady=()=>typeof firebaseReady!=='undefined'&&firebaseReady&&typeof db!=='undefined';
+  const pCollection=()=>typeof PRODUCTS_COLLECTION!=='undefined'?PRODUCTS_COLLECTION:'products';
+  const oCollection=()=>typeof ORDERS_COLLECTION!=='undefined'?ORDERS_COLLECTION:'orders';
+
+  async function hash(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+  async function login(){if(await hash(password.value)===ADMIN_HASH){loggedIn.value=true;sessionStorage.setItem('trevoAdmin','1');connect()}else{loginError.value='Incorrect password.'}}
+  function logout(){sessionStorage.removeItem('trevoAdmin');location.reload()}
+  function notify(msg){toast.value=msg;setTimeout(()=>toast.value='',2600)}
+  function money(v){return Math.round(Number(v||0)).toLocaleString('en-PK')}
+  function customerName(o){return o.name||o.customer?.name||'Customer'}
+  function customerPhone(o){return o.phone||o.customer?.phone||''}
+
+  function normalizeProduct(d,id){
+    const variants=Array.isArray(d.variants)?d.variants:[];
+    const variantStock=variants.reduce((s,v)=>s+Number(v.stock||v.quantity||0),0);
+    const explicit=Number(d.quantity??d.stock??0);
+    return {...d,_docId:id,id:d.id||id,sku:d.sku||d.id||id,price:Number(d.price||d.sellingPrice||0),salePrice:Number(d.salePrice||0)||null,
+      quantity:variants.length?variantStock:explicit,stock:variants.length?variantStock:explicit,variants,
+      colors:Array.isArray(d.colors)?d.colors:String(d.color||'').split(/[,/|]/).map(x=>x.trim()).filter(Boolean),
+      img:d.img||d.image||d.imageUrl||d.image_url||(Array.isArray(d.images)?d.images[0]:'')};
+  }
+  function connect(){
+    if(!dbReady()){firebaseConnected.value=false;return}
+    firebaseConnected.value=true;
+    if(unProducts)unProducts(); if(unOrders)unOrders();
+    unProducts=db.collection(pCollection()).onSnapshot(s=>{products.value=s.docs.map(x=>normalizeProduct(x.data(),x.id)).sort((a,b)=>a.name.localeCompare(b.name))},e=>{console.error(e);firebaseConnected.value=false});
+    unOrders=db.collection(oCollection()).orderBy('date','desc').onSnapshot(s=>orders.value=s.docs.map(x=>({...x.data(),_docId:x.id,orderId:x.data().orderId||x.id})),e=>{
+      console.warn(e);db.collection(oCollection()).onSnapshot(s=>orders.value=s.docs.map(x=>({...x.data(),_docId:x.id,orderId:x.data().orderId||x.id})))
+    });
+  }
+
+  const totalUnits=computed(()=>products.value.reduce((s,p)=>s+Number(p.quantity||0),0));
+  const retailValue=computed(()=>products.value.reduce((s,p)=>s+Number(p.quantity||0)*Number(p.salePrice||p.price||0),0));
+  const lowStockProducts=computed(()=>products.value.filter(p=>Number(p.quantity||0)<=5).sort((a,b)=>a.quantity-b.quantity));
+  const revenue=computed(()=>orders.value.filter(o=>o.status==='Delivered').reduce((s,o)=>s+Number(o.total||0),0));
+  const pending=computed(()=>orders.value.filter(o=>!o.status||o.status==='Pending').length);
+  const kpis=computed(()=>[
+    {icon:'👜',label:'Live Products',value:products.value.length,note:`${products.value.filter(p=>p.quantity>0).length} available`},
+    {icon:'📦',label:'Units in Stock',value:totalUnits.value,note:`${lowStockProducts.value.length} low or out`},
+    {icon:'💰',label:'Stock Value',value:'Rs. '+money(retailValue.value),note:'Retail value'},
+    {icon:'🧾',label:'Delivered Revenue',value:'Rs. '+money(revenue.value),note:`${pending.value} pending orders`}
+  ]);
+  const categories=computed(()=>[...new Set(products.value.map(p=>p.category).filter(Boolean))]);
+  const filteredProducts=computed(()=>{const q=productSearch.value.toLowerCase();return products.value.filter(p=>(!categoryFilter.value||p.category===categoryFilter.value)&&(!q||`${p.name} ${p.sku} ${p.category}`.toLowerCase().includes(q)))});
+  const filteredOrders=computed(()=>{const q=orderSearch.value.toLowerCase();return orders.value.filter(o=>(!orderFilter.value||(o.status||'Pending')===orderFilter.value)&&(!q||`${o.orderId} ${customerName(o)} ${customerPhone(o)}`.toLowerCase().includes(q)))});
+
+  function openProduct(p=null){
+    const base=p?JSON.parse(JSON.stringify(p)):{name:'',sku:'',category:'Handbags',collection:'',style:'',price:0,salePrice:null,wholesaleCost:0,quantity:0,img:'',description:'',material:'',pattern:'',careInstructions:'',seoKeywords:'',colors:[],features:[],variants:[]};
+    base.colorsText=(base.colors||[]).join(', ');
+    base.featuresText=(base.features||[]).join('; ');
+    editing.value=base;productModal.value=true;
+  }
+  function closeProduct(){productModal.value=false;imagePicker.value=false}
+  function addVariant(){editing.value.variants.push({color:'',sku:'',barcode:'',stock:0,status:'Active'})}
+  function selectImage(url){editing.value.img=url;imagePicker.value=false}
+  async function saveProduct(){
+    if(!dbReady()){alert('Firebase is not connected.');return}
+    saving.value=true;
+    try{
+      const old=editing.value._docId?products.value.find(p=>p._docId===editing.value._docId):null;
+      const variants=(editing.value.variants||[]).map(v=>({...v,stock:Math.max(0,Number(v.stock||0))}));
+      const quantity=variants.length?variants.reduce((s,v)=>s+v.stock,0):Math.max(0,Number(editing.value.quantity||0));
+      const docId=String(editing.value._docId||editing.value.sku||editing.value.id||('TRV-'+Date.now()));
+      const data={...editing.value,id:editing.value.id||editing.value.sku||docId,sku:editing.value.sku||docId,
+        colors:String(editing.value.colorsText||'').split(',').map(x=>x.trim()).filter(Boolean),
+        features:String(editing.value.featuresText||'').split(';').map(x=>x.trim()).filter(Boolean),
+        variants,quantity,stock:quantity,inStock:quantity>0,price:Number(editing.value.price||0),salePrice:Number(editing.value.salePrice||0)||null,
+        updatedAt:new Date().toISOString()};
+      delete data._docId;delete data.colorsText;delete data.featuresText;
+      await db.collection(pCollection()).doc(docId).set(data,{merge:true});
+      if(old&&Number(old.price)!==Number(data.price)){
+        await db.collection('price_history').add({productId:docId,sku:data.sku,name:data.name,oldPrice:Number(old.price||0),newPrice:Number(data.price||0),changedAt:new Date().toISOString()});
+      }
+      notify('Product saved to Firebase');closeProduct();
+    }catch(e){console.error(e);alert('Save failed: '+e.message)}finally{saving.value=false}
+  }
+  async function quickStock(p,val){
+    if(!dbReady())return;
+    const qty=Math.max(0,Number(val||0));
+    if(p.variants?.length){alert('This product uses color variants. Edit the product and update each variant stock.');return}
+    await db.collection(pCollection()).doc(p._docId).update({quantity:qty,stock:qty,inStock:qty>0,updatedAt:new Date().toISOString()});
+    await db.collection('inventory_movements').add({productId:p._docId,sku:p.sku,name:p.name,type:'Manual adjustment',quantityAfter:qty,date:new Date().toISOString()});
+    notify('Stock updated');
+  }
+  async function deleteProduct(p){if(!confirm(`Delete "${p.name}"?`))return;await db.collection(pCollection()).doc(p._docId).delete();notify('Product deleted')}
+  async function importWorkbookCatalog(){
+    if(!dbReady()){alert('Firebase is not connected.');return}
+    if(!confirm('Import the 11 workbook products into Firebase? Existing products with the same SKU will be updated, while your current prices and stock will be preserved when already entered.'))return;
+    const batch=db.batch();
+    for(const raw of WORKBOOK_PRODUCTS){
+      const ref=db.collection(pCollection()).doc(raw.id);
+      const existing=products.value.find(p=>p._docId===raw.id||p.sku===raw.sku);
+      const variants=(raw.variants||[]).map(v=>({...v,image:raw.img||''}));
+      const qty=existing?Number(existing.quantity||0):variants.reduce((s,v)=>s+Number(v.stock||0),0);
+      batch.set(ref,{...raw,variants,price:existing?.price||0,salePrice:existing?.salePrice||null,wholesaleCost:existing?.wholesaleCost||0,
+        quantity:qty,stock:qty,inStock:qty>0,publishStatus:existing?.publishStatus||'Draft',updatedAt:new Date().toISOString()},{merge:true});
+    }
+    await batch.commit();notify('Workbook catalog imported successfully');
+  }
+  async function changeOrderStatus(order,newStatus){
+    if(!dbReady())return;
+    const orderRef=db.collection(oCollection()).doc(order._docId);
+    try{
+      await db.runTransaction(async tx=>{
+        const os=await tx.get(orderRef);if(!os.exists)throw new Error('Order not found');
+        const live=os.data(),items=live.items||[],changes=[];
+        if(newStatus==='Confirmed'&&!live.inventoryAdjusted){
+          for(const item of items){
+            const id=String(item.id||item.productId||'');if(!id)continue;
+            const pr=db.collection(pCollection()).doc(id),ps=await tx.get(pr);if(!ps.exists)continue;
+            const p=normalizeProduct(ps.data(),ps.id),qty=Number(item.qty||item.quantity||1);
+            if(p.quantity<qty)throw new Error(`Not enough stock for ${item.name}. Available: ${p.quantity}`);
+            if(p.variants?.length&&item.color){
+              const variants=p.variants.map(v=>v.color===item.color?{...v,stock:Math.max(0,Number(v.stock||0)-qty)}:v);
+              const total=variants.reduce((s,v)=>s+Number(v.stock||0),0);changes.push({ref:pr,data:{variants,quantity:total,stock:total,inStock:total>0}});
+            }else changes.push({ref:pr,data:{quantity:p.quantity-qty,stock:p.quantity-qty,inStock:p.quantity-qty>0}});
+          }
+          changes.forEach(c=>tx.update(c.ref,{...c.data,updatedAt:new Date().toISOString()}));
+          tx.update(orderRef,{status:newStatus,inventoryAdjusted:true,inventoryAdjustedAt:new Date().toISOString()});
+        }else if(newStatus==='Cancelled'&&live.inventoryAdjusted){
+          for(const item of items){
+            const id=String(item.id||item.productId||'');if(!id)continue;
+            const pr=db.collection(pCollection()).doc(id),ps=await tx.get(pr);if(!ps.exists)continue;
+            const p=normalizeProduct(ps.data(),ps.id),qty=Number(item.qty||item.quantity||1);
+            if(p.variants?.length&&item.color){
+              const variants=p.variants.map(v=>v.color===item.color?{...v,stock:Number(v.stock||0)+qty}:v);
+              const total=variants.reduce((s,v)=>s+Number(v.stock||0),0);changes.push({ref:pr,data:{variants,quantity:total,stock:total,inStock:true}});
+            }else changes.push({ref:pr,data:{quantity:p.quantity+qty,stock:p.quantity+qty,inStock:true}});
+          }
+          changes.forEach(c=>tx.update(c.ref,{...c.data,updatedAt:new Date().toISOString()}));
+          tx.update(orderRef,{status:newStatus,inventoryAdjusted:false,inventoryRestoredAt:new Date().toISOString()});
+        }else tx.update(orderRef,{status:newStatus,updatedAt:new Date().toISOString()});
+      });notify('Order status updated');
+    }catch(e){alert(e.message)}
+  }
+  function exportProducts(){
+    const rows=[['SKU','Product Name','Category','Regular Price','Sale Price','Stock','Image URL'],...products.value.map(p=>[p.sku,p.name,p.category,p.price,p.salePrice||'',p.quantity,p.img||''])];
+    const csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='TREVO_Firebase_Products.csv';a.click();
+  }
+  async function copyUrl(url){await navigator.clipboard.writeText(url);notify('Image URL copied')}
+
+  onMounted(()=>{if(loggedIn.value)connect()});
+  return{loggedIn,password,loginError,login,logout,firebaseConnected,tab,nav,products,orders,statuses,imageLibrary,fallbackImage,
+    productSearch,categoryFilter,orderSearch,orderFilter,kpis,categories,filteredProducts,filteredOrders,totalUnits,retailValue,lowStockProducts,
+    productModal,imagePicker,editing,saving,toast,money,customerName,customerPhone,openProduct,closeProduct,addVariant,selectImage,saveProduct,
+    quickStock,deleteProduct,importWorkbookCatalog,changeOrderStatus,exportProducts,copyUrl};
+}}).mount('#app');
+</script>
+</body>
+</html>
