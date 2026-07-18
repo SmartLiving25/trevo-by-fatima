@@ -2075,6 +2075,23 @@
       }
     }
   </style>
+  <!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1399833584825730');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1399833584825730&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
 </head>
 
 <body>
@@ -2168,7 +2185,7 @@
               <div class="hero-float hero-float-2"><span class="hero-float-icon">👜</span>
                 <div>
                   <div style="font-size:.75rem;color:var(--text-muted)">Orders Today</div>
-                  <div>250+ Happy Buyers</div>
+                  <div id="happyBuyers">250+ Happy Buyers</div>
                 </div>
               </div>
             </div>
@@ -2306,6 +2323,9 @@
               199</span></div>
           <div class="summary-row total"><span>Total</span><span class="val" id="summaryTotal">Rs. 0</span></div>
           <div class="summary-btns">
+            <button class="btn btn-primary" onclick="openCheckoutForm()" style="justify-content:center;">
+              📋 Checkout Now
+            </button>
             <button class="btn btn-wa" onclick="checkoutWhatsApp()">
               <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
                 <path
@@ -2675,6 +2695,45 @@
     </div>
   </div>
 
+  <!-- Checkout Form Modal -->
+  <div class="modal-overlay" id="modal-checkoutForm" onclick="closeModalOverlay(event)">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2>📋 Your Details</h2>
+        <button class="modal-close" onclick="closeModal('checkoutForm')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:20px;">Fill in your details and we'll save your order.</p>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="checkoutName" placeholder="e.g. Ahmed Ali" />
+        </div>
+        <div class="form-group">
+          <label>Complete Address</label>
+          <textarea id="checkoutAddress"
+            placeholder="House No., Street, Area, Landmark…"
+            style="min-height:80px;"
+            oninput="updateAddressCounter(this)"></textarea>
+          <div id="addressCounter"
+            style="font-size:.75rem;color:var(--text-light);text-align:right;margin-top:4px;">
+            0 / 150
+          </div>
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" id="checkoutCity" placeholder="e.g. Lahore" />
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="checkoutPhone" placeholder="e.g. 0300 1234567" />
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="submitCheckoutForm()">
+          ✅ Place Order
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -2714,7 +2773,11 @@
       const badgeHtml = p.badge ? '<span class="badge badge-' + p.badge + '">' + (p.badge === 'sale' ? '% Sale' : p.badge === 'new' ? '★ New' : '🔥 Hot') + '</span>' : '';
       const oldHtml = p.oldPrice ? '<div style="color:var(--text-light);text-decoration:line-through;font-size:.8rem;">' + formatPrice(p.oldPrice) + '</div>' : '';
       const imgHtml = p.img ? '<img src="' + p.img + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />' : '<span style="font-size:4rem;">📦</span>';
-      return '<div class="product-card" onclick="openProductDetail(' + p.id + ')"><div class="product-img" style="background:#f0f4ec;">' + badgeHtml + imgHtml + '</div><div class="product-body"><div class="product-category">' + p.category + '</div><div class="product-name">' + p.name + '</div><div class="product-desc">' + p.desc + '</div><div class="product-footer"><div><div class="product-price">' + formatPrice(p.price) + '</div>' + oldHtml + '</div><button class="add-btn" onclick="event.stopPropagation(); addToCart(' + p.id + ',this)">+ Add to Cart</button></div></div></div>';
+      return '<div class="product-card" onclick="openProductDetail(' + p.id + ')"><div class="product-img" style="background:#f0f4ec;">' + badgeHtml + imgHtml + '</div><div class="product-body"><div class="product-category">' + p.category + '</div><div class="product-name">' + p.name + '</div><div class="product-desc">' + p.desc + '</div><div class="product-footer"><div><div class="product-price">' + formatPrice(p.price) + '</div>' + oldHtml + '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px;">' +
+        '<button class="add-btn" onclick="event.stopPropagation(); addToCart(' + p.id + ',this)">+ Add to Cart</button>' +
+        '<button class="add-btn" onclick="event.stopPropagation(); buyNow(' + p.id + ')" style="background:linear-gradient(135deg,var(--purple-mid),var(--purple-dark));color:white;">⚡ Buy Now</button>' +
+        '</div></div></div>';
     }
 
     function openProductDetail(id) {
@@ -2902,6 +2965,368 @@
       showToast('📋 Order ' + order.orderId + ' saved!');
       window.open('https://wa.me/923007041451?text=' + encodeURIComponent(msg), '_blank');
     }
+
+    function buyNow(id) {
+      const p = PRODUCTS.find(p => p.id === id);
+      if (!p) return;
+      const existing = cart.find(i => i.id === id);
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({ id, name: p.name, price: p.price, img: p.img, qty: 1 });
+      }
+      saveCart();
+      updateCartBadge();
+      navigate('cart');
+      showToast('⚡ "' + p.name + '" ready for checkout!');
+    }
+
+    function openCheckoutForm() {
+      if (!cart.length) return;
+      openModal('checkoutForm');
+    }
+
+    async function submitCheckoutForm() {
+      const submitBtn = document.querySelector('#modal-checkoutForm .btn-primary');
+
+      const name = document.getElementById('checkoutName').value.trim();
+      const address = document.getElementById('checkoutAddress').value.trim();
+      const city = document.getElementById('checkoutCity').value.trim();
+      const phone = document.getElementById('checkoutPhone').value.trim();
+
+      clearFieldError('checkoutName');
+      clearFieldError('checkoutAddress');
+      clearFieldError('checkoutCity');
+      clearFieldError('checkoutPhone');
+
+      let hasError = false;
+
+      if (!name) {
+        showFieldError('checkoutName', 'Full name is required.');
+        hasError = true;
+      } else if (name.length < 3) {
+        showFieldError('checkoutName', 'Name must be at least 3 characters.');
+        hasError = true;
+      }
+
+      if (!address) {
+        showFieldError('checkoutAddress', 'Address is required.');
+        hasError = true;
+      } else if (address.length < 20) {
+        showFieldError('checkoutAddress', 'Please enter a more complete address (at least 20 characters).');
+        hasError = true;
+      } else if (address.length > 150) {
+        showFieldError('checkoutAddress', 'Address must be under 150 characters (' + address.length + '/150).');
+        hasError = true;
+      }
+
+      if (!city) {
+        showFieldError('checkoutCity', 'City is required.');
+        hasError = true;
+      } else if (city.length < 3) {
+        showFieldError('checkoutCity', 'Please enter a valid city name.');
+        hasError = true;
+      }
+
+      const phoneClean = phone.replace(/[\s\-()]/g, '');
+      const phoneRegex = /^(\+92|0)?[0-9]{10}$/;
+      if (!phone) {
+        showFieldError('checkoutPhone', 'Phone number is required.');
+        hasError = true;
+      } else if (!/^[\d\s\-()+]+$/.test(phone)) {
+        showFieldError('checkoutPhone', 'Phone number must contain numbers only.');
+        hasError = true;
+      } else if (!phoneRegex.test(phoneClean)) {
+        showFieldError('checkoutPhone', 'Enter a valid Pakistani number e.g. 0300 1234567.');
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Placing order…';
+      submitBtn.style.opacity = '0.7';
+      submitBtn.style.cursor = 'not-allowed';
+
+      try {
+        const deliveryCost = getDeliveryCost();
+        const deliveryLabel = selectedDeliveryType === 'urgent'
+          ? 'Urgent Delivery (2–3 days)'
+          : 'Standard Delivery (5–7 days)';
+
+        let idData = null;
+        if (firebaseReady) idData = await firestoreNextOrderId();
+        if (!idData) idData = generateLocalOrderId();
+
+        const order = {
+          orderId: idData.orderId,
+          orderNum: idData.orderNum,
+          date: new Date().toISOString(),
+          customer: { name, address, city, phone },
+          items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
+          deliveryType: deliveryLabel,
+          subtotal: getTotal(),
+          deliveryCost,
+          total: getTotal() + deliveryCost,
+          status: 'Pending',
+          source: 'form'
+        };
+
+        const localOrders = getLocalOrders();
+        localOrders.push(order);
+        saveLocalOrders(localOrders);
+
+        if (firebaseReady) {
+          await firestoreSaveOrder(order);
+        }
+
+        document.getElementById('checkoutName').value = '';
+        document.getElementById('checkoutAddress').value = '';
+        document.getElementById('checkoutCity').value = '';
+        document.getElementById('checkoutPhone').value = '';
+        clearFieldError('checkoutName');
+        clearFieldError('checkoutAddress');
+        clearFieldError('checkoutCity');
+        clearFieldError('checkoutPhone');
+
+        const counter = document.getElementById('addressCounter');
+        if (counter) { counter.textContent = '0 / 150'; counter.style.color = 'var(--text-light)'; }
+
+        closeModal('checkoutForm');
+        showOrderSuccess(order.orderId);
+
+      } catch (err) {
+        console.error('Order submission failed:', err);
+        showToast('⚠️ Something went wrong. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '✅ Place Order';
+        submitBtn.style.opacity = '1';
+        submitBtn.style.cursor = 'pointer';
+      }
+    }
+
+    // ── Validation helpers ──
+    function updateAddressCounter(el) {
+      const len = el.value.length;
+      const counter = document.getElementById('addressCounter');
+      counter.textContent = len + ' / 150';
+      if (len > 150) {
+        counter.style.color = '#dc2626';
+        counter.style.fontWeight = '600';
+      } else if (len < 20) {
+        counter.style.color = 'var(--text-light)';
+        counter.style.fontWeight = '400';
+      } else {
+        counter.style.color = '#16a34a';
+        counter.style.fontWeight = '400';
+      }
+    }
+
+    function showFieldError(fieldId, message) {
+      const field = document.getElementById(fieldId);
+      field.style.borderColor = '#dc2626';
+      field.style.boxShadow = '0 0 0 3px rgba(220,38,38,0.12)';
+      let err = document.getElementById(fieldId + '_err');
+      if (!err) {
+        err = document.createElement('div');
+        err.id = fieldId + '_err';
+        err.style.cssText = 'color:#dc2626;font-size:.78rem;margin-top:4px;font-weight:500;';
+        field.parentNode.appendChild(err);
+      }
+      err.textContent = '⚠️ ' + message;
+    }
+
+    function clearFieldError(fieldId) {
+      const field = document.getElementById(fieldId);
+      field.style.borderColor = '';
+      field.style.boxShadow = '';
+      const err = document.getElementById(fieldId + '_err');
+      if (err) err.remove();
+    }
+
+    function showOrderSuccess(orderId) {
+      const existing = document.getElementById('orderSuccessPopup');
+      if (existing) existing.remove();
+
+      const popup = document.createElement('div');
+      cart = [];
+      saveCart();
+      updateCartBadge();
+      popup.id = 'orderSuccessPopup';
+      popup.style.cssText = `
+        position: fixed;
+        inset: 0;
+        z-index: 500;
+        background: rgba(26, 31, 22, 0.6);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        animation: fadeIn .25s ease;
+      `;
+
+      popup.innerHTML = `
+        <div style="
+          background: white;
+          border-radius: 24px;
+          padding: 48px 40px;
+          max-width: 420px;
+          width: 100%;
+          text-align: center;
+          box-shadow: 0 24px 64px rgba(107,122,94,.25);
+          animation: popUp .35s cubic-bezier(.34,1.56,.64,1) both;
+        ">
+          <div style="
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2.4rem;
+          ">✅</div>
+
+          <h2 style="
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+          ">Order Placed!</h2>
+
+          <p style="
+            color: var(--text-muted);
+            font-size: .95rem;
+            line-height: 1.7;
+            margin-bottom: 8px;
+          ">Your order <strong style="color:var(--purple-dark);">${orderId}</strong> has been successfully placed.</p>
+
+          <p style="
+            color: var(--text-muted);
+            font-size: .88rem;
+            line-height: 1.7;
+            margin-bottom: 28px;
+          ">We will contact you shortly on your provided phone number to confirm delivery details. 🚚</p>
+
+          <div style="
+            background: var(--purple-light);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+          ">
+            <span style="font-size:1.6rem;">💬</span>
+            <div>
+              <div style="font-weight:700;font-size:.88rem;color:var(--purple-dark);margin-bottom:2px;">Need help?</div>
+              <div style="font-size:.82rem;color:var(--text-muted);">Chat with us anytime on WhatsApp at +92 300 704 1451</div>
+            </div>
+          </div>
+
+          <button onclick="closeOrderSuccess(); renderCart();" style="
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--purple-mid), var(--purple-dark));
+            color: white;
+            border: none;
+            border-radius: var(--radius-full);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(107,122,94,.38);
+            transition: all .2s;
+            margin-bottom: 12px;
+          " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            🛍️ Continue Shopping
+          </button>
+
+          <button onclick="closeOrderSuccess(); navigate('cart'); renderCart();" style="
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-full);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            font-size: .88rem;
+            cursor: pointer;
+            transition: all .2s;
+          " onmouseover="this.style.borderColor='var(--purple)';this.style.color='var(--purple-dark)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+            View Cart
+          </button>
+        </div>
+      `;
+
+      popup.addEventListener('click', function(e) {
+        if (e.target === popup) closeOrderSuccess();
+      });
+
+      document.body.appendChild(popup);
+
+      if (!document.getElementById('orderSuccessStyles')) {
+        const style = document.createElement('style');
+        style.id = 'orderSuccessStyles';
+        style.textContent = `
+          @keyframes popUp {
+            from { opacity: 0; transform: scale(.85) translateY(20px); }
+            to   { opacity: 1; transform: scale(1)  translateY(0);     }
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+
+    function closeOrderSuccess() {
+      const popup = document.getElementById('orderSuccessPopup');
+      if (!popup) return;
+      popup.style.opacity = '0';
+      popup.style.transition = 'opacity .2s ease';
+      setTimeout(() => popup.remove(), 200);
+    }
+
+    function startBuyerCounter() {
+      let count = parseInt(localStorage.getItem('trevoBuyerCount')) || 250;
+
+      const el = document.getElementById('happyBuyers');
+      if (el) el.textContent = count + '+ Happy Buyers';
+
+      function randomIncrement() {
+        const increment = Math.floor(Math.random() * 3) + 1;
+        count += increment;
+        localStorage.setItem('trevoBuyerCount', count);
+
+        const el = document.getElementById('happyBuyers');
+        if (el) {
+          el.style.transition = 'all 0.3s ease';
+          el.style.color = 'var(--purple-dark)';
+          el.style.fontWeight = '800';
+          el.textContent = count + '+ Happy Buyers';
+
+          setTimeout(() => {
+            el.style.color = '';
+            el.style.fontWeight = '';
+          }, 600);
+        }
+
+        const nextUpdate = Math.floor(Math.random() * 12000) + 8000;
+        setTimeout(randomIncrement, nextUpdate);
+      }
+
+      setTimeout(randomIncrement, 10000);
+    }
+
+    startBuyerCounter();
 
     function navigate(page) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
