@@ -46,9 +46,13 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
+        html { scroll-behavior: smooth; }
+        section[id], div[id] { scroll-margin-top: 110px; }
         .smooth-transition {
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         /* Custom scrollbar to match luxury theme */
         ::-webkit-scrollbar {
             width: 6px;
@@ -76,17 +80,60 @@
         <!-- Navigation Header -->
         <header class="sticky top-0 z-40 w-full border-b border-sage-100 glass smooth-transition">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                <!-- Brand Text Logo as per structural specification -->
-                <a href="#" @click.prevent="navigateTo('home')" class="group flex flex-col items-start">
-                    <span class="font-heading text-3xl font-black tracking-widest text-gray-900 group-hover:text-sage-600 transition duration-300">TREVO</span>
-                    <span class="text-[9px] tracking-[0.3em] text-rosegold uppercase -mt-1">Premium Handbags</span>
-                </a>
+                <!-- TREVO Brand Logo -->
+                <button @click="scrollToStoreSection('home-section')" class="group flex items-center gap-3 flex-shrink-0 text-left">
+                    <img src="logo.png" alt="TREVO logo"
+                         class="w-11 h-11 rounded-xl object-contain bg-white border border-sage-100 shadow-sm"
+                         onerror="this.style.display='none'">
+                    <span class="flex flex-col">
+                        <span class="font-heading text-2xl md:text-3xl font-black tracking-widest text-gray-900 group-hover:text-sage-600 transition">TREVO</span>
+                        <span class="text-[8px] md:text-[9px] tracking-[0.26em] text-rosegold uppercase -mt-1">Premium Handbags</span>
+                    </span>
+                </button>
 
-                <!-- Desktop Navigation Links -->
-                <nav class="hidden md:flex space-x-8 text-xs font-semibold uppercase tracking-widest text-gray-600">
-                    <a href="#" @click.prevent="navigateTo('home')" :class="{'text-sage-600 border-b border-sage-600': currentPage === 'home'}" class="pb-1 hover:text-sage-600 transition">Home</a>
-                    <a href="#" @click.prevent="navigateTo('shop')" :class="{'text-sage-600 border-b border-sage-600': currentPage === 'shop'}" class="pb-1 hover:text-sage-600 transition">Collections</a>
-                    <a href="#" @click.prevent="navigateTo('about')" :class="{'text-sage-600 border-b border-sage-600': currentPage === 'about'}" class="pb-1 hover:text-sage-600 transition">Our Story</a>
+                <!-- Responsive Storefront Navigation -->
+                <nav class="flex-1 mx-4 overflow-x-auto scrollbar-hide">
+                    <div class="flex md:justify-center gap-2 md:gap-6 min-w-max text-[11px] md:text-xs font-semibold uppercase tracking-[0.16em] text-gray-600">
+                        <button @click="scrollToStoreSection('home-section')"
+                                class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition">
+                            Home
+                        </button>
+                        <button @click="openCompleteRange"
+                                class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition">
+                            Complete Range
+                        </button>
+
+                        <div class="relative group">
+                            <button class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition flex items-center gap-1">
+                                Featured Collection
+                                <span class="text-[9px]">▼</span>
+                            </button>
+                            <div class="absolute left-0 md:left-1/2 md:-translate-x-1/2 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition z-50">
+                                <div class="w-56 bg-white border border-sage-100 rounded-2xl shadow-xl p-2">
+                                    <button v-for="cat in categories"
+                                            :key="'nav-'+cat.name"
+                                            @click="openFeaturedCategory(cat.name)"
+                                            class="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-sage-50 text-left normal-case tracking-normal">
+                                        <img v-if="cat.img" :src="cat.img" :alt="cat.name" class="w-10 h-10 rounded-lg object-cover">
+                                        <span v-else class="w-10 h-10 rounded-lg bg-sage-50 flex items-center justify-center">{{ cat.emoji }}</span>
+                                        <span>
+                                            <span class="block text-xs font-semibold text-gray-800">{{ cat.name }}</span>
+                                            <span class="block text-[10px] text-gray-400">{{ cat.count }} products</span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button @click="scrollToStoreSection('story-section')"
+                                class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition">
+                            Our Story
+                        </button>
+                        <button @click="scrollToStoreSection('contact-section')"
+                                class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition">
+                            Contact Us
+                        </button>
+                    </div>
                 </nav>
 
                 <!-- Search and Dynamic Utility Actions -->
@@ -117,7 +164,7 @@
         <main class="flex-grow">
             
             <!-- PAGE 1: HOME STATE VIEW -->
-            <div v-if="currentPage === 'home'" class="animate-fadeIn">
+            <div v-if="currentPage === 'home'" id="home-section" class="animate-fadeIn">
                 <!-- High-End Editorial Hero Section -->
                 <section class="relative bg-gradient-to-tr from-sage-50 via-ivory to-blush-100 py-20 sm:py-28 overflow-hidden">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -178,8 +225,8 @@
                 <!-- Featured Category Cards Section -->
                 <section id="categories" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                     <div class="text-center max-w-xl mx-auto mb-12">
-                        <span class="text-[10px] tracking-[0.4em] font-bold text-sage-600 uppercase block mb-2">Curated Silhouettes</span>
-                        <h2 class="font-heading text-3xl text-gray-900">Featured Categories</h2>
+                        <span class="text-[10px] tracking-[0.4em] font-bold text-sage-600 uppercase block mb-2">TREVO Collections</span>
+                        <h2 class="font-heading text-3xl text-gray-900">Shop by Signature Style</h2>
                         <div class="w-12 h-[2px] bg-blush-200 mx-auto mt-3"></div>
                     </div>
 
@@ -289,7 +336,7 @@
                 </section>
 
                 <!-- Dedicated Brand Manifesto Editorial -->
-                <section class="bg-gradient-to-b from-white to-ivory py-20 border-t border-sage-50">
+                <section id="story-section" class="bg-gradient-to-b from-white to-ivory py-20 border-t border-sage-50">
                     <div class="max-w-4xl mx-auto px-4 text-center space-y-6">
                         <span class="text-xs font-bold tracking-[0.5em] text-rosegold uppercase block">Our Philosophy</span>
                         <h2 class="font-heading text-4xl text-gray-900 italic">"Carry confidence. Carry TREVO."</h2>
@@ -347,7 +394,7 @@
                     <!-- Structural Sidebar Filters -->
                     <aside class="w-full lg:w-64 space-y-8 bg-white p-6 rounded-2xl shadow-sm border border-sage-50 h-fit sticky top-28">
                         <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-                            <h3 class="text-xs font-bold tracking-widest uppercase text-gray-900">Filter Products</h3>
+                            <h3 class="text-xs font-bold tracking-widest uppercase text-gray-900">{{ shopMode === "complete" ? "Filter Complete Range" : "Refine Selection" }}</h3>
                             <button @click="resetFilters" class="text-[10px] font-semibold text-rosegold uppercase tracking-wider hover:underline">Reset</button>
                         </div>
 
@@ -417,7 +464,7 @@
                             <div class="overflow-x-auto pb-1">
                               <div class="flex gap-2 min-w-max">
                                 <button
-                                    @click="activeCollection = 'All'; filters.category=''; filters.color=''; filters.inStockOnly=false; filters.priceRange=25000; searchQuery=''"
+                                    @click="shopMode='all'; activeCollection = 'All'; filters.category=''; filters.color=''; filters.inStockOnly=false; filters.priceRange=25000; searchQuery=''"
                                     :class="activeCollection === 'All' ? 'bg-sage-600 text-white' : 'bg-ivory text-gray-700 hover:bg-sage-50'"
                                     class="px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition">
                                     All Products
@@ -425,7 +472,7 @@
                                 <button
                                     v-for="collection in collectionTabs"
                                     :key="collection"
-                                    @click="activeCollection = collection; filters.category=''; filters.color=''; filters.inStockOnly=false; filters.priceRange=25000; searchQuery=''"
+                                    @click="shopMode='collection'; activeCollection = collection; filters.category=''; filters.color=''; filters.inStockOnly=false; filters.priceRange=25000; searchQuery=''"
                                     :class="activeCollection === collection ? 'bg-sage-600 text-white' : 'bg-ivory text-gray-700 hover:bg-sage-50'"
                                     class="px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition">
                                     {{ collection }}
@@ -440,8 +487,9 @@
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-xl border border-sage-50/60 gap-4">
                             <p class="text-xs text-gray-500 font-light">
                                 Showing <span class="font-bold text-gray-800">{{ filteredProducts.length }}</span>
-                                product<span v-if="filteredProducts.length !== 1">s</span>
-                                <span v-if="activeCollection !== 'All'"> in <strong>{{ activeCollection }}</strong></span>
+                                item<span v-if="filteredProducts.length !== 1">s</span>
+                                <span v-if="shopMode === 'complete'"> across the complete range</span>
+                                <span v-else-if="activeCollection !== 'All'"> in <strong>{{ activeCollection }}</strong></span>
                                 <span v-else-if="filters.category"> in <strong>{{ filters.category }}</strong></span>.
                             </p>
                             
@@ -789,12 +837,19 @@
         </section>
 
         <!-- Premium Standard Structural Footer Module -->
-        <footer class="bg-white border-t border-sage-100 text-gray-600 text-xs py-12">
+        <footer id="contact-section" class="bg-white border-t border-sage-100 text-gray-600 text-xs py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-12 gap-8">
                 
                 <!-- Brand Meta Grid Column -->
                 <div class="md:col-span-4 space-y-4">
-                    <span class="font-heading text-3xl font-black tracking-widest text-gray-900">TREVO</span>
+                    <div class="flex items-center gap-3">
+                        <img src="logo.png" alt="TREVO logo" class="w-12 h-12 rounded-xl object-contain border border-sage-100 bg-white"
+                             onerror="this.style.display='none'">
+                        <div>
+                            <span class="font-heading text-3xl font-black tracking-widest text-gray-900 block">TREVO</span>
+                            <span class="text-[9px] uppercase tracking-[0.25em] text-rosegold">trevopk.com</span>
+                        </div>
+                    </div>
                     <p class="text-xs text-gray-400 font-light max-w-xs leading-relaxed">
                         Elegant, affordable handbags selected for everyday confidence and special occasions.
                     </p>
@@ -859,6 +914,7 @@
                 const searchQuery = ref('');
                 const sortBy = ref('newest');
                 const activeCollection = ref('All');
+                const shopMode = ref('all');
                 
                 // Modals Visibility Triggers States
                 const cartDrawerOpen = ref(false);
@@ -922,6 +978,46 @@
                             .map(product => product.collection)
                             .filter(Boolean)
                     )].sort((a, b) => a.localeCompare(b));
+                });
+
+                const completeRangeVariants = computed(() => {
+                    return products.value.flatMap(product => {
+                        if (Array.isArray(product.variants) && product.variants.length) {
+                            return product.variants.map(variant => {
+                                const regular = Number(variant.price || product.regularPrice || product.price || 0);
+                                const sale = Number(variant.salePrice || product.salePrice || 0);
+                                const display = sale > 0 && sale < regular ? sale : Number(product.price || regular);
+                                return {
+                                    ...product,
+                                    id: `${product.id}-${variant.sku || variant.color}`,
+                                    parentId: product.id,
+                                    _docId: product._docId,
+                                    sku: variant.sku || product.sku,
+                                    variantSku: variant.sku || '',
+                                    name: `${product.name} - ${variant.color}`,
+                                    colors: [variant.color],
+                                    selectedVariantColor: variant.color,
+                                    variants: [variant],
+                                    availableVariants: Number(variant.stock || 0) > 0 ? [variant] : [],
+                                    quantity: Number(variant.stock || 0),
+                                    inStock: Number(variant.stock || 0) > 0,
+                                    img: variant.img || product.img,
+                                    price: display,
+                                    regularPrice: regular,
+                                    salePrice: sale > 0 ? sale : null,
+                                    oldPrice: sale > 0 && sale < regular ? regular : product.oldPrice,
+                                    discount: sale > 0 && sale < regular && regular > 0
+                                        ? Math.round(((regular - sale) / regular) * 100)
+                                        : product.discount
+                                };
+                            });
+                        }
+                        return [{
+                            ...product,
+                            id: `${product.id}-default`,
+                            parentId: product.id
+                        }];
+                    });
                 });
 
                 // Global Color Options Matrix cataloged across designs
@@ -1097,7 +1193,7 @@
 
                 // COMPUTED LOGIC ENGINES: Search, Filters, Sort pipelines
                 const filteredProducts = computed(() => {
-                    let output = [...products.value];
+                    let output = shopMode.value === 'complete' ? [...completeRangeVariants.value] : [...products.value];
 
                     // 1. Text Search query Vector checking
                     if (searchQuery.value.trim() !== '') {
@@ -1151,6 +1247,7 @@
                 const navigateTo = (page) => {
                     currentPage.value = page;
                     if (page === 'shop') {
+                        shopMode.value = 'all';
                         searchQuery.value = '';
                         activeCollection.value = 'All';
                         filters.value = {
@@ -1171,7 +1268,47 @@
                     }
                 };
 
+                const openCompleteRange = () => {
+                    currentPage.value = 'shop';
+                    shopMode.value = 'complete';
+                    activeCollection.value = 'All';
+                    searchQuery.value = '';
+                    filters.value = {
+                        category: '',
+                        priceRange: 25000,
+                        color: '',
+                        inStockOnly: false
+                    };
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+
+                const openFeaturedCategory = (categoryName) => {
+                    currentPage.value = 'shop';
+                    shopMode.value = 'category';
+                    activeCollection.value = 'All';
+                    searchQuery.value = '';
+                    filters.value = {
+                        category: categoryName,
+                        priceRange: 25000,
+                        color: '',
+                        inStockOnly: false
+                    };
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+
+                const scrollToStoreSection = (id) => {
+                    if (currentPage.value !== 'home') {
+                        currentPage.value = 'home';
+                        setTimeout(() => {
+                            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 120);
+                    } else {
+                        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                };
+
                 const selectCategory = (categoryName) => {
+                    shopMode.value = 'category';
                     activeCollection.value = 'All';
                     searchQuery.value = '';
                     filters.value = {
@@ -1220,7 +1357,7 @@
                     }
 
                     const colors = availableColorsFor(product);
-                    const defaultColor = colors[0] || 'Default';
+                    const defaultColor = product.selectedVariantColor || colors[0] || 'Default';
                     const variant = getVariantForColor(product, defaultColor);
                     const availableQty = variant ? variant.stock : product.quantity;
                     const lineId = variant?.sku || product.id;
@@ -1491,10 +1628,10 @@ Subtotal: PKR ${formatPrice(cartSubtotal.value)}
                 };
 
                 return {
-                    currentPage, searchQuery, sortBy, activeCollection, collectionTabs, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
+                    currentPage, searchQuery, sortBy, activeCollection, shopMode, collectionTabs, completeRangeVariants, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
                     selectedColor, quantity, filters, categories, availableColors, products, reviews, valueProps,
                     cart, wishlist, filteredProducts, cartCount, cartSubtotal, cartDiscount, cartTotal,
-                    navigateTo, setFilter, selectCategory, scrollToSection, formatPrice, addToCart, addConfiguredToCart,
+                    navigateTo, setFilter, selectCategory, scrollToSection, scrollToStoreSection, openCompleteRange, openFeaturedCategory, formatPrice, addToCart, addConfiguredToCart,
                     updateQty, removeFromCart, toggleWishlist, isInWishlist, openQuickView, closeQuickView,
                     toggleCartDrawer, toggleWishlistModal, resetFilters, handleSubscribe, alertModal,
                     compileAndSendWhatsAppCheckout, openCheckout, sendCheckoutToWhatsApp, instantWhatsAppCheckout, triggerMockSecureCheckout,
