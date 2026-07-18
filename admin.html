@@ -973,51 +973,118 @@
     prodFileDrop.addEventListener('drop', e => { e.preventDefault(); prodFileDrop.classList.remove('dragover'); if (e.dataTransfer.files.length) parseProdCSV(e.dataTransfer.files[0]); });
     function handleProdFileSelect(input) { if (input.files.length) parseProdCSV(input.files[0]); }
 
+
     function parseProdCSV(file) {
       const ext = file.name.split('.').pop().toLowerCase();
-      if (ext !== 'csv' && ext !== 'tsv' && ext !== 'txt') { alert('Please select a CSV or TSV file.'); return; }
+      if (!['csv', 'tsv', 'txt'].includes(ext)) {
+        alert('Please select a CSV or TSV file.');
+        return;
+      }
+
       const reader = new FileReader();
-      reader.onload = function(e) {
-        const text = e.target.result;
-        // Split into lines (respecting quoted fields that span multiple lines)
-        const lines = [];
-        let cur = '', inQ = false;
-        for (let i = 0; i < text.length; i++) {
-          const c = text[i];
-          if (c === '"') { if (inQ && text[i+1] === '"') { cur += '"'; i++; } else { inQ = !inQ; } }
-          else if ((c === '\n' || (c === '\r' && text[i+1] === '\n')) && !inQ) {
-            lines.push(cur); cur = '';
-            if (c === '\r') i++;
-          } else { cur += c; }
-        }
-        if (cur.trim()) lines.push(cur);
 
-        if (lines.length < 2) { alert('File is empty or has no data rows.'); return; }
-
-        // Auto-detect delimiter: if first line has more tabs than commas, it's TSV
-        const firstLine = lines[0];
-        const tabCount = (firstLine.match(/\t/g) || []).length;
-        const commaCount = (firstLine.match(/,/g) || []).length;
-        importDelimiter = tabCount > commaCount ? '\t' : ',';
-        console.log('Detected delimiter:', importDelimiter === '\t' ? 'TAB (TSV)' : 'COMMA (CSV)', '— Tabs:', tabCount, 'Commas:', commaCount);
-
-        importCsvHeaders = parseImportLine(lines[0]).map(h => h.trim());
-
-        // Parse all data rows
-        const allRows = [];
-        for (let i = 1; i < lines.length; i++) {
-          const cols = parseImportLine(lines[i]);
-          if (cols.length >= 2) allRows.push(cols);
-        }
-        importCsvData = allRows;
-
-        buildMappingUI();
-        goToImportStep(2);
+      reader.onerror = function() {
+        alert('Could not read the selected file. Please try again.');
       };
-      reader.readAsText(file);
+
+      reader.onload = function(e) {
+        try {
+          let rawText = String(e.target.result || '');
+
+          // Remove UTF-8 BOM often added by Excel.
+          rawText = rawText.replace(/^\uFEFF/, '');
+
+          if (!rawText.trim()) {
+            alert('The selected file is empty.');
+            return;
+          }
+
+          // Detect delimiter from the first physical line.
+          const firstPhysicalLine = rawText.split(/\r?\n/, 1)[0];
+          const tabCount = (firstPhysicalLine.match(/\t/g) || []).length;
+          const commaCount = (firstPhysicalLine.match(/,/g) || []).length;
+          importDelimiter = tabCount > commaCount ? '\t' : ',';
+
+          // Parse the complete file in one pass. This preserves:
+          // - commas inside quoted descriptions
+          // - line breaks inside quoted HTML/descriptions
+          // - escaped quotes ("")
+          const rows = parseDelimitedText(rawText, importDelimiter);
+
+          if (rows.length < 2) {
+            alert('File is empty or has no product rows.');
+            return;
+          }
+
+          importCsvHeaders = rows[0].map(h =>
+            String(h || '').replace(/^\uFEFF/, '').trim()
+          );
+
+          importCsvData = rows
+            .slice(1)
+            .filter(row => row.some(cell => String(cell || '').trim() !== ''));
+
+          if (!importCsvData.length) {
+            alert('No product rows were found in this file.');
+            return;
+          }
+
+          buildMappingUI();
+          goToImportStep(2);
+        } catch (err) {
+          console.error('CSV parsing error:', err);
+          alert('Could not parse this CSV file: ' + err.message);
+        }
+      };
+
+      reader.readAsText(file, 'UTF-8');
     }
 
-    // Parse a single line using the auto-detected delimiter (CSV or TSV)
+    function parseDelimitedText(text, delimiter) {
+      const rows = [];
+      let row = [];
+      let value = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (char === '"') {
+          if (inQuotes && next === '"') {
+            value += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+          continue;
+        }
+
+        if (char === delimiter && !inQuotes) {
+          row.push(value);
+          value = '';
+          continue;
+        }
+
+        if ((char === '\n' || char === '\r') && !inQuotes) {
+          if (char === '\r' && next === '\n') i++;
+          row.push(value);
+          rows.push(row);
+          row = [];
+          value = '';
+          continue;
+        }
+
+        value += char;
+      }
+
+      row.push(value);
+      if (row.some(cell => String(cell).length > 0)) rows.push(row);
+
+      return rows;
+    }
+
+    // Parse a single line using the auto-detected delimiter (kept for order import compatibility)
     function parseImportLine(line) {
       if (importDelimiter === '\t') {
         // TSV: split by tabs, strip surrounding quotes
@@ -1123,13 +1190,23 @@
       }
 
       // Render preview — only show NEW products, hide duplicates
-      const newProducts = importMappedProducts.filter(p => !p.isDuplicate);
+      // Only import usable products. Invalid rows remain visible through the summary.
+      const invalidProducts = importMappedProducts.filter(
+        p => !p.isDuplicate && (!p.name || p.price <= 0 || !p.img)
+      );
+      invalidProducts.forEach(p => { p.isInvalid = true; });
+
+      const newProducts = importMappedProducts.filter(
+        p => !p.isDuplicate && !p.isInvalid
+      );
       const dupCount = importMappedProducts.filter(p => p.isDuplicate).length;
+      const invalidCount = invalidProducts.length;
       const newCount = newProducts.length;
       document.getElementById('importSummary').innerHTML =
         '<strong>' + importMappedProducts.length + '</strong> products found in CSV. ' +
         '<strong style="color:#16a34a">' + newCount + ' new</strong> will be imported.' +
-        (dupCount ? '<br>🔒 <strong style="color:#92400e">' + dupCount + ' already in your store</strong> — hidden from this list.' : '');
+        (dupCount ? '<br>🔒 <strong style="color:#92400e">' + dupCount + ' already in your store</strong> — skipped.' : '') +
+        (invalidCount ? '<br>⚠️ <strong style="color:#dc2626">' + invalidCount + ' invalid row(s)</strong> — missing a valid price or image URL.' : '');
 
       const tbody = document.getElementById('importPreviewBody');
       tbody.innerHTML = newProducts.map((p, i) => {
@@ -1156,7 +1233,12 @@
     }
 
     async function confirmProductImport() {
-      const toImport = importMappedProducts.filter(p => !p.isDuplicate);
+      if (!firebaseReady || typeof db === 'undefined') {
+        alert('Firebase is not connected. Products cannot be published to the live store until firebase-config.js is loaded and Firestore access is available.');
+        return;
+      }
+
+      const toImport = importMappedProducts.filter(p => !p.isDuplicate && !p.isInvalid);
       if (!toImport.length) { alert('No new products to import.'); return; }
 
       if (!confirm('Import ' + toImport.length + ' new products into your store?')) return;
