@@ -259,6 +259,7 @@
           <select id="prodCategoryFilter" onchange="renderProducts()"><option value="All">All Categories</option></select>
           <button class="btn btn-ghost btn-sm" onclick="openProdImportModal()">📤 Import Products CSV</button>
           <button class="btn btn-ghost btn-sm" onclick="exportProductsCSV()">📥 Export Products</button>
+          <button class="btn btn-success btn-sm" onclick="repairExistingProductImages()">🖼 Fix Existing Images</button>
           <button class="btn btn-primary btn-sm" onclick="openProductModal()">＋ Add Product</button>
           <button class="btn btn-danger btn-sm" onclick="archiveAllCurrentProducts()">📦 Archive Current Products</button>
         </div>
@@ -963,18 +964,24 @@
     function getFixedImageUrl(csvImage, rowIndex, sku) {
       const original = String(csvImage || '').trim();
 
-      // Keep an already-valid public GitHub raw link.
-      if (/^https:\/\/raw\.githubusercontent\.com\//i.test(original)) return original;
+      // Keep only image links that already exist in the approved TREVO list.
+      if (TREVO_FIXED_IMAGE_URLS.includes(original)) return original;
 
-      // Convert normal GitHub "blob" URLs into raw URLs.
+      // Convert a GitHub blob URL into its raw equivalent, then keep it
+      // only when it matches one of the approved image links.
       const githubMatch = original.match(
         /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/i
       );
       if (githubMatch) {
-        return 'https://raw.githubusercontent.com/' +
+        const rawUrl = 'https://raw.githubusercontent.com/' +
           githubMatch[1] + '/' + githubMatch[2] + '/' +
           githubMatch[3] + '/' + githubMatch[4];
+        if (TREVO_FIXED_IMAGE_URLS.includes(rawUrl)) return rawUrl;
       }
+
+      // Assign the supplied links in the same order as CSV product rows.
+      return TREVO_FIXED_IMAGE_URLS[rowIndex % TREVO_FIXED_IMAGE_URLS.length] || original;
+    }
 
       // The supplied image list does not contain SKU metadata, so use stable
       // CSV row order as the fallback. This keeps each import deterministic.
@@ -1234,18 +1241,18 @@
         const simpleCategory = chooseTrevoCategory(name, desc, tags, csvCategory);
 
         const quantity = parseInt(getMappedVal(row, 'quantity')) || 0;
-        const tags = getMappedVal(row, 'tags').toLowerCase();
+        const normalizedTags = String(tags || '').toLowerCase();
         let badge = null;
-        if (tags.includes('sale')) badge = 'sale';
-        else if (tags.includes('new')) badge = 'new';
-        else if (tags.includes('hot')) badge = 'hot';
+        if (normalizedTags.includes('sale')) badge = 'sale';
+        else if (normalizedTags.includes('new')) badge = 'new';
+        else if (normalizedTags.includes('hot')) badge = 'hot';
 
         const isDuplicate = existingNames.has(name.toLowerCase());
 
         importMappedProducts.push({
           name, price, oldPrice, img, desc, bodyHtml: rawDesc,
           category: simpleCategory, quantity, badge, featured: false,
-          isDuplicate
+          sku, isDuplicate
         });
       }
 
@@ -1341,6 +1348,49 @@
         hideLoader();
         console.error('Product import error:', err);
         alert('❌ Import failed: ' + err.message);
+      }
+    }
+
+
+    async function repairExistingProductImages() {
+      if (!firebaseReady || typeof db === 'undefined') {
+        alert('Firebase is not connected.');
+        return;
+      }
+      if (!allProducts.length) {
+        alert('No products found to repair.');
+        return;
+      }
+      if (!confirm('Replace image links for all current products using the approved TREVO image list?')) return;
+
+      showLoader('Repairing product images…');
+      try {
+        const BATCH_SIZE = 450;
+        for (let start = 0; start < allProducts.length; start += BATCH_SIZE) {
+          const chunk = allProducts.slice(start, start + BATCH_SIZE);
+          const batch = db.batch();
+
+          chunk.forEach((product, offset) => {
+            const globalIndex = start + offset;
+            const fixedUrl = TREVO_FIXED_IMAGE_URLS[
+              globalIndex % TREVO_FIXED_IMAGE_URLS.length
+            ];
+            const ref = db.collection(PRODUCTS_COLLECTION).doc(String(product.id));
+            batch.update(ref, {
+              img: fixedUrl,
+              images: [fixedUrl]
+            });
+          });
+
+          await batch.commit();
+        }
+
+        hideLoader();
+        alert('✅ Image links repaired for ' + allProducts.length + ' products.');
+      } catch (err) {
+        hideLoader();
+        console.error('Image repair error:', err);
+        alert('❌ Image repair failed: ' + err.message);
       }
     }
 
