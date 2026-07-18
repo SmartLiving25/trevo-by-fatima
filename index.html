@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TREVO | Carry Confidence. Carry TREVO.</title>
+    <!-- Tailwind CSS for utility styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Playfair Display for headers, Poppins for body text -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Vue 3 Production build for reactive frontend state management -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        heading: ['"Playfair Display"', 'serif'],
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        sage: {
+                            50: '#f4f6f4',
+                            100: '#e6ebe5',
+                            600: '#7D8F7A',
+                            700: '#677764',
+                        },
+                        blush: {
+                            50: '#fdf8f8',
+                            100: '#f7e7e7',
+                            200: '#E9C7C7',
+                        },
+                        ivory: '#FAF9F5',
+                        rosegold: '#B76E79',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .smooth-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Custom scrollbar to match luxury theme */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FAF9F5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #7D8F7A;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-ivory text-gray-800 font-sans antialiased selection:bg-blush-200">
+
+    <div id="app" class="min-h-screen flex flex-col justify-between">
+        <!-- Top Announcement Bar -->
+        <div class="bg-sage-600 text-ivory text-xs tracking-widest uppercase text-center py-2 px-4 font-medium">
+            ✨ Free Nationwide Delivery on All Orders This Week • Order Easily Through WhatsApp
+        </div>
+        <div v-if="firebaseMessage" :class="firebaseConnected ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'" class="text-center text-[11px] py-1.5 px-4 border-b">
+            {{ firebaseMessage }}
+        </div>
+
+        <!-- Navigation Header -->
+        <header class="sticky top-0 z-40 w-full border-b border-sage-100 glass smooth-transition">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+                <!-- Brand Text Logo as per structural specification -->
+                <a href="#" @click.prevent="navigateTo('home')" class="group flex flex-col items-start">
+                    <span class="font-heading text-3xl font-black tracking-widest text-gray-900 group-hover:text-sage-600 transition duration-300">TREVO</span>
+                    <span class="text-[9px] tracking-[0.3em] text-rosegold uppercase -mt-1">Premium Handbags</span>
+                </a>
+
+                <!-- Desktop Navigation Links -->
+                <nav class="hidden md:flex space-x-8 text-xs font-semibold uppercase tracking-widest text-gray-600">
+                    <a href="#" @click.prevent="navigateTo('home')" :class="{'text-sage-600 border-b border-sage-600': currentPage === 'home'}" class="pb-1 hover:text-sage-600 transition">Home</a>
+                    <a href="#" @click.prevent="navigateTo('shop')" :class="{'text-sage-600 border-b border-sage-600': currentPage === 'shop'}" class="pb-1 hover:text-sage-600 transition">Collections</a>
+                    <a href="#" @click.prevent="navigateTo('about')" :class="{'text-sage-600 border-b border-sage-600': currentPage === 'about'}" class="pb-1 hover:text-sage-600 transition">Our Story</a>
+                </nav>
+
+                <!-- Search and Dynamic Utility Actions -->
+                <div class="flex items-center space-x-6">
+                    <!-- Search Input Box Wrapper -->
+                    <div class="relative hidden sm:block">
+                        <input type="text" v-model="searchQuery" placeholder="Search bags..." 
+                               class="bg-white/60 border border-sage-100 rounded-full pl-4 pr-8 py-1.5 text-xs focus:outline-none focus:border-sage-600 w-44 focus:w-56 transition-all duration-300">
+                        <svg class="w-4 h-4 absolute right-3 top-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+
+                    <!-- Wishlist Button Counter -->
+                    <button @click="toggleWishlistModal(true)" class="relative p-1 text-gray-700 hover:text-rosegold transition">
+                        <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
+                        <span v-if="wishlist.length > 0" class="absolute -top-1 -right-1 bg-rosegold text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold">{{ wishlist.length }}</span>
+                    </button>
+
+                    <!-- Cart Drawer Trigger Counter -->
+                    <button @click="toggleCartDrawer(true)" class="relative p-1 text-gray-700 hover:text-sage-600 transition">
+                        <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007z"></path></svg>
+                        <span v-if="cartCount > 0" class="absolute -top-1 -right-1 bg-sage-600 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold">{{ cartCount }}</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Workspace Router -->
+        <main class="flex-grow">
+            
+            <!-- PAGE 1: HOME STATE VIEW -->
+            <div v-if="currentPage === 'home'" class="animate-fadeIn">
+                <!-- High-End Editorial Hero Section -->
+                <section class="relative bg-gradient-to-tr from-sage-50 via-ivory to-blush-100 py-20 sm:py-28 overflow-hidden">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                        <div class="lg:col-span-6 space-y-6 text-center lg:text-left">
+                            <span class="text-xs font-bold tracking-[0.4em] text-rosegold uppercase block">Exquisite Craftsmanship</span>
+                            <h1 class="font-heading text-4xl sm:text-5xl lg:text-6xl text-gray-900 leading-tight">
+                                Carry Confidence.<br><span class="italic text-sage-600">Carry TREVO.</span>
+                            </h1>
+                            <p class="text-sm sm:text-base text-gray-600 max-w-xl mx-auto lg:mx-0 font-light leading-relaxed">
+                                Discover elegant handbags designed for every occasion—from everyday essentials to statement pieces.
+                            </p>
+                            <div class="pt-4 flex flex-wrap justify-center lg:justify-start gap-4">
+                                <button @click="navigateTo('shop')" class="bg-sage-600 text-white text-xs font-semibold tracking-widest uppercase px-6 py-3.5 rounded-sm shadow-md hover:bg-sage-700 smooth-transition">Shop Collection</button>
+                                <button @click="setFilter('filterArrival', 'new')" class="bg-white/80 border border-sage-100 text-gray-800 text-xs font-semibold tracking-widest uppercase px-6 py-3.5 rounded-sm hover:bg-white smooth-transition">New Arrivals</button>
+                                <button @click="scrollToSection('categories')" class="bg-transparent border border-gray-300 text-gray-700 text-xs font-semibold tracking-widest uppercase px-6 py-3.5 rounded-sm hover:bg-gray-900 hover:text-white smooth-transition">Categories</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Hero Multi-Display Visual Graphics -->
+                        <div class="lg:col-span-6 grid grid-cols-12 gap-4 items-center">
+                            <div class="col-span-7 space-y-4">
+                                <div class="bg-white p-3 rounded-2xl shadow-xl smooth-transition hover:scale-[1.02]">
+                                    <div class="aspect-[4/5] bg-sage-100 rounded-xl overflow-hidden relative flex items-center justify-center">
+                                        <img v-if="products[0] && products[0].img" :src="products[0].img" :alt="products[0].name" class="w-full h-full object-cover">
+                                        <span v-else class="text-6xl">👜</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-span-5 space-y-4 transform translate-y-8">
+                                <div class="bg-white p-3 rounded-2xl shadow-lg smooth-transition hover:scale-[1.02]">
+                                    <div class="aspect-square bg-blush-100 rounded-xl overflow-hidden flex items-center justify-center">
+                                        <img v-if="products[1] && products[1].img" :src="products[1].img" :alt="products[1].name" class="w-full h-full object-cover">
+                                        <span v-else class="text-4xl">👜</span>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-3 rounded-2xl shadow-lg smooth-transition hover:scale-[1.02]">
+                                    <div class="aspect-square bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
+                                        <img v-if="products[2] && products[2].img" :src="products[2].img" :alt="products[2].name" class="w-full h-full object-cover">
+                                        <span v-else class="text-4xl">👜</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Value Proposition Trust Badges -->
+                <section class="bg-white border-y border-sage-50 py-10">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-6 gap-6 text-center">
+                        <div class="space-y-1 p-2" v-for="prop in valueProps" :key="prop.title">
+                            <div class="text-rosegold text-lg mb-1" v-html="prop.icon"></div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-900">{{ prop.title }}</h4>
+                            <p class="text-[11px] text-gray-400 font-light">{{ prop.desc }}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Featured Category Cards Section -->
+                <section id="categories" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                    <div class="text-center max-w-xl mx-auto mb-12">
+                        <span class="text-[10px] tracking-[0.4em] font-bold text-sage-600 uppercase block mb-2">Curated Silhouettes</span>
+                        <h2 class="font-heading text-3xl text-gray-900">Featured Categories</h2>
+                        <div class="w-12 h-[2px] bg-blush-200 mx-auto mt-3"></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div v-for="cat in categories" :key="cat.name" 
+                             @click="selectCategory(cat.name)"
+                             class="group cursor-pointer bg-white rounded-2xl p-4 shadow-sm hover:shadow-xl smooth-transition transform hover:-translate-y-1 border border-sage-50/50">
+                            <div class="aspect-square bg-gradient-to-br from-sage-50 to-ivory rounded-xl flex flex-col items-center justify-center relative overflow-hidden mb-4">
+                                <div class="text-4xl group-hover:scale-110 transition duration-300">{{ cat.emoji }}</div>
+                                <div class="absolute inset-0 bg-sage-600/5 opacity-0 group-hover:opacity-100 transition duration-300"></div>
+                            </div>
+                            <div class="flex items-center justify-between px-1">
+                                <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-800">{{ cat.name }}</h3>
+                                <span class="text-rosegold group-hover:translate-x-1 smooth-transition text-xs">&rarr;</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Featured Collection Grid Section -->
+                <section class="bg-white py-16 border-t border-sage-50">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-12 border-b border-gray-100 pb-4">
+                            <div class="text-center sm:text-left mb-4 sm:mb-0">
+                                <h2 class="font-heading text-3xl text-gray-900">Trending Masterpieces</h2>
+                                <p class="text-xs text-gray-400 mt-1 font-light">Handpicked luxury expressions capturing timeless seasonal allure.</p>
+                            </div>
+                            <button @click="navigateTo('shop')" class="text-xs font-semibold text-rosegold tracking-widest uppercase border-b border-rosegold pb-0.5 hover:text-sage-600 hover:border-sage-600 transition">View Entire Vault &rarr;</button>
+                        </div>
+
+                        <!-- Product Showcase Mapping -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                            <div v-for="product in products.slice(0, 4)" :key="product.id" class="group bg-ivory/50 rounded-2xl p-4 border border-transparent hover:border-sage-100 hover:bg-white shadow-sm hover:shadow-xl smooth-transition relative">
+                                <!-- Image Sandbox Frame -->
+                                <div class="aspect-[4/5] bg-white rounded-xl overflow-hidden relative mb-4 flex items-center justify-center border border-gray-100/60">
+                                    <img v-if="product.img" :src="product.img" :alt="product.name" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'">
+                                    <div v-else class="text-5xl">👜</div>
+                                    <!-- Dynamic Absolute Badges -->
+                                    <span v-if="product.isNew" class="absolute top-3 left-3 bg-sage-600 text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">New</span>
+                                    <span v-if="product.discount" class="absolute top-3 right-3 bg-rosegold text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">-{{ product.discount }}%</span>
+                                    
+                                    <!-- Wishlist Heart Overlay Action -->
+                                    <button @click="toggleWishlist(product)" class="absolute bottom-3 left-3 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-gray-400 hover:text-rosegold transition">
+                                        <svg class="w-4 h-4" :fill="isInWishlist(product.id) ? '#B76E79' : 'none'" :stroke="isInWishlist(product.id) ? '#B76E79' : 'currentColor'" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
+                                    </button>
+
+                                    <!-- Action Mask Reveal Hover States -->
+                                    <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center gap-2">
+                                        <button @click="openQuickView(product)" class="bg-white text-gray-800 text-xs font-medium px-4 py-2 rounded-full shadow-lg hover:bg-sage-600 hover:text-white transition duration-200">Quick View</button>
+                                    </div>
+                                </div>
+
+                                <!-- Narrative Content Block -->
+                                <div class="space-y-1">
+                                    <p class="text-[10px] tracking-wider text-sage-600 uppercase font-bold">{{ product.category }}</p>
+                                    <h3 class="text-sm font-semibold text-gray-800 tracking-wide line-clamp-1">{{ product.name }}</h3>
+                                    
+                                    <!-- Price Matrix Block -->
+                                    <div class="flex items-center space-x-2 pt-1">
+                                        <span class="text-sm font-bold text-gray-900">PKR {{ formatPrice(product.price) }}</span>
+                                        <span v-if="product.oldPrice" class="text-xs text-gray-400 line-through">PKR {{ formatPrice(product.oldPrice) }}</span>
+                                    </div>
+
+                                    <!-- Quick Add Action Layer -->
+                                    <div class="pt-3">
+                                        <button @click="addToCart(product)" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white text-xs font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                            Add To Cart
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Dedicated Brand Manifesto Editorial -->
+                <section class="bg-gradient-to-b from-white to-ivory py-20 border-t border-sage-50">
+                    <div class="max-w-4xl mx-auto px-4 text-center space-y-6">
+                        <span class="text-xs font-bold tracking-[0.5em] text-rosegold uppercase block">Our Philosophy</span>
+                        <h2 class="font-heading text-4xl text-gray-900 italic">"Carry confidence. Carry TREVO."</h2>
+                        <p class="text-gray-600 font-light leading-relaxed text-base sm:text-lg">
+                            TREVO believes every handbag is more than an accessory—it is a statement of confidence, elegance, and everyday style. We carefully select fashionable handbags that combine quality, affordability, and timeless design.
+                        </p>
+                        <div class="w-24 h-[1px] bg-sage-600/30 mx-auto pt-4"></div>
+                    </div>
+                </section>
+
+                <!-- High-Fidelity Testimonial Cards Layout -->
+                <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                    <div class="text-center mb-12">
+                        <span class="text-[10px] tracking-[0.4em] font-bold text-sage-600 uppercase block mb-1">Real Experiences</span>
+                        <h2 class="font-heading text-3xl text-gray-900">Customer Reviews</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div v-for="review in reviews" :key="review.author" class="bg-white p-6 rounded-2xl shadow-sm border border-sage-50 space-y-3">
+                            <div class="flex text-rosegold space-x-0.5 text-xs">
+                                <span v-for="i in 5" :key="i">★</span>
+                            </div>
+                            <p class="text-xs text-gray-600 italic font-light leading-relaxed">"{{ review.text }}"</p>
+                            <div class="border-t border-gray-50 pt-2 flex items-center justify-between">
+                                <span class="text-xs font-bold text-gray-800 tracking-wide">{{ review.author }}</span>
+                                <span class="text-[10px] text-sage-600 bg-sage-50 px-2 py-0.5 rounded-full uppercase font-medium">Verified Muse</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Instagram Inspired Lifestyle Showcase Frame -->
+                <section class="bg-white py-16 border-t border-sage-50">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="text-center mb-10">
+                            <span class="text-xs font-semibold tracking-widest text-rosegold uppercase">@Trevo.Brand</span>
+                            <h2 class="font-heading text-2xl text-gray-900 mt-1">Follow TREVO</h2>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <div v-for="n in 6" :key="n" class="aspect-square bg-sage-50 rounded-xl relative overflow-hidden group border border-gray-100">
+                                <div class="absolute inset-0 flex items-center justify-center text-gray-400 text-[10px] uppercase font-medium tracking-tighter p-2 text-center">Lifestyle Editorial Frame {{n}}</div>
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 smooth-transition flex items-center justify-center">
+                                    <span class="text-white text-xs font-medium tracking-widest uppercase">View Look</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- PAGE 2: COLLECTIONS VAULT (SHOP VIEW) -->
+            <div v-if="currentPage === 'shop'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fadeIn">
+                <div class="flex flex-col lg:flex-row gap-8">
+                    
+                    <!-- Structural Sidebar Filters -->
+                    <aside class="w-full lg:w-64 space-y-8 bg-white p-6 rounded-2xl shadow-sm border border-sage-50 h-fit sticky top-28">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <h3 class="text-xs font-bold tracking-widest uppercase text-gray-900">Filter Products</h3>
+                            <button @click="resetFilters" class="text-[10px] font-semibold text-rosegold uppercase tracking-wider hover:underline">Reset</button>
+                        </div>
+
+                        <!-- Category Filters -->
+                        <div class="space-y-2.5">
+                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Category</h4>
+                            <div class="space-y-1.5 text-xs">
+                                <label class="flex items-center space-x-2 text-gray-600 cursor-pointer">
+                                    <input type="radio" value="" v-model="filters.category" class="accent-sage-600">
+                                    <span>All Styles</span>
+                                </label>
+                                <label v-for="cat in categories" :key="cat.name" class="flex items-center space-x-2 text-gray-600 cursor-pointer">
+                                    <input type="radio" :value="cat.name" v-model="filters.category" class="accent-sage-600">
+                                    <span>{{ cat.name }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Price Threshold Slider -->
+                        <div class="space-y-2.5">
+                            <div class="flex justify-between items-center text-xs">
+                                <h4 class="font-bold text-gray-800 uppercase tracking-wide">Maximum Price</h4>
+                                <span class="text-sage-600 font-bold">PKR {{ formatPrice(filters.priceRange) }}</span>
+                            </div>
+                            <input type="range" min="3000" max="25000" step="500" v-model="filters.priceRange" class="w-full accent-sage-600">
+                        </div>
+
+                        <!-- Color Filter Matrix -->
+                        <div class="space-y-2.5">
+                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Color</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <button v-for="color in availableColors" :key="color" 
+                                        @click="filters.color = (filters.color === color ? '' : color)"
+                                        :class="{'ring-2 ring-rosegold scale-105': filters.color === color}"
+                                        class="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide border uppercase bg-ivory text-gray-700 smooth-transition">
+                                    {{ color }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Availability Status Toggle -->
+                        <div class="space-y-2.5">
+                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Availability</h4>
+                            <label class="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer">
+                                <input type="checkbox" v-model="filters.inStockOnly" class="rounded text-sage-600 focus:ring-sage-600">
+                                <span>Show in-stock products only</span>
+                            </label>
+                        </div>
+                    </aside>
+
+                    <!-- Catalog Workspace Results Grid -->
+                    <div class="flex-grow space-y-6">
+                        <!-- Top Sort Actions Layout -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-xl border border-sage-50/60 gap-4">
+                            <p class="text-xs text-gray-500 font-light">Showing <span class="font-bold text-gray-800">{{ filteredProducts.length }}</span> products matching your selection.</p>
+                            
+                            <div class="flex items-center space-x-3 text-xs self-end sm:self-auto">
+                                <span class="text-gray-400 font-light">Sort by:</span>
+                                <select v-model="sortBy" class="bg-transparent font-semibold text-gray-800 focus:outline-none cursor-pointer">
+                                    <option value="newest">Newest</option>
+                                    <option value="low-high">Price: Low to High</option>
+                                    <option value="high-low">Price: High to Low</option>
+                                    <option value="popular">Popular</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Grid Render Block -->
+                        <div v-if="filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div v-for="product in filteredProducts" :key="product.id" class="group bg-white rounded-2xl p-4 border border-sage-50 shadow-sm hover:shadow-xl smooth-transition relative">
+                                <div class="aspect-[4/5] bg-sage-50 rounded-xl overflow-hidden relative mb-4 flex items-center justify-center">
+                                    <img v-if="product.img" :src="product.img" :alt="product.name" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'">
+                                    <div v-else class="text-5xl">👜</div>
+                                    <span v-if="product.isNew" class="absolute top-3 left-3 bg-sage-600 text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">New</span>
+                                    <span v-if="product.discount" class="absolute top-3 right-3 bg-rosegold text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">-{{ product.discount }}%</span>
+                                    <span v-if="!product.inStock" class="absolute inset-0 bg-white/80 backdrop-blur-[1px] flex items-center justify-center text-xs font-bold uppercase tracking-widest text-rosegold">Awaiting Restock</span>
+                                    
+                                    <button @click="toggleWishlist(product)" class="absolute bottom-3 left-3 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-gray-400 hover:text-rosegold transition z-10">
+                                        <svg class="w-4 h-4" :fill="isInWishlist(product.id) ? '#B76E79' : 'none'" :stroke="isInWishlist(product.id) ? '#B76E79' : 'currentColor'" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
+                                    </button>
+
+                                    <div v-if="product.inStock" class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
+                                        <button @click="openQuickView(product)" class="bg-white text-gray-800 text-xs font-medium px-4 py-2 rounded-full shadow-lg hover:bg-sage-600 hover:text-white transition duration-200">Quick View</button>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <p class="text-[9px] tracking-wider text-sage-600 uppercase font-bold">{{ product.category }}</p>
+                                    <h3 class="text-xs font-semibold text-gray-800 tracking-wide line-clamp-1">{{ product.name }}</h3>
+                                    <div class="flex items-center space-x-2 pt-0.5">
+                                        <span class="text-xs font-bold text-gray-900">PKR {{ formatPrice(product.price) }}</span>
+                                        <span v-if="product.oldPrice" class="text-[10px] text-gray-400 line-through">PKR {{ formatPrice(product.oldPrice) }}</span>
+                                    </div>
+
+                                    <div class="pt-3">
+                                        <button @click="addToCart(product)" :disabled="!product.inStock" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 text-[11px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                            {{ product.inStock ? 'Add To Cart' : 'Restocking Soon' }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alternative Empty State Layout -->
+                        <div v-else class="bg-white rounded-2xl p-16 text-center max-w-md mx-auto border border-sage-50 space-y-4">
+                            <span class="text-3xl block">👜</span>
+                            <h4 class="font-heading text-xl font-bold text-gray-900">No Products Found</h4>
+                            <p class="text-xs text-gray-500 font-light">Try changing your filters or resetting the selection.</p>
+                            <button @click="resetFilters" class="mt-2 bg-sage-600 text-white text-xs font-bold uppercase tracking-widest px-6 py-2.5 rounded-lg hover:bg-sage-700 transition">Reset Filters</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 3: ABOUT MANIFESTO BRAND DETAILS -->
+            <div v-if="currentPage === 'about'" class="max-w-4xl mx-auto px-4 py-16 space-y-16 animate-fadeIn">
+                <div class="text-center space-y-4">
+                    <span class="text-xs font-bold tracking-[0.4em] text-rosegold uppercase block">Our DNA</span>
+                    <h2 class="font-heading text-4xl text-gray-900">Crafting the TREVO Standard</h2>
+                    <div class="w-16 h-[2px] bg-sage-600 mx-auto mt-2"></div>
+                </div>
+
+                <div class="bg-white p-8 sm:p-12 rounded-2xl shadow-sm border border-sage-50 space-y-6 text-gray-600 font-light leading-relaxed text-sm">
+                    <p>TREVO believes every handbag is more than an accessory—it is a statement of confidence, elegance, and everyday style. We carefully select fashionable handbags that combine quality, affordability, and timeless design.</p>
+                    <p>Designed for the contemporary woman who transitions seamlessly between boardrooms and high-profile socials, each TREVO architecture is built to withstand time while projecting effortless grace.</p>
+                </div>
+
+                <div class="space-y-6">
+                    <h3 class="font-heading text-2xl text-center text-gray-900">Why Choose TREVO</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                        <div v-for="prop in valueProps" :key="prop.title" class="bg-white p-6 rounded-xl border border-sage-50 text-center space-y-2">
+                            <div class="text-sage-600 text-2xl mb-1" v-html="prop.icon"></div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-900">{{ prop.title }}</h4>
+                            <p class="text-xs text-gray-500 font-light">{{ prop.desc }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Dynamic Quick View Detail Overlay Modal -->
+        <div v-if="quickViewProduct" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
+            <div class="bg-white max-w-4xl w-full rounded-2xl overflow-hidden shadow-2xl border border-sage-50 relative grid grid-cols-1 md:grid-cols-12 max-h-[90vh] overflow-y-auto">
+                
+                <button @click="closeQuickView" class="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-ivory text-gray-500 hover:text-gray-800 shadow-sm flex items-center justify-center text-lg">&times;</button>
+                
+                <!-- Left Column Dynamic Mock Showcase Image Block -->
+                <div class="md:col-span-6 bg-sage-50 aspect-[4/5] md:aspect-auto flex flex-col items-center justify-center p-8 text-center relative border-b md:border-b-0 md:border-r border-gray-100">
+                    <img v-if="quickViewProduct.img" :src="quickViewProduct.img" :alt="quickViewProduct.name" class="absolute inset-0 w-full h-full object-cover">
+                    <div v-else class="text-7xl">👜</div>
+                    
+                    <div class="absolute bottom-4 left-4 flex space-x-2">
+                        <span class="w-2 h-2 rounded-full bg-sage-600"></span>
+                        <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                        <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                    </div>
+                </div>
+
+                <!-- Right Column Specification Form Configuration Data -->
+                <div class="md:col-span-6 p-6 sm:p-8 flex flex-col justify-between space-y-6">
+                    <div class="space-y-4">
+                        <div>
+                            <span class="text-[10px] tracking-widest font-bold text-sage-600 uppercase">{{ quickViewProduct.category }}</span>
+                            <h2 class="font-heading text-2xl text-gray-900 mt-0.5">{{ quickViewProduct.name }}</h2>
+                        </div>
+
+                        <div class="flex items-center space-x-3 text-lg font-bold text-gray-900">
+                            <span>PKR {{ formatPrice(quickViewProduct.price) }}</span>
+                            <span v-if="quickViewProduct.oldPrice" class="text-sm font-normal text-gray-400 line-through">PKR {{ formatPrice(quickViewProduct.oldPrice) }}</span>
+                        </div>
+
+                        <div class="text-xs text-gray-600 font-light leading-relaxed space-y-2">
+                            <p>{{ quickViewProduct.desc || 'An ultra-premium composition highlighting meticulously aligned stitch metrics, structured profile baselines, and functional high-capacity storage chambers.' }}</p>
+                            
+                            <ul class="border-t border-gray-100 pt-3 mt-3 space-y-1 text-[11px] font-medium text-gray-500">
+                                <li><strong>Material Composition:</strong> Top-Grain Premium Synthetic Luxury Polyurethane / Rose Gold Plated Zinc Hardware</li>
+                                <li><strong>Dimensional Metric:</strong> 28cm x 22cm x 12cm</li>
+                                <li><strong>Internal Compartments:</strong> Triple divided space with security zip pockets</li>
+                            </ul>
+                        </div>
+
+                        <!-- Selection Attributes Swatch Controls -->
+                        <div class="space-y-2">
+                            <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider block">Available Color Matrix</span>
+                            <div class="flex space-x-2">
+                                <button v-for="color in availableColorsFor(quickViewProduct)" :key="color" 
+                                        @click="selectedColor = color"
+                                        :class="{'ring-2 ring-sage-600 scale-105': selectedColor === color}"
+                                        class="px-3 py-1 bg-ivory text-gray-700 rounded-md border text-[10px] uppercase font-semibold transition">{{ color }}</button>
+                            </div>
+                        </div>
+
+                        <!-- Quantity Selector Wrapper -->
+                        <div class="space-y-2">
+                            <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider block">Quantity</span>
+                            <div class="flex items-center space-x-3 border border-gray-200 rounded-lg w-24 px-2 py-1 bg-ivory">
+                                <button @click="quantity > 1 ? quantity-- : null" class="font-bold text-gray-500 hover:text-black">-</button>
+                                <span class="flex-grow text-center text-xs font-semibold">{{ quantity }}</span>
+                                <button @click="quantity++" class="font-bold text-gray-500 hover:text-black">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Primary Actions Core Stack -->
+                    <div class="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
+                        <button @click="addConfiguredToCart" :disabled="!quickViewProduct.inStock" class="w-full bg-sage-600 disabled:bg-gray-300 text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-sage-700 smooth-transition">Add To Cart</button>
+                        <button @click="instantWhatsAppCheckout(quickViewProduct)" class="w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:opacity-90 smooth-transition flex items-center justify-center space-x-1">
+                            <span>Order WhatsApp</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sliding Dynamic Checkout Shopping Cart Side Drawer overlay -->
+        <div v-if="cartDrawerOpen" class="fixed inset-0 z-50 overflow-hidden bg-black/30 backdrop-blur-sm flex justify-end animate-fadeIn">
+            <div class="bg-white max-w-md w-full h-full p-6 shadow-2xl border-l border-sage-50 flex flex-col justify-between animate-slideLeft">
+                
+                <div>
+                    <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+                        <h3 class="font-heading text-xl text-gray-900">Your Shopping Bag</h3>
+                        <button @click="toggleCartDrawer(false)" class="text-2xl text-gray-400 hover:text-black">&times;</button>
+                    </div>
+
+                    <!-- Cart Item Rows Loop Grid -->
+                    <div v-if="cart.length > 0" class="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                        <div v-for="item in cart" :key="item.lineId || (item.id + item.color)" class="flex items-center space-x-4 bg-ivory/50 p-3 rounded-xl border border-sage-50/50">
+                            <div class="w-16 h-20 bg-sage-100 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center">
+                                <img v-if="item.img" :src="item.img" :alt="item.name" class="w-full h-full object-cover">
+                                <span v-else class="text-2xl">👜</span>
+                            </div>
+                            
+                            <div class="flex-grow min-w-0">
+                                <h4 class="text-xs font-semibold text-gray-800 truncate">{{ item.name }}</h4>
+                                <p class="text-[10px] text-gray-400 uppercase font-medium mt-0.5">Color: {{ item.color }}</p>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span class="text-xs font-bold text-gray-900">PKR {{ formatPrice(item.price) }}</span>
+                                    
+                                    <div class="flex items-center space-x-2 border rounded bg-white px-1.5 py-0.5 text-[10px]">
+                                        <button @click="updateQty(item, -1)" class="text-gray-400 hover:text-black">-</button>
+                                        <span class="font-bold w-4 text-center">{{ item.quantity }}</span>
+                                        <button @click="updateQty(item, 1)" class="text-gray-400 hover:text-black">+</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button @click="removeFromCart(item)" class="text-xs text-rosegold hover:text-red-700 font-medium px-2">&times;</button>
+                        </div>
+                    </div>
+
+                    <!-- Alternative Empty State Cart Drawer view -->
+                    <div v-else class="text-center py-16 space-y-3">
+                        <span class="text-3xl block">🛒</span>
+                        <p class="text-xs text-gray-500 font-light">Your shopping bag is empty.</p>
+                        <button @click="toggleCartDrawer(false); navigateTo('shop')" class="text-xs font-bold text-sage-600 uppercase tracking-wider underline">Browse Handbags</button>
+                    </div>
+                </div>
+
+                <!-- Footer Summary Mathematical Calculation Matrix Block -->
+                <div v-if="cart.length > 0" class="border-t border-gray-100 pt-4 space-y-4">
+                    <div class="space-y-1.5 text-xs text-gray-600 font-light">
+                        <div class="flex justify-between">
+                            <span>Subtotal</span>
+                            <span>PKR {{ formatPrice(cartSubtotal) }}</span>
+                        </div>
+                        <div class="flex justify-between text-rosegold font-medium">
+                            <span>Launch Discount (10%)</span>
+                            <span>- PKR {{ formatPrice(cartDiscount) }}</span>
+                        </div>
+                        <div class="flex justify-between border-t border-gray-100 pt-2 text-sm font-bold text-gray-900">
+                            <span>Total</span>
+                            <span>PKR {{ formatPrice(cartTotal) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Checkout Integration Stack Options -->
+                    <div class="space-y-2">
+                        <button @click="openCheckout" class="w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:opacity-90 transition flex items-center justify-center space-x-2">
+                            <span>Checkout on WhatsApp</span>
+                        </button>
+                        <button @click="toggleCartDrawer(false); navigateTo('shop')" class="w-full bg-gray-900 text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-gray-800 transition">
+                            Continue Shopping
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- WhatsApp Checkout Form -->
+        <div v-if="checkoutOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 sm:p-8 relative max-h-[92vh] overflow-y-auto">
+                <button @click="checkoutOpen=false" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-gray-900">&times;</button>
+                <span class="text-[10px] tracking-[0.35em] font-bold text-sage-600 uppercase">Secure WhatsApp Order</span>
+                <h3 class="font-heading text-3xl text-gray-900 mt-2">Delivery Details</h3>
+                <p class="text-xs text-gray-500 mt-2 mb-6">Fill in your details. Your order will open in WhatsApp for confirmation.</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label class="text-xs font-semibold text-gray-700">
+                        Full Name *
+                        <input v-model.trim="checkout.name" type="text" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="Your full name">
+                    </label>
+                    <label class="text-xs font-semibold text-gray-700">
+                        Phone Number *
+                        <input v-model.trim="checkout.phone" type="tel" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="03XX XXXXXXX">
+                    </label>
+                    <label class="text-xs font-semibold text-gray-700">
+                        City *
+                        <input v-model.trim="checkout.city" type="text" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="City">
+                    </label>
+                    <label class="text-xs font-semibold text-gray-700">
+                        Delivery Method
+                        <select v-model="checkout.delivery" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600 bg-white">
+                            <option>Standard Delivery</option>
+                            <option>Urgent Delivery</option>
+                        </select>
+                    </label>
+                    <label class="text-xs font-semibold text-gray-700 sm:col-span-2">
+                        Complete Address *
+                        <textarea v-model.trim="checkout.address" rows="3" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="House/Street, Area, City"></textarea>
+                    </label>
+                    <label class="text-xs font-semibold text-gray-700 sm:col-span-2">
+                        Order Notes
+                        <textarea v-model.trim="checkout.notes" rows="2" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="Optional color or delivery instructions"></textarea>
+                    </label>
+                </div>
+
+                <div class="mt-6 rounded-xl bg-sage-50 p-4 text-xs">
+                    <div class="flex justify-between"><span>Items</span><strong>{{ cartCount }}</strong></div>
+                    <div class="flex justify-between mt-2"><span>Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong></div>
+                </div>
+
+                <button @click="sendCheckoutToWhatsApp" class="mt-5 w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg hover:opacity-90 transition">
+                    Confirm Order on WhatsApp
+                </button>
+                <p class="text-[10px] text-gray-400 text-center mt-3">Cash on Delivery available across Pakistan.</p>
+            </div>
+        </div>
+
+        <!-- Wishlist Modal Overlay Layout Component -->
+        <div v-if="wishlistModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
+            <div class="bg-white max-w-2xl w-full rounded-2xl p-6 shadow-2xl border border-sage-50 max-h-[80vh] overflow-y-auto space-y-6 relative">
+                <button @click="toggleWishlistModal(false)" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-black">&times;</button>
+                
+                <h3 class="font-heading text-2xl text-gray-900 border-b border-gray-100 pb-3">Your Wishlist</h3>
+
+                <div v-if="wishlist.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div v-for="product in wishlist" :key="product.id" class="flex items-center space-x-3 bg-ivory/40 p-3 rounded-xl border border-sage-50">
+                        <div class="w-12 h-16 bg-sage-50 flex-shrink-0 rounded overflow-hidden flex items-center justify-center">
+                            <img v-if="product.img" :src="product.img" :alt="product.name" class="w-full h-full object-cover">
+                            <span v-else class="text-xl">👜</span>
+                        </div>
+                        <div class="flex-grow min-w-0">
+                            <h4 class="text-xs font-semibold text-gray-800 truncate">{{ product.name }}</h4>
+                            <span class="text-xs text-gray-900 font-bold block mt-0.5">PKR {{ formatPrice(product.price) }}</span>
+                        </div>
+                        <div class="flex flex-col space-y-1">
+                            <button @click="addToCart(product); toggleWishlist(product)" class="text-[10px] font-bold text-sage-600 uppercase tracking-wide bg-white px-2 py-1 rounded border border-sage-100 shadow-sm hover:bg-sage-600 hover:text-white smooth-transition">Move Cart</button>
+                            <button @click="toggleWishlist(product)" class="text-[9px] font-semibold text-rosegold uppercase text-center hover:underline">Remove</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else class="text-center py-10 text-xs text-gray-500 font-light">
+                    Your wishlist is empty.
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Newsletter Call-To-Action Element Box Section -->
+        <section class="bg-gradient-to-tr from-sage-100 via-white to-blush-100 py-16 border-t border-sage-50">
+            <div class="max-w-2xl mx-auto px-4 text-center space-y-6">
+                <h3 class="font-heading text-3xl text-gray-900 tracking-wide">Join the TREVO Family</h3>
+                <p class="text-xs text-gray-500 font-light max-w-md mx-auto leading-relaxed">Subscribe for new arrivals, special offers, and handbag styling updates.</p>
+                
+                <form @submit.prevent="handleSubscribe" class="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+                    <input type="email" required placeholder="Enter your email address" class="flex-grow bg-white border border-sage-200 text-xs px-4 py-3 rounded-lg focus:outline-none focus:border-sage-600">
+                    <button type="submit" class="bg-sage-600 text-white text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-lg hover:bg-sage-700 transition">Subscribe</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Premium Standard Structural Footer Module -->
+        <footer class="bg-white border-t border-sage-100 text-gray-600 text-xs py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-12 gap-8">
+                
+                <!-- Brand Meta Grid Column -->
+                <div class="md:col-span-4 space-y-4">
+                    <span class="font-heading text-3xl font-black tracking-widest text-gray-900">TREVO</span>
+                    <p class="text-xs text-gray-400 font-light max-w-xs leading-relaxed">
+                        Elegant, affordable handbags selected for everyday confidence and special occasions.
+                    </p>
+                    
+                    <!-- Dynamic Social Link Matrices -->
+                    <div class="flex space-x-4 pt-2">
+                        <a href="https://wa.me/923007041451" target="_blank" class="p-2 bg-sage-50 text-sage-600 rounded-full hover:bg-sage-600 hover:text-white transition">WhatsApp</a>
+                        <a href="https://instagram.com/trevo_pk" target="_blank" class="p-2 bg-sage-50 text-rosegold rounded-full hover:bg-rosegold hover:text-white transition">Instagram</a>
+                        <a href="https://web.facebook.com/profile.php?id=61578912687234" target="_blank" class="p-2 bg-sage-50 text-gray-700 rounded-full hover:bg-gray-900 hover:text-white transition">Facebook</a>
+                    </div>
+                </div>
+
+                <!-- Fast Hyperlinks Vectors -->
+                <div class="md:col-span-3 space-y-3">
+                    <h4 class="text-gray-900 font-bold uppercase tracking-widest text-xs">Quick Links</h4>
+                    <ul class="space-y-2 font-light text-gray-500">
+                        <li><a href="#" @click.prevent="navigateTo('shop')" class="hover:text-sage-600 transition">Shop Collections</a></li>
+                        <li><a href="#" @click.prevent="scrollToSection('categories')" class="hover:text-sage-600 transition">Categories View</a></li>
+                        <li><a href="#" @click.prevent="navigateTo('about')" class="hover:text-sage-600 transition">Our Story</a></li>
+                    </ul>
+                </div>
+
+                <!-- Policy Disclaimers Vectors -->
+                <div class="md:col-span-3 space-y-3">
+                    <h4 class="text-gray-900 font-bold uppercase tracking-widest text-xs">Customer Care</h4>
+                    <ul class="space-y-2 font-light text-gray-500">
+                        <li><a href="#" @click.prevent="alertModal('Your personal information is only used to process your order and provide customer support.')" class="hover:text-sage-600 transition">Privacy Policy</a></li>
+                        <li><a href="#" @click.prevent="alertModal('Exchange requests are reviewed according to product condition and our store policy.')" class="hover:text-sage-600 transition">Return Policy</a></li>
+                        <li><a href="#" @click.prevent="alertModal('We deliver across Pakistan through trusted courier partners.')" class="hover:text-sage-600 transition">Shipping Policy</a></li>
+                    </ul>
+                </div>
+
+                <!-- Instant Diagnostic Support Vector -->
+                <div class="md:col-span-2 space-y-3">
+                    <h4 class="text-gray-900 font-bold uppercase tracking-widest text-xs">Customer Support</h4>
+                    <p class="text-xs text-gray-400 font-light">Message us on WhatsApp for quick support.</p>
+                    <a href="mailto:support@trevopk.com" class="text-xs font-semibold text-rosegold block hover:underline">support@trevopk.com</a>
+                </div>
+            </div>
+
+            <!-- Absolute Bottom Legal Copyright Frame Container -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-6 border-t border-gray-100 text-center text-[11px] text-gray-400 font-light flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span>&copy; 2026 TREVO. All Rights Reserved. Engineered for Elegance.</span>
+                <span class="tracking-widest uppercase font-semibold text-[9px] bg-ivory text-sage-600 px-3 py-1 rounded-md border">SECURE PLATFORM VERIFIED</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Firebase SDK + shared configuration -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <!-- Core Dynamic Application Engine Script Initialization -->
+    <script>
+        const { createApp, ref, computed } = Vue;
+
+        createApp({
+            setup() {
+                // Reactive Navigational Coordinates Routing
+                const currentPage = ref('home');
+                const searchQuery = ref('');
+                const sortBy = ref('newest');
+                
+                // Modals Visibility Triggers States
+                const cartDrawerOpen = ref(false);
+                const wishlistModalOpen = ref(false);
+                const quickViewProduct = ref(null);
+                const checkoutOpen = ref(false);
+                const checkout = ref({
+                    name: '',
+                    phone: '',
+                    city: '',
+                    address: '',
+                    delivery: 'Standard Delivery',
+                    notes: ''
+                });
+
+                // Configurable product page setup options state
+                const selectedColor = ref('');
+                const quantity = ref(1);
+                const firebaseConnected = ref(false);
+                const firebaseMessage = ref('Connecting to live product catalog…');
+
+                // System Active Configuration Reactive Filter Object Matrix
+                const filters = ref({
+                    category: '',
+                    priceRange: 25000,
+                    color: '',
+                    inStockOnly: false
+                });
+
+                // Structured Static Static Categories Vector Source Array
+                const categoryEmoji = (name) => {
+                    const n = String(name || '').toLowerCase();
+                    if (n.includes('tote')) return '👜';
+                    if (n.includes('box')) return '💼';
+                    if (n.includes('cross')) return '✨';
+                    if (n.includes('lux') || n.includes('premium')) return '👑';
+                    if (n.includes('pearl')) return '🤍';
+                    return '👜';
+                };
+
+                const categories = computed(() => {
+                    const names = [...new Set(products.value.map(p => p.category).filter(Boolean))];
+                    return names.map(name => ({ name, emoji: categoryEmoji(name) }));
+                });
+
+                // Global Color Options Matrix cataloged across designs
+                const availableColors = computed(() => {
+                    return [...new Set(products.value.flatMap(p => p.colors || []).filter(Boolean))];
+                });
+
+                // Fallback catalog shown only when Firebase is unavailable or empty
+                const fallbackProducts = [
+                    { id: 101, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2003_56_40%20PM.png', name: 'Aura Classic Textured Tote', category: 'Tote Bags', price: 6800, oldPrice: 8500, discount: 20, isNew: true, inStock: true, colors: ['Sage Green', 'Ivory'], popular: true },
+                    { id: 102, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_41_09%20PM.png', name: 'Seraphina Sculpted Box Bag', category: 'Box Bags', price: 9200, oldPrice: 11000, discount: 15, isNew: true, inStock: true, colors: ['Blush Pink', 'Rose Gold'], popular: true },
+                    { id: 103, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_44_46%20PM.png', name: 'Elysian Minimalist Crossbody', category: 'Crossbody Bags', price: 5400, oldPrice: 5400, discount: 0, isNew: false, inStock: true, colors: ['Ivory', 'Classic Onyx'], popular: false },
+                    { id: 104, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_47_53%20PM.png', name: 'Imperia Gold-Clasp Luxury Satchel', category: 'Luxury Collection', price: 18500, oldPrice: 22000, discount: 16, isNew: true, inStock: true, colors: ['Rose Gold', 'Classic Onyx'], popular: true },
+                    { id: 105, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_50_20%20PM.png', name: 'Heritage Structured Over-Shoulder Tote', category: 'Tote Bags', price: 7900, oldPrice: 7900, discount: 0, isNew: false, inStock: false, colors: ['Sage Green', 'Classic Onyx'], popular: false },
+                    { id: 106, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_51_53%20PM.png', name: 'Monarch Geometric Box Clutch', category: 'Box Bags', price: 12000, oldPrice: 14500, discount: 17, isNew: false, inStock: true, colors: ['Rose Gold', 'Ivory'], popular: true }
+                ];
+                const products = ref([...fallbackProducts]);
+
+                // Static Trusted Testimonial Voice Arrays
+                const reviews = [
+                    { author: 'Ayesha K.', text: 'The structural integrity of the Aura Tote matches my international designer pieces. Truly beautiful quality!' },
+                    { author: 'Zainab M.', text: 'Exactly like the pictures. The metallic rose gold hardware catches light perfectly. My new favorite handbag brand.' },
+                    { author: 'Mariam R.', text: 'Incredibly fast delivery across Lahore and the box packaging layout feels like opening a true premium luxury boutique treasure.' }
+                ];
+
+                // Value propositions mapping array data source
+                const valueProps = [
+                    { title: 'Premium Quality', desc: 'Hand-selected luxury materials', icon: '💎' },
+                    { title: 'Elegant Designs', desc: 'Timeless feminine aesthetics', icon: '🎨' },
+                    { title: 'Affordable Luxury', desc: 'Direct boutique configurations', icon: '✨' },
+                    { title: 'Fast Delivery', desc: 'Nationwide dispatch routes', icon: '📦' },
+                    { title: 'Secure Checkout', desc: 'Encrypted network protocols', icon: '🔒' },
+                    { title: 'Satisfaction', desc: 'Dedicated client concierge', icon: '👑' }
+                ];
+
+                // Global Persistent Core Storage State Matrices
+                const cart = ref([]);
+                const wishlist = ref([]);
+
+
+                const cleanImageUrl = (value) => {
+                    if (!value || typeof value !== 'string') return '';
+                    let url = value.trim().replace(/^["']+|["']+$/g, '');
+                    url = url.replace(
+                        /https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/,
+                        'https://raw.githubusercontent.com/$1/$2/$3/$4'
+                    );
+                    try {
+                        const parsed = new URL(url);
+                        parsed.pathname = parsed.pathname.split('/').map(segment => {
+                            if (!segment) return segment;
+                            try { return encodeURIComponent(decodeURIComponent(segment)); }
+                            catch (_) { return encodeURIComponent(segment); }
+                        }).join('/');
+                        return parsed.toString();
+                    } catch (_) {
+                        return url;
+                    }
+                };
+
+                const splitColors = (value) => {
+                    if (Array.isArray(value)) return value.filter(Boolean).map(String);
+                    if (!value) return ['Default'];
+                    return String(value).split(/[,|/]/).map(v => v.trim()).filter(Boolean);
+                };
+
+                const normalizeProduct = (data, docId, index) => {
+                    const rawImage =
+                        data.img || data.image || data.imageUrl || data.image_url ||
+                        (Array.isArray(data.images) ? data.images[0] : '');
+
+                    const regularPrice = Number(data.price || data.regularPrice || data.sellingPrice || 0);
+                    const salePrice = Number(data.salePrice || 0);
+                    const displayPrice = salePrice > 0 && salePrice < regularPrice ? salePrice : regularPrice;
+                    const comparePrice = salePrice > 0 && salePrice < regularPrice ? regularPrice :
+                        Number(data.oldPrice || data.compareAtPrice || 0);
+
+                    const variants = Array.isArray(data.variants)
+                        ? data.variants.map(v => ({
+                            ...v,
+                            sku: String(v.sku || ''),
+                            color: String(v.color || 'Default'),
+                            stock: Math.max(0, Number(v.stock ?? v.quantity ?? 0)),
+                            price: Number(v.price || 0),
+                            salePrice: Number(v.salePrice || 0),
+                            img: cleanImageUrl(v.img || v.image || v.imageUrl || rawImage)
+                        }))
+                        : [];
+
+                    const variantQuantity = variants.reduce((sum, v) => sum + v.stock, 0);
+                    const storedQuantity = Math.max(0, Number(data.quantity ?? data.stock ?? data.inventory ?? 0));
+                    const quantityValue = variants.length ? variantQuantity : storedQuantity;
+                    const availableVariants = variants.filter(v => v.stock > 0);
+                    const badge = String(data.badge || '').toLowerCase();
+
+                    const colors = variants.length
+                        ? variants.map(v => v.color)
+                        : splitColors(data.colors || data.color);
+
+                    return {
+                        ...data,
+                        _docId: docId,
+                        id: String(data.id ?? docId ?? index + 1),
+                        sku: String(data.sku || data.id || docId || index + 1),
+                        name: data.name || data.title || 'TREVO Handbag',
+                        category: data.category || data.collection || 'Handbags',
+                        price: displayPrice,
+                        regularPrice,
+                        salePrice: salePrice > 0 ? salePrice : null,
+                        oldPrice: comparePrice > displayPrice ? comparePrice : null,
+                        discount: comparePrice > displayPrice && displayPrice > 0
+                            ? Math.round(((comparePrice - displayPrice) / comparePrice) * 100)
+                            : 0,
+                        img: cleanImageUrl(rawImage),
+                        desc: data.desc || data.description || '',
+                        colors,
+                        variants,
+                        availableVariants,
+                        isNew: data.isNew === true || badge === 'new',
+                        popular: data.popular === true || data.featured === true || badge === 'hot',
+                        inStock: data.inStock !== false &&
+                            String(data.availability || '').toLowerCase() !== 'out of stock' &&
+                            quantityValue > 0,
+                        quantity: quantityValue
+                    };
+                };
+
+                const connectFirebaseProducts = () => {
+                    if (typeof firebaseReady === 'undefined' || !firebaseReady || typeof db === 'undefined') {
+                        firebaseConnected.value = false;
+                        firebaseMessage.value = 'Firebase is not connected. Showing sample products.';
+                        return;
+                    }
+
+                    const collectionName =
+                        typeof PRODUCTS_COLLECTION !== 'undefined' ? PRODUCTS_COLLECTION : 'products';
+
+                    db.collection(collectionName).onSnapshot(snapshot => {
+                        const liveProducts = snapshot.docs
+                            .map((doc, index) => normalizeProduct(doc.data(), doc.id, index))
+                            .filter(product => product.name)
+                            .sort((a, b) => a.name.localeCompare(b.name));
+
+                        products.value = liveProducts;
+                        firebaseConnected.value = true;
+
+                        const variantCount = liveProducts.reduce(
+                            (sum, product) => sum + (product.variants?.length || 0), 0
+                        );
+                        firebaseMessage.value = liveProducts.length
+                            ? `${liveProducts.length} products and ${variantCount} variants loaded live from Firebase.`
+                            : 'Firebase is connected, but the products collection is empty.';
+                    }, error => {
+                        console.error('Firebase product listener error:', error);
+                        firebaseConnected.value = false;
+                        firebaseMessage.value = 'Could not load live products. Check Firestore permissions and firebase-config.js.';
+                        products.value = [...fallbackProducts];
+                    });
+                };
+
+                // Start the real-time product listener once.
+                connectFirebaseProducts();
+
+                // COMPUTED LOGIC ENGINES: Search, Filters, Sort pipelines
+                const filteredProducts = computed(() => {
+                    let output = [...products.value];
+
+                    // 1. Text Search query Vector checking
+                    if (searchQuery.value.trim() !== '') {
+                        const term = searchQuery.value.toLowerCase();
+                        output = output.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
+                    }
+
+                    // 2. Active Sidebar Filters Vector validation
+                    if (filters.value.category) {
+                        output = output.filter(p => p.category === filters.value.category);
+                    }
+                    if (filters.value.priceRange) {
+                        output = output.filter(p => p.price <= filters.value.priceRange);
+                    }
+                    if (filters.value.color) {
+                        output = output.filter(p => p.colors.includes(filters.value.color));
+                    }
+                    if (filters.value.inStockOnly) {
+                        output = output.filter(p => p.inStock);
+                    }
+
+                    // 3. Conditional Mathematical Sorting algorithms
+                    if (sortBy.value === 'low-high') {
+                        output.sort((a, b) => a.price - b.price);
+                    } else if (sortBy.value === 'high-low') {
+                        output.sort((a, b) => b.price - a.price);
+                    } else if (sortBy.value === 'popular') {
+                        output.sort((a, b) => (b.popular ? 1 : 0) - (a.popular ? 1 : 0));
+                    } else {
+                        // default newest sort ordering mapping
+                        output.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
+                    }
+
+                    return output;
+                });
+
+                // Cart Computations aggregates matrix
+                const cartCount = computed(() => cart.value.reduce((total, item) => total + item.quantity, 0));
+                const cartSubtotal = computed(() => cart.value.reduce((total, item) => total + (item.price * item.quantity), 0));
+                const cartDiscount = computed(() => Math.round(cartSubtotal.value * 0.10)); // 10% computed promotion code value
+                const cartTotal = computed(() => cartSubtotal.value - cartDiscount.value);
+
+                // SYSTEM ACTION INTERFACE OPERATIONS METHODS
+                const navigateTo = (page) => {
+                    currentPage.value = page;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+
+                const setFilter = (action, parameter) => {
+                    currentPage.value = 'shop';
+                    resetFilters();
+                    if (parameter === 'new') {
+                        sortBy.value = 'newest';
+                    }
+                };
+
+                const selectCategory = (categoryName) => {
+                    filters.value.category = categoryName;
+                    currentPage.value = 'shop';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+
+                const scrollToSection = (id) => {
+                    if (currentPage.value !== 'home') {
+                        currentPage.value = 'home';
+                        setTimeout(() => executeScroll(id), 100);
+                    } else {
+                        executeScroll(id);
+                    }
+                };
+
+                const executeScroll = (id) => {
+                    const el = document.getElementById(id);
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                };
+
+                const formatPrice = (value) => new Intl.NumberFormat('en-PK').format(value);
+
+                // Cart Controls implementation
+                const getVariantForColor = (product, color) => {
+                    if (!Array.isArray(product.variants) || !product.variants.length) return null;
+                    return product.variants.find(v => v.color === color) || null;
+                };
+
+                const availableColorsFor = (product) => {
+                    if (Array.isArray(product.availableVariants) && product.availableVariants.length) {
+                        return product.availableVariants.map(v => v.color);
+                    }
+                    return product.inStock ? (product.colors || []) : [];
+                };
+
+                const addToCart = (product) => {
+                    if (!product.inStock || product.quantity <= 0) {
+                        alert('This product is currently out of stock.');
+                        return;
+                    }
+
+                    const colors = availableColorsFor(product);
+                    const defaultColor = colors[0] || 'Default';
+                    const variant = getVariantForColor(product, defaultColor);
+                    const availableQty = variant ? variant.stock : product.quantity;
+                    const lineId = variant?.sku || product.id;
+                    const existingItem = cart.value.find(item => item.lineId === lineId);
+
+                    if (existingItem) {
+                        if (existingItem.quantity >= availableQty) {
+                            alert(`Only ${availableQty} unit(s) are available in ${defaultColor}.`);
+                            return;
+                        }
+                        existingItem.quantity++;
+                    } else {
+                        cart.value.push({
+                            lineId,
+                            id: product.id,
+                            productId: product._docId || product.id,
+                            variantSku: variant?.sku || '',
+                            name: product.name,
+                            price: variant?.salePrice || variant?.price || product.price,
+                            img: variant?.img || product.img || '',
+                            color: defaultColor,
+                            quantity: 1,
+                            availableQty
+                        });
+                    }
+                    cartDrawerOpen.value = true;
+                };
+
+                const addConfiguredToCart = () => {
+                    const product = quickViewProduct.value;
+                    if (!product || !product.inStock) {
+                        alert('This product is currently out of stock.');
+                        return;
+                    }
+
+                    const chosenColor = selectedColor.value || availableColorsFor(product)[0] || 'Default';
+                    const variant = getVariantForColor(product, chosenColor);
+                    const availableQty = variant ? variant.stock : product.quantity;
+
+                    if (quantity.value > availableQty) {
+                        alert(`Only ${availableQty} unit(s) are available in ${chosenColor}.`);
+                        return;
+                    }
+
+                    const lineId = variant?.sku || product.id;
+                    const existingItem = cart.value.find(item => item.lineId === lineId);
+                    if (existingItem) {
+                        if (existingItem.quantity + quantity.value > availableQty) {
+                            alert(`Only ${availableQty} unit(s) are available in ${chosenColor}.`);
+                            return;
+                        }
+                        existingItem.quantity += quantity.value;
+                    } else {
+                        cart.value.push({
+                            lineId,
+                            id: product.id,
+                            productId: product._docId || product.id,
+                            variantSku: variant?.sku || '',
+                            name: product.name,
+                            price: variant?.salePrice || variant?.price || product.price,
+                            img: variant?.img || product.img || '',
+                            color: chosenColor,
+                            quantity: quantity.value,
+                            availableQty
+                        });
+                    }
+                    closeQuickView();
+                    cartDrawerOpen.value = true;
+                };
+
+                const updateQty = (item, delta) => {
+                    item.quantity += delta;
+                    if (item.quantity <= 0) {
+                        removeFromCart(item);
+                    }
+                };
+
+                const removeFromCart = (item) => {
+                    cart.value = cart.value.filter(i => !(i.id === item.id && i.color === item.color));
+                };
+
+                // Wishlist Handlers 
+                const toggleWishlist = (product) => {
+                    const idx = wishlist.value.findIndex(i => i.id === product.id);
+                    if (idx >= 0) {
+                        wishlist.value.splice(idx, 1);
+                    } else {
+                        wishlist.value.push(product);
+                    }
+                };
+
+                const isInWishlist = (id) => wishlist.value.some(i => i.id === id);
+
+                // Modals Controls toggles
+                const openQuickView = (product) => {
+                    quickViewProduct.value = product;
+                    selectedColor.value = product.colors[0];
+                    quantity.value = 1;
+                };
+
+                const closeQuickView = () => { quickViewProduct.value = null; };
+                const toggleCartDrawer = (state) => { cartDrawerOpen.value = state; };
+                const toggleWishlistModal = (state) => { wishlistModalOpen.value = state; };
+
+                const resetFilters = () => {
+                    filters.value.category = '';
+                    filters.value.priceRange = 25000;
+                    filters.value.color = '';
+                    filters.value.inStockOnly = false;
+                    searchQuery.value = '';
+                };
+
+                // Form submission interactions handlers
+                const handleSubscribe = () => {
+                    alert('Thank you for joining the TREVO family!');
+                };
+
+                const alertModal = (msg) => { alert(msg); };
+
+                // WhatsApp checkout
+                const openCheckout = () => {
+                    if (cart.value.length === 0) {
+                        alert('Your shopping bag is empty.');
+                        return;
+                    }
+                    cartDrawerOpen.value = false;
+                    checkoutOpen.value = true;
+                };
+
+                const sendCheckoutToWhatsApp = async () => {
+                    if (!checkout.value.name || !checkout.value.phone || !checkout.value.city || !checkout.value.address) {
+                        alert('Please complete your name, phone number, city, and address.');
+                        return;
+                    }
+
+                    const phoneNumber = "923007041451";
+                    const orderId = `TRV-${Date.now().toString().slice(-8)}`;
+                    const orderData = {
+                        orderId,
+                        date: new Date().toISOString(),
+                        customer: {
+                            name: checkout.value.name,
+                            phone: checkout.value.phone,
+                            city: checkout.value.city,
+                            address: checkout.value.address
+                        },
+                        name: checkout.value.name,
+                        phone: checkout.value.phone,
+                        city: checkout.value.city,
+                        address: checkout.value.address,
+                        deliveryType: checkout.value.delivery,
+                        notes: checkout.value.notes || '',
+                        items: cart.value.map(item => ({
+                            id: item.productId || item.id,
+                            productId: item.productId || item.id,
+                            variantSku: item.variantSku || '',
+                            name: item.name,
+                            color: item.color,
+                            qty: item.quantity,
+                            quantity: item.quantity,
+                            price: item.price,
+                            img: item.img || ''
+                        })),
+                        subtotal: cartSubtotal.value,
+                        discount: cartDiscount.value,
+                        total: cartTotal.value,
+                        status: 'Pending',
+                        source: 'Website WhatsApp Checkout'
+                    };
+
+                    if (typeof firebaseReady !== 'undefined' && firebaseReady && typeof db !== 'undefined') {
+                        try {
+                            const ordersCollection =
+                                typeof ORDERS_COLLECTION !== 'undefined' ? ORDERS_COLLECTION : 'orders';
+                            await db.collection(ordersCollection).doc(orderId).set(orderData);
+                        } catch (error) {
+                            console.error('Order save error:', error);
+                            const proceed = confirm('The order could not be saved to Firebase, but it can still be sent through WhatsApp. Continue?');
+                            if (!proceed) return;
+                        }
+                    }
+
+                    let text = `👜 *NEW TREVO ORDER*
+`;
+                    text += `Order ID: *${orderId}*
+
+`;
+                    text += `*Customer Details*
+`;
+                    text += `Name: ${checkout.value.name}
+`;
+                    text += `Phone: ${checkout.value.phone}
+`;
+                    text += `City: ${checkout.value.city}
+`;
+                    text += `Address: ${checkout.value.address}
+`;
+                    text += `Delivery: ${checkout.value.delivery}
+`;
+                    if (checkout.value.notes) text += `Notes: ${checkout.value.notes}
+`;
+
+                    text += `
+*Order Items*
+`;
+                    cart.value.forEach((item, index) => {
+                        text += `${index + 1}. ${item.name}
+`;
+                        text += `   Color: ${item.color}
+`;
+                        text += `   Qty: ${item.quantity}
+`;
+                        text += `   Price: PKR ${formatPrice(item.price * item.quantity)}
+`;
+                    });
+
+                    text += `
+Subtotal: PKR ${formatPrice(cartSubtotal.value)}
+`;
+                    text += `Launch Discount: -PKR ${formatPrice(cartDiscount.value)}
+`;
+                    text += `*Total: PKR ${formatPrice(cartTotal.value)}*
+
+`;
+                    text += `Please confirm availability and delivery time.`;
+
+                    localStorage.setItem('trevoLastOrder', JSON.stringify(orderData));
+                    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(text)}`, '_blank');
+                    checkoutOpen.value = false;
+                };
+
+                const compileAndSendWhatsAppCheckout = openCheckout;
+
+                const instantWhatsAppCheckout = (product) => {
+                    const phoneNumber = "923007041451";
+                    const chosenColor = selectedColor.value || product.colors[0];
+                    const text = `👜 *TREVO PRODUCT INQUIRY*\n\nProduct: ${product.name}\nCategory: ${product.category}\nColor: ${chosenColor}\nQuantity: ${quantity.value}\nTotal: PKR ${formatPrice(product.price * quantity.value)}\n\nPlease confirm availability.`;
+                    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(text)}`, '_blank');
+                };
+
+                const triggerMockSecureCheckout = () => {
+                    alert(`🔐 Re-routing to premium digital processing center. Your configuration packet values totaling PKR ${formatPrice(cartTotal.value)} are secure.`);
+                };
+
+                return {
+                    currentPage, searchQuery, sortBy, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
+                    selectedColor, quantity, filters, categories, availableColors, products, reviews, valueProps,
+                    cart, wishlist, filteredProducts, cartCount, cartSubtotal, cartDiscount, cartTotal,
+                    navigateTo, setFilter, selectCategory, scrollToSection, formatPrice, addToCart, addConfiguredToCart,
+                    updateQty, removeFromCart, toggleWishlist, isInWishlist, openQuickView, closeQuickView,
+                    toggleCartDrawer, toggleWishlistModal, resetFilters, handleSubscribe, alertModal,
+                    compileAndSendWhatsAppCheckout, openCheckout, sendCheckoutToWhatsApp, instantWhatsAppCheckout, triggerMockSecureCheckout,
+                    availableColorsFor
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
