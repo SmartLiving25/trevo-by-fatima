@@ -2743,6 +2743,30 @@ src="https://www.facebook.com/tr?id=1399833584825730&ev=PageView&noscript=1"
     // ── Live products array (loaded from Firestore) ──
     let PRODUCTS = [];
 
+    // ── Auto-fix broken image URLs (e.g. unencoded spaces/commas from GitHub raw links) ──
+    function fixImageUrl(url) {
+      if (!url || typeof url !== 'string') return url;
+      const match = url.match(/^(https?:\/\/[^\/]+)(\/.*)$/);
+      if (!match) return url;
+      const origin = match[1];
+      const path = match[2];
+      const fixedPath = path.split('/').map(seg => {
+        if (!seg) return seg;
+        let decoded;
+        try { decoded = decodeURIComponent(seg); } catch (e) { decoded = seg; }
+        return encodeURIComponent(decoded);
+      }).join('/');
+      return origin + fixedPath;
+    }
+    function sanitizeProductImages(products) {
+      if (!Array.isArray(products)) return products;
+      return products.map(p => {
+        if (p.img) p.img = fixImageUrl(p.img);
+        if (p.images && Array.isArray(p.images)) p.images = p.images.map(fixImageUrl);
+        return p;
+      });
+    }
+
     let cart = JSON.parse(localStorage.getItem('trevoCart') || '[]');
     function saveCart() { localStorage.setItem('trevoCart', JSON.stringify(cart)); }
     function getCartCount() { return cart.reduce((s, i) => s + i.qty, 0); }
@@ -3392,7 +3416,7 @@ src="https://www.facebook.com/tr?id=1399833584825730&ev=PageView&noscript=1"
       const cachedProducts = localStorage.getItem('trevoCachedProducts');
       if (cachedProducts) {
         try {
-          PRODUCTS = JSON.parse(cachedProducts);
+          PRODUCTS = sanitizeProductImages(JSON.parse(cachedProducts));
           renderFeatured();
           renderHeroCard();
           hideLoader();
@@ -3404,7 +3428,7 @@ src="https://www.facebook.com/tr?id=1399833584825730&ev=PageView&noscript=1"
           // Fetch fresh products from Firestore
           const firestoreProducts = await firestoreGetAllProducts();
           if (firestoreProducts && firestoreProducts.length > 0) {
-            PRODUCTS = firestoreProducts;
+            PRODUCTS = sanitizeProductImages(firestoreProducts);
             // Update cache
             localStorage.setItem('trevoCachedProducts', JSON.stringify(PRODUCTS));
           }
