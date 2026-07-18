@@ -69,6 +69,9 @@
         <div class="bg-sage-600 text-ivory text-xs tracking-widest uppercase text-center py-2 px-4 font-medium">
             ✨ Free Nationwide Delivery on All Orders This Week • Order Easily Through WhatsApp
         </div>
+        <div v-if="firebaseMessage" :class="firebaseConnected ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'" class="text-center text-[11px] py-1.5 px-4 border-b">
+            {{ firebaseMessage }}
+        </div>
 
         <!-- Navigation Header -->
         <header class="sticky top-0 z-40 w-full border-b border-sage-100 glass smooth-transition">
@@ -751,6 +754,11 @@
         </footer>
     </div>
 
+    <!-- Firebase SDK + shared configuration -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
     <!-- Core Dynamic Application Engine Script Initialization -->
     <script>
         const { createApp, ref, computed } = Vue;
@@ -779,6 +787,8 @@
                 // Configurable product page setup options state
                 const selectedColor = ref('');
                 const quantity = ref(1);
+                const firebaseConnected = ref(false);
+                const firebaseMessage = ref('Connecting to live product catalog…');
 
                 // System Active Configuration Reactive Filter Object Matrix
                 const filters = ref({
@@ -789,25 +799,36 @@
                 });
 
                 // Structured Static Static Categories Vector Source Array
-                const categories = [
-                    { name: 'Tote Bags', emoji: '👜' },
-                    { name: 'Box Bags', emoji: '💼' },
-                    { name: 'Crossbody Bags', emoji: '✨' },
-                    { name: 'Luxury Collection', emoji: '👑' }
-                ];
+                const categoryEmoji = (name) => {
+                    const n = String(name || '').toLowerCase();
+                    if (n.includes('tote')) return '👜';
+                    if (n.includes('box')) return '💼';
+                    if (n.includes('cross')) return '✨';
+                    if (n.includes('lux') || n.includes('premium')) return '👑';
+                    if (n.includes('pearl')) return '🤍';
+                    return '👜';
+                };
+
+                const categories = computed(() => {
+                    const names = [...new Set(products.value.map(p => p.category).filter(Boolean))];
+                    return names.map(name => ({ name, emoji: categoryEmoji(name) }));
+                });
 
                 // Global Color Options Matrix cataloged across designs
-                const availableColors = ['Sage Green', 'Blush Pink', 'Rose Gold', 'Ivory', 'Classic Onyx'];
+                const availableColors = computed(() => {
+                    return [...new Set(products.value.flatMap(p => p.colors || []).filter(Boolean))];
+                });
 
-                // Hardcoded High-Fidelity Handbags Catalog Database
-                const products = ref([
+                // Fallback catalog shown only when Firebase is unavailable or empty
+                const fallbackProducts = [
                     { id: 101, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2003_56_40%20PM.png', name: 'Aura Classic Textured Tote', category: 'Tote Bags', price: 6800, oldPrice: 8500, discount: 20, isNew: true, inStock: true, colors: ['Sage Green', 'Ivory'], popular: true },
                     { id: 102, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_41_09%20PM.png', name: 'Seraphina Sculpted Box Bag', category: 'Box Bags', price: 9200, oldPrice: 11000, discount: 15, isNew: true, inStock: true, colors: ['Blush Pink', 'Rose Gold'], popular: true },
                     { id: 103, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_44_46%20PM.png', name: 'Elysian Minimalist Crossbody', category: 'Crossbody Bags', price: 5400, oldPrice: 5400, discount: 0, isNew: false, inStock: true, colors: ['Ivory', 'Classic Onyx'], popular: false },
                     { id: 104, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_47_53%20PM.png', name: 'Imperia Gold-Clasp Luxury Satchel', category: 'Luxury Collection', price: 18500, oldPrice: 22000, discount: 16, isNew: true, inStock: true, colors: ['Rose Gold', 'Classic Onyx'], popular: true },
                     { id: 105, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_50_20%20PM.png', name: 'Heritage Structured Over-Shoulder Tote', category: 'Tote Bags', price: 7900, oldPrice: 7900, discount: 0, isNew: false, inStock: false, colors: ['Sage Green', 'Classic Onyx'], popular: false },
                     { id: 106, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_51_53%20PM.png', name: 'Monarch Geometric Box Clutch', category: 'Box Bags', price: 12000, oldPrice: 14500, discount: 17, isNew: false, inStock: true, colors: ['Rose Gold', 'Ivory'], popular: true }
-                ]);
+                ];
+                const products = ref([...fallbackProducts]);
 
                 // Static Trusted Testimonial Voice Arrays
                 const reviews = [
@@ -829,6 +850,94 @@
                 // Global Persistent Core Storage State Matrices
                 const cart = ref([]);
                 const wishlist = ref([]);
+
+
+                const cleanImageUrl = (value) => {
+                    if (!value || typeof value !== 'string') return '';
+                    let url = value.trim().replace(/^["']+|["']+$/g, '');
+                    url = url.replace(
+                        /https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/,
+                        'https://raw.githubusercontent.com/$1/$2/$3/$4'
+                    );
+                    try {
+                        const parsed = new URL(url);
+                        parsed.pathname = parsed.pathname.split('/').map(segment => {
+                            if (!segment) return segment;
+                            try { return encodeURIComponent(decodeURIComponent(segment)); }
+                            catch (_) { return encodeURIComponent(segment); }
+                        }).join('/');
+                        return parsed.toString();
+                    } catch (_) {
+                        return url;
+                    }
+                };
+
+                const splitColors = (value) => {
+                    if (Array.isArray(value)) return value.filter(Boolean).map(String);
+                    if (!value) return ['Default'];
+                    return String(value).split(/[,|/]/).map(v => v.trim()).filter(Boolean);
+                };
+
+                const normalizeProduct = (data, docId, index) => {
+                    const rawImage =
+                        data.img || data.image || data.imageUrl || data.image_url ||
+                        (Array.isArray(data.images) ? data.images[0] : '');
+                    const price = Number(data.price || data.salePrice || data.sellingPrice || 0);
+                    const oldPrice = Number(data.oldPrice || data.compareAtPrice || data.regularPrice || 0);
+                    const quantityValue = Number(data.quantity ?? data.stock ?? data.inventory ?? 0);
+                    const badge = String(data.badge || '').toLowerCase();
+
+                    connectFirebaseProducts();
+
+                return {
+                        ...data,
+                        id: data.id ?? docId ?? index + 1,
+                        name: data.name || data.title || 'TREVO Handbag',
+                        category: data.category || data.collection || 'Handbags',
+                        price,
+                        oldPrice: oldPrice > price ? oldPrice : null,
+                        discount: oldPrice > price && price > 0 ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0,
+                        img: cleanImageUrl(rawImage),
+                        desc: data.desc || data.description || '',
+                        colors: splitColors(data.colors || data.color),
+                        isNew: data.isNew === true || badge === 'new',
+                        popular: data.popular === true || data.featured === true || badge === 'hot',
+                        inStock: data.inStock !== false && String(data.availability || '').toLowerCase() !== 'out of stock' && quantityValue !== 0,
+                        quantity: quantityValue
+                    };
+                };
+
+                const connectFirebaseProducts = () => {
+                    if (typeof firebaseReady === 'undefined' || !firebaseReady || typeof db === 'undefined') {
+                        firebaseConnected.value = false;
+                        firebaseMessage.value = 'Firebase is not connected. Showing sample products.';
+                        return;
+                    }
+
+                    const collectionName =
+                        typeof PRODUCTS_COLLECTION !== 'undefined' ? PRODUCTS_COLLECTION : 'products';
+
+                    db.collection(collectionName).onSnapshot(snapshot => {
+                        const liveProducts = snapshot.docs
+                            .map((doc, index) => normalizeProduct(doc.data(), doc.id, index))
+                            .filter(product => product.name && product.price > 0);
+
+                        if (liveProducts.length) {
+                            products.value = liveProducts;
+                            firebaseConnected.value = true;
+                            firebaseMessage.value = `${liveProducts.length} live products loaded from TREVO inventory.`;
+                        } else {
+                            products.value = [...fallbackProducts];
+                            firebaseConnected.value = true;
+                            firebaseMessage.value = 'Firebase is connected, but no products were found. Showing sample products.';
+                        }
+                    }, error => {
+                        console.error('Firebase product listener error:', error);
+                        firebaseConnected.value = false;
+                        firebaseMessage.value = 'Could not load live products. Check Firestore permissions and firebase-config.js.';
+                        products.value = [...fallbackProducts];
+                    });
+                };
 
                 // COMPUTED LOGIC ENGINES: Search, Filters, Sort pipelines
                 const filteredProducts = computed(() => {
@@ -1012,36 +1121,104 @@
                     checkoutOpen.value = true;
                 };
 
-                const sendCheckoutToWhatsApp = () => {
+                const sendCheckoutToWhatsApp = async () => {
                     if (!checkout.value.name || !checkout.value.phone || !checkout.value.city || !checkout.value.address) {
                         alert('Please complete your name, phone number, city, and address.');
                         return;
                     }
 
                     const phoneNumber = "923007041451";
-                    let text = `👜 *NEW TREVO ORDER*\n\n`;
-                    text += `*Customer Details*\n`;
-                    text += `Name: ${checkout.value.name}\n`;
-                    text += `Phone: ${checkout.value.phone}\n`;
-                    text += `City: ${checkout.value.city}\n`;
-                    text += `Address: ${checkout.value.address}\n`;
-                    text += `Delivery: ${checkout.value.delivery}\n`;
-                    if (checkout.value.notes) text += `Notes: ${checkout.value.notes}\n`;
+                    const orderId = `TRV-${Date.now().toString().slice(-8)}`;
+                    const orderData = {
+                        orderId,
+                        date: new Date().toISOString(),
+                        customer: {
+                            name: checkout.value.name,
+                            phone: checkout.value.phone,
+                            city: checkout.value.city,
+                            address: checkout.value.address
+                        },
+                        name: checkout.value.name,
+                        phone: checkout.value.phone,
+                        city: checkout.value.city,
+                        address: checkout.value.address,
+                        deliveryType: checkout.value.delivery,
+                        notes: checkout.value.notes || '',
+                        items: cart.value.map(item => ({
+                            id: item.id,
+                            name: item.name,
+                            color: item.color,
+                            qty: item.quantity,
+                            quantity: item.quantity,
+                            price: item.price,
+                            img: item.img || ''
+                        })),
+                        subtotal: cartSubtotal.value,
+                        discount: cartDiscount.value,
+                        total: cartTotal.value,
+                        status: 'Pending',
+                        source: 'Website WhatsApp Checkout'
+                    };
 
-                    text += `\n*Order Items*\n`;
+                    if (typeof firebaseReady !== 'undefined' && firebaseReady && typeof db !== 'undefined') {
+                        try {
+                            const ordersCollection =
+                                typeof ORDERS_COLLECTION !== 'undefined' ? ORDERS_COLLECTION : 'orders';
+                            await db.collection(ordersCollection).doc(orderId).set(orderData);
+                        } catch (error) {
+                            console.error('Order save error:', error);
+                            const proceed = confirm('The order could not be saved to Firebase, but it can still be sent through WhatsApp. Continue?');
+                            if (!proceed) return;
+                        }
+                    }
+
+                    let text = `👜 *NEW TREVO ORDER*
+`;
+                    text += `Order ID: *${orderId}*
+
+`;
+                    text += `*Customer Details*
+`;
+                    text += `Name: ${checkout.value.name}
+`;
+                    text += `Phone: ${checkout.value.phone}
+`;
+                    text += `City: ${checkout.value.city}
+`;
+                    text += `Address: ${checkout.value.address}
+`;
+                    text += `Delivery: ${checkout.value.delivery}
+`;
+                    if (checkout.value.notes) text += `Notes: ${checkout.value.notes}
+`;
+
+                    text += `
+*Order Items*
+`;
                     cart.value.forEach((item, index) => {
-                        text += `${index + 1}. ${item.name}\n`;
-                        text += `   Color: ${item.color}\n`;
-                        text += `   Qty: ${item.quantity}\n`;
-                        text += `   Price: PKR ${formatPrice(item.price * item.quantity)}\n`;
+                        text += `${index + 1}. ${item.name}
+`;
+                        text += `   Color: ${item.color}
+`;
+                        text += `   Qty: ${item.quantity}
+`;
+                        text += `   Price: PKR ${formatPrice(item.price * item.quantity)}
+`;
                     });
 
-                    text += `\nSubtotal: PKR ${formatPrice(cartSubtotal.value)}\n`;
-                    text += `Launch Discount: -PKR ${formatPrice(cartDiscount.value)}\n`;
-                    text += `*Total: PKR ${formatPrice(cartTotal.value)}*\n\n`;
+                    text += `
+Subtotal: PKR ${formatPrice(cartSubtotal.value)}
+`;
+                    text += `Launch Discount: -PKR ${formatPrice(cartDiscount.value)}
+`;
+                    text += `*Total: PKR ${formatPrice(cartTotal.value)}*
+
+`;
                     text += `Please confirm availability and delivery time.`;
 
+                    localStorage.setItem('trevoLastOrder', JSON.stringify(orderData));
                     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(text)}`, '_blank');
+                    checkoutOpen.value = false;
                 };
 
                 const compileAndSendWhatsAppCheckout = openCheckout;
@@ -1058,7 +1235,7 @@
                 };
 
                 return {
-                    currentPage, searchQuery, sortBy, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout,
+                    currentPage, searchQuery, sortBy, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
                     selectedColor, quantity, filters, categories, availableColors, products, reviews, valueProps,
                     cart, wishlist, filteredProducts, cartCount, cartSubtotal, cartDiscount, cartTotal,
                     navigateTo, setFilter, selectCategory, scrollToSection, formatPrice, addToCart, addConfiguredToCart,
