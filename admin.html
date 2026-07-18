@@ -1,1427 +1,424 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Trevo – Admin Panel</title>
-  <link rel="icon" type="image/png" href="logo.png" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
-  <style>
-    :root{--purple:#7B2D8B;--purple-dark:#5C1F6B;--purple-deep:#1C1C2E;--purple-mid:#A855C0;--purple-light:#F3E8F7;--purple-soft:#EDD9F4;--purple-glow:rgba(123,45,139,.18);--text:#1a0a22;--text-muted:#6b5478;--text-light:#a08ab0;--border:#e4d4ee;--bg:#faf5fc;--bg-card:#fff;--shadow-sm:0 1px 3px rgba(90,20,110,.06);--shadow:0 4px 18px rgba(90,20,110,.10);--shadow-lg:0 12px 44px rgba(90,20,110,.15);--radius:16px;--radius-sm:10px;--radius-full:999px}
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{scroll-behavior:smooth}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
-
-    /* LOGIN */
-    .login-wrapper{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:linear-gradient(145deg,#faf5fc 0%,#fff 50%,#f3e8f7 100%)}
-    .login-card{background:#fff;border-radius:24px;padding:48px 40px;box-shadow:var(--shadow-lg);max-width:400px;width:100%;text-align:center;animation:fadeUp .4s ease}
-    .login-card img{height:80px;margin-bottom:16px;mix-blend-mode:multiply}
-    .login-card h1{font-family:'Playfair Display',serif;font-size:1.6rem;margin-bottom:8px}
-    .login-card p{color:var(--text-muted);font-size:.9rem;margin-bottom:28px}
-    .login-input{width:100%;padding:14px 18px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:1rem;outline:none;transition:border-color .2s,box-shadow .2s;margin-bottom:16px}
-    .login-input:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-glow)}
-    .login-error{color:#dc2626;font-size:.85rem;margin-bottom:12px;display:none}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:var(--radius-full);font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
-    .btn-primary{background:linear-gradient(135deg,var(--purple-mid),var(--purple-dark));color:#fff;box-shadow:0 4px 14px rgba(123,45,139,.38);width:100%;justify-content:center}
-    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(123,45,139,.50)}
-    .btn-ghost{background:var(--bg);color:var(--text-muted);border:1.5px solid var(--border)}
-    .btn-ghost:hover{border-color:var(--purple);color:var(--purple-dark);background:var(--purple-light)}
-    .btn-sm{padding:8px 16px;font-size:.82rem}
-    .btn-danger{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}
-    .btn-danger:hover{background:#fecaca}
-    .btn-success{background:#dcfce7;color:#16a34a;border:1px solid #86efac}
-
-    /* DASHBOARD */
-    .dashboard{display:none;animation:fadeUp .35s ease}
-    .topbar{background:#fff;border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;backdrop-filter:blur(18px)}
-    .topbar-left{display:flex;align-items:center;gap:12px}
-    .topbar-left img{height:50px;mix-blend-mode:multiply}
-    .topbar-left h1{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--text)}
-    .topbar-left span{background:var(--purple-light);color:var(--purple-dark);padding:3px 10px;border-radius:var(--radius-full);font-size:.72rem;font-weight:700}
-    .topbar-right{display:flex;gap:10px;align-items:center}
-    .main{max-width:1200px;margin:0 auto;padding:32px 24px}
-
-    /* STATS */
-    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:32px}
-    .stat-card{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow-sm);border:1px solid var(--border);transition:transform .2s}
-    .stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
-    .stat-label{color:var(--text-muted);font-size:.82rem;font-weight:500;margin-bottom:6px}
-    .stat-value{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--purple-dark)}
-    .stat-icon{font-size:1.6rem;margin-bottom:8px}
-
-    /* TOOLBAR */
-    .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-    .toolbar-search{display:flex;align-items:center;background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-full);padding:8px 16px;gap:8px;flex:1;max-width:320px;transition:border-color .2s}
-    .toolbar-search:focus-within{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-glow)}
-    .toolbar-search input{border:none;background:transparent;outline:none;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);width:100%}
-    .toolbar select{padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.85rem;background:#fff;color:var(--text);cursor:pointer;outline:none}
-    .toolbar select:focus{border-color:var(--purple)}
-
-    /* TABLE */
-    .table-wrap{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid var(--border);overflow-x:auto}
-    table{width:100%;border-collapse:collapse;font-size:.88rem}
-    thead{background:var(--purple-light)}
-    th{padding:14px 16px;text-align:left;font-weight:600;color:var(--purple-dark);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
-    td{padding:12px 16px;border-top:1px solid var(--border);vertical-align:top}
-    tr:hover td{background:#fdf8ff}
-    .items-list{font-size:.82rem;color:var(--text-muted);line-height:1.6}
-    .items-list strong{color:var(--text);font-weight:600}
-
-    /* STATUS BADGES */
-    .status{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:var(--radius-full);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .18s;user-select:none}
-    .status:hover{transform:scale(1.05)}
-    .status-Pending{background:#fef3c7;color:#92400e}
-    .status-Confirmed{background:#dbeafe;color:#1e40af}
-    .status-Shipped{background:#e0e7ff;color:#4338ca}
-    .status-Delivered{background:#dcfce7;color:#16a34a}
-    .delete-btn{background:none;border:none;cursor:pointer;font-size:1rem;opacity:.5;transition:opacity .2s}
-    .delete-btn:hover{opacity:1}
-
-    /* EMPTY STATE */
-    .empty-state{text-align:center;padding:80px 24px;color:var(--text-muted)}
-    .empty-state .icon{font-size:3rem;margin-bottom:16px}
-    .empty-state h3{font-family:'Playfair Display',serif;color:var(--text);margin-bottom:8px}
-
-    /* IMPORT MODAL */
-    .modal-bg{display:none;position:fixed;inset:0;background:rgba(29,5,48,.55);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:24px}
-    .modal-bg.open{display:flex}
-    .modal-box{background:#fff;border-radius:20px;padding:36px;max-width:480px;width:100%;box-shadow:var(--shadow-lg);animation:fadeUp .25s ease}
-    .modal-box h2{font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:8px}
-    .modal-box p{color:var(--text-muted);font-size:.88rem;margin-bottom:20px}
-    .file-drop{border:2px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;color:var(--text-muted);cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:16px}
-    .file-drop:hover,.file-drop.dragover{border-color:var(--purple);background:var(--purple-light)}
-    .file-drop input{display:none}
-
-    /* STATUS BANNER */
-    .status-banner{padding:10px 20px;text-align:center;font-size:.82rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
-    .status-banner.connected{background:#dcfce7;color:#16a34a;border-bottom:1px solid #86efac}
-    .status-banner.offline{background:#fef3c7;color:#92400e;border-bottom:1px solid #fde68a}
-    .status-banner .pulse-dot{width:8px;height:8px;border-radius:50%;animation:blink 1.8s infinite}
-    .status-banner.connected .pulse-dot{background:#16a34a}
-    .status-banner.offline .pulse-dot{background:#f59e0b}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-
-    /* LOADER */
-    #loaderOverlay{display:none;position:fixed;inset:0;background:rgba(29,5,48,.5);backdrop-filter:blur(6px);z-index:400;align-items:center;justify-content:center}
-    #loaderOverlay.active{display:flex}
-    .loader-box{background:#fff;border-radius:20px;padding:40px 52px;text-align:center;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;align-items:center;gap:16px;animation:fadeUp .2s ease}
-    .loader-spinner{width:46px;height:46px;border:4px solid var(--purple-light);border-top-color:var(--purple);border-radius:50%;animation:spin .75s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .loader-msg{color:var(--text-muted);font-size:.9rem;font-weight:500;letter-spacing:.01em}
-
-    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-
-    /* TABS */
-    .tab-nav{display:flex;gap:0;background:#fff;border-bottom:2px solid var(--border);margin-bottom:28px;border-radius:var(--radius) var(--radius) 0 0;overflow:hidden}
-    .tab-btn{flex:1;padding:14px 20px;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .2s;position:relative;display:flex;align-items:center;justify-content:center;gap:8px}
-    .tab-btn:hover{background:var(--purple-light);color:var(--purple-dark)}
-    .tab-btn.active{color:var(--purple-dark);background:var(--purple-light)}
-    .tab-btn.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:3px;background:var(--purple);border-radius:3px 3px 0 0}
-    .tab-content{display:none;animation:fadeUp .3s ease}
-    .tab-content.active{display:block}
-
-    /* INVENTORY TABLE */
-    .prod-img-thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--bg-soft);border:1px solid var(--border)}
-    .prod-badge{display:inline-block;padding:2px 8px;border-radius:var(--radius-full);font-size:.7rem;font-weight:700;text-transform:uppercase}
-    .prod-badge-sale{background:#fef3c7;color:#92400e}
-    .prod-badge-new{background:#dbeafe;color:#1e40af}
-    .prod-badge-hot{background:#fee2e2;color:#dc2626}
-    .qty-inline{width:60px;padding:4px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.85rem;text-align:center;outline:none}
-    .qty-inline:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-glow)}
-    .featured-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
-    .featured-dot.yes{background:#16a34a}
-    .featured-dot.no{background:#d1d5db}
-
-    /* PRODUCT MODAL */
-    .prod-modal .modal-box{max-width:580px;max-height:90vh;overflow-y:auto}
-    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .form-grid .full{grid-column:1/-1}
-    .form-field{display:flex;flex-direction:column;gap:4px}
-    .form-field label{font-size:.8rem;font-weight:600;color:var(--text-muted)}
-    .form-field input,.form-field select,.form-field textarea{padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s}
-    .form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-glow)}
-    .form-field textarea{min-height:80px;resize:vertical}
-
-    /* PRODUCT IMPORT MODAL */
-    .prod-import-modal .modal-box{max-width:780px;max-height:90vh;overflow-y:auto}
-    .import-step{display:none}
-    .import-step.active{display:block}
-    .mapping-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:8px 12px;align-items:center;margin:16px 0}
-    .mapping-grid .map-label{font-size:.82rem;font-weight:600;color:var(--text)}
-    .mapping-grid .map-arrow{color:var(--text-light);font-size:1.1rem}
-    .mapping-grid select{padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.82rem;background:#fff;color:var(--text);cursor:pointer;outline:none}
-    .mapping-grid select:focus{border-color:var(--purple)}
-    .archive-banner{display:flex;align-items:center;gap:10px;padding:14px 20px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:var(--radius-sm);margin-bottom:20px;font-size:.88rem;color:#92400e;font-weight:500}
-    .archive-banner .archive-icon{font-size:1.4rem}
-    .preview-table-wrap{max-height:280px;overflow:auto;border:1px solid var(--border);border-radius:var(--radius-sm);margin:16px 0}
-    .preview-table{width:100%;border-collapse:collapse;font-size:.78rem}
-    .preview-table th{background:var(--purple-light);padding:8px 10px;text-align:left;font-weight:600;color:var(--purple-dark);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0;z-index:1}
-    .preview-table td{padding:6px 10px;border-top:1px solid var(--border);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .preview-table tr:hover td{background:#fdf8ff}
-    .import-summary{background:var(--purple-light);border-radius:var(--radius-sm);padding:16px;margin:12px 0;font-size:.88rem}
-    .import-summary strong{color:var(--purple-dark)}
-    .import-actions{display:flex;gap:10px;margin-top:20px}
-    .import-actions .btn{flex:1}
-    .import-info{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#dbeafe;border-radius:var(--radius-sm);font-size:.82rem;color:#1e40af;margin-bottom:12px}
-    .import-warning{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fef3c7;border-radius:var(--radius-sm);font-size:.82rem;color:#92400e;margin-bottom:12px}
-    .dup-tag{display:inline-block;padding:1px 6px;border-radius:var(--radius-full);font-size:.68rem;font-weight:600;background:#fef3c7;color:#92400e}
-    .new-tag{display:inline-block;padding:1px 6px;border-radius:var(--radius-full);font-size:.68rem;font-weight:600;background:#dcfce7;color:#16a34a}
-    .cat-select-inline{padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.82rem;min-width:120px}
-
-    @media(max-width:768px){.topbar{padding:12px 16px}.main{padding:20px 16px}.stats{grid-template-columns:1fr 1fr}.toolbar{flex-direction:column;align-items:stretch}.toolbar-search{max-width:100%}.form-grid{grid-template-columns:1fr}.mapping-grid{grid-template-columns:1fr}}
-    @media(max-width:480px){.stats{grid-template-columns:1fr}.login-card{padding:32px 24px}.tab-nav{flex-direction:column}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TREVO | Advanced Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+tailwind.config={theme:{extend:{fontFamily:{heading:['"Playfair Display"','serif'],sans:['Poppins','sans-serif']},colors:{sage:{50:'#f4f6f4',100:'#e6ebe5',600:'#7D8F7A',700:'#677764'},blush:{50:'#fdf8f8',100:'#f7e7e7',200:'#E9C7C7'},ivory:'#FAF9F5',rosegold:'#B76E79'}}}}
+</script>
+<style>
+[v-cloak]{display:none}.glass{background:rgba(255,255,255,.82);backdrop-filter:blur(14px)}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:#FAF9F5}::-webkit-scrollbar-thumb{background:#7D8F7A;border-radius:9px}
+.fade{animation:fade .25s ease}@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
 </head>
-<body>
+<body class="bg-ivory text-gray-800 font-sans antialiased">
+<div id="app" v-cloak>
+  <div v-if="!loggedIn" class="min-h-screen bg-gradient-to-br from-sage-50 via-ivory to-blush-100 flex items-center justify-center p-6">
+    <form @submit.prevent="login" class="w-full max-w-md bg-white/90 glass border border-sage-100 shadow-2xl rounded-3xl p-8 text-center">
+      <div class="font-heading text-4xl font-black tracking-widest">TREVO</div>
+      <div class="text-[10px] tracking-[.35em] text-rosegold uppercase mt-1">Store Management</div>
+      <h1 class="font-heading text-2xl mt-8">Welcome Back</h1>
+      <p class="text-sm text-gray-500 mt-2 mb-6">Manage products, pricing, inventory and orders.</p>
+      <input v-model="password" type="password" placeholder="Admin password" class="w-full bg-ivory border border-sage-100 rounded-xl px-4 py-3 outline-none focus:border-sage-600">
+      <p v-if="loginError" class="text-red-600 text-xs mt-3">{{loginError}}</p>
+      <button class="w-full bg-sage-600 hover:bg-sage-700 text-white rounded-xl py-3 mt-5 font-semibold tracking-wider uppercase text-xs">Open Dashboard</button>
+    </form>
+  </div>
 
-  <!-- LOGIN -->
-  <div class="login-wrapper" id="loginScreen">
-    <div class="login-card">
-      <img src="logo.png" alt="Trevo" />
-      <h1>Admin Panel</h1>
-      <p>Enter your password to access order management.</p>
-      <div class="login-error" id="loginError">❌ Incorrect password. Try again.</div>
-      <input type="password" class="login-input" id="passwordInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')attemptLogin()" autofocus />
-      <button class="btn btn-primary" onclick="attemptLogin()">🔐 Login</button>
+  <div v-else class="min-h-screen">
+    <div class="bg-sage-600 text-white text-[11px] tracking-widest uppercase text-center py-2">
+      {{firebaseConnected ? '● Live Firebase Connected' : '○ Firebase Offline — check firebase-config.js'}}
+    </div>
+    <header class="sticky top-0 z-30 glass border-b border-sage-100">
+      <div class="max-w-[1500px] mx-auto px-4 lg:px-6 h-20 flex items-center justify-between">
+        <div>
+          <div class="font-heading text-3xl font-black tracking-widest">TREVO</div>
+          <div class="text-[9px] tracking-[.3em] text-rosegold uppercase -mt-1">Advanced Admin</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="index.html" target="_blank" class="hidden sm:inline-flex border border-sage-100 bg-white rounded-full px-4 py-2 text-xs font-semibold hover:border-sage-600">View Store ↗</a>
+          <button @click="logout" class="text-xs text-gray-500 hover:text-rosegold">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid lg:grid-cols-[230px_1fr] gap-6">
+      <aside class="bg-white border border-sage-100 rounded-2xl p-3 h-fit lg:sticky lg:top-28">
+        <button v-for="item in nav" :key="item.id" @click="tab=item.id"
+          :class="tab===item.id?'bg-sage-600 text-white shadow-md':'hover:bg-sage-50 text-gray-600'"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-left transition">
+          <span>{{item.icon}}</span><span>{{item.label}}</span>
+        </button>
+      </aside>
+
+      <main class="min-w-0">
+        <section v-if="tab==='dashboard'" class="fade space-y-6">
+          <div class="flex flex-wrap items-end justify-between gap-3">
+            <div><p class="text-[10px] uppercase tracking-[.35em] text-rosegold font-bold">Business Overview</p><h1 class="font-heading text-3xl mt-1">Dashboard</h1></div>
+            <button @click="importWorkbookCatalog" class="bg-sage-600 hover:bg-sage-700 text-white rounded-xl px-5 py-3 text-xs font-semibold">Import Workbook Catalog</button>
+          </div>
+          <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div v-for="k in kpis" :key="k.label" class="bg-white border border-sage-100 rounded-2xl p-5 shadow-sm">
+              <div class="text-2xl">{{k.icon}}</div><div class="text-[10px] uppercase tracking-widest text-gray-400 mt-3">{{k.label}}</div>
+              <div class="font-heading text-3xl mt-1">{{k.value}}</div><div class="text-xs text-gray-400 mt-1">{{k.note}}</div>
+            </div>
+          </div>
+          <div class="grid xl:grid-cols-3 gap-6">
+            <div class="xl:col-span-2 bg-white border border-sage-100 rounded-2xl p-5">
+              <div class="flex justify-between items-center mb-5"><h2 class="font-heading text-xl">Inventory Health</h2><span class="text-xs text-gray-400">{{products.length}} products</span></div>
+              <div class="space-y-4">
+                <div v-for="p in lowStockProducts.slice(0,8)" :key="p.id" class="flex items-center gap-4">
+                  <img :src="p.img||fallbackImage" class="w-12 h-12 rounded-xl object-cover bg-sage-50">
+                  <div class="min-w-0 flex-1"><div class="text-sm font-semibold truncate">{{p.name}}</div><div class="text-xs text-gray-400">{{p.sku}} • {{p.quantity}} units</div></div>
+                  <span :class="p.quantity===0?'bg-red-50 text-red-600':'bg-amber-50 text-amber-600'" class="px-3 py-1 rounded-full text-[10px] font-bold">{{p.quantity===0?'OUT':'LOW'}}</span>
+                </div>
+                <p v-if="!lowStockProducts.length" class="text-sm text-gray-400 py-8 text-center">All products have healthy stock.</p>
+              </div>
+            </div>
+            <div class="bg-white border border-sage-100 rounded-2xl p-5">
+              <h2 class="font-heading text-xl mb-5">Recent Orders</h2>
+              <div class="space-y-4">
+                <div v-for="o in orders.slice(0,6)" :key="o.orderId" class="border-b border-sage-50 pb-3">
+                  <div class="flex justify-between gap-3"><span class="text-sm font-semibold">{{o.orderId}}</span><span class="text-xs text-rosegold">Rs. {{money(o.total)}}</span></div>
+                  <div class="text-xs text-gray-400 mt-1">{{customerName(o)}} • {{o.status||'Pending'}}</div>
+                </div>
+                <p v-if="!orders.length" class="text-sm text-gray-400 py-8 text-center">No orders yet.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="tab==='products'" class="fade space-y-5">
+          <div class="flex flex-wrap gap-3 justify-between items-end">
+            <div><p class="text-[10px] uppercase tracking-[.35em] text-rosegold font-bold">Live Store Catalog</p><h1 class="font-heading text-3xl mt-1">Products & Prices</h1></div>
+            <div class="flex gap-2"><button @click="exportProducts" class="border border-sage-100 bg-white rounded-xl px-4 py-3 text-xs">Export CSV</button><button @click="openProduct()" class="bg-sage-600 text-white rounded-xl px-5 py-3 text-xs font-semibold">+ Add Product</button></div>
+          </div>
+          <div class="bg-white border border-sage-100 rounded-2xl p-4 flex flex-wrap gap-3">
+            <input v-model="productSearch" placeholder="Search product, SKU or category..." class="flex-1 min-w-[220px] bg-ivory border border-sage-100 rounded-xl px-4 py-3 text-sm outline-none focus:border-sage-600">
+            <select v-model="categoryFilter" class="bg-ivory border border-sage-100 rounded-xl px-4 py-3 text-sm">
+              <option value="">All categories</option><option v-for="c in categories" :key="c">{{c}}</option>
+            </select>
+          </div>
+          <div class="bg-white border border-sage-100 rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full min-w-[950px] text-sm">
+                <thead class="bg-sage-50 text-[10px] uppercase tracking-widest text-gray-500"><tr>
+                  <th class="p-4 text-left">Product</th><th class="p-4 text-left">SKU</th><th class="p-4 text-left">Category</th>
+                  <th class="p-4 text-right">Price</th><th class="p-4 text-right">Sale</th><th class="p-4 text-center">Stock</th><th class="p-4 text-center">Status</th><th class="p-4"></th>
+                </tr></thead>
+                <tbody>
+                  <tr v-for="p in filteredProducts" :key="p.id" class="border-t border-sage-50 hover:bg-ivory/50">
+                    <td class="p-4"><div class="flex items-center gap-3"><img :src="p.img||fallbackImage" class="w-14 h-14 rounded-xl object-cover bg-sage-50"><div><div class="font-semibold">{{p.name}}</div><div class="text-xs text-gray-400">{{p.collection||p.style}}</div></div></div></td>
+                    <td class="p-4 text-gray-500">{{p.sku||p.id}}</td><td class="p-4">{{p.category}}</td>
+                    <td class="p-4 text-right font-semibold">Rs. {{money(p.price)}}</td><td class="p-4 text-right text-rosegold">{{p.salePrice?('Rs. '+money(p.salePrice)):'—'}}</td>
+                    <td class="p-4 text-center"><input type="number" min="0" :value="p.quantity" @change="quickStock(p,$event.target.value)" class="w-20 text-center border border-sage-100 rounded-lg px-2 py-2"></td>
+                    <td class="p-4 text-center"><span :class="p.quantity>0?'bg-green-50 text-green-700':'bg-red-50 text-red-600'" class="text-[10px] font-bold px-3 py-1 rounded-full">{{p.quantity>0?'IN STOCK':'OUT'}}</span></td>
+                    <td class="p-4 text-right"><button @click="openProduct(p)" class="text-sage-600 font-semibold mr-3">Edit</button><button @click="deleteProduct(p)" class="text-red-500">Delete</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-if="!filteredProducts.length" class="text-center text-gray-400 py-14">No matching products.</div>
+          </div>
+        </section>
+
+        <section v-if="tab==='inventory'" class="fade space-y-5">
+          <div><p class="text-[10px] uppercase tracking-[.35em] text-rosegold font-bold">Stock Control</p><h1 class="font-heading text-3xl mt-1">Inventory & Variants</h1></div>
+          <div class="grid sm:grid-cols-3 gap-4">
+            <div class="bg-white border border-sage-100 rounded-2xl p-5"><p class="text-xs text-gray-400">Total Units</p><p class="font-heading text-3xl mt-2">{{totalUnits}}</p></div>
+            <div class="bg-white border border-sage-100 rounded-2xl p-5"><p class="text-xs text-gray-400">Retail Stock Value</p><p class="font-heading text-3xl mt-2">Rs. {{money(retailValue)}}</p></div>
+            <div class="bg-white border border-sage-100 rounded-2xl p-5"><p class="text-xs text-gray-400">Low / Out of Stock</p><p class="font-heading text-3xl mt-2">{{lowStockProducts.length}}</p></div>
+          </div>
+          <div class="bg-white border border-sage-100 rounded-2xl overflow-hidden">
+            <div v-for="p in products" :key="p.id" class="border-b border-sage-50 p-5">
+              <div class="flex flex-wrap justify-between gap-3">
+                <div class="flex gap-3"><img :src="p.img||fallbackImage" class="w-14 h-14 rounded-xl object-cover"><div><div class="font-semibold">{{p.name}}</div><div class="text-xs text-gray-400">{{p.sku}} • Total {{p.quantity}}</div></div></div>
+                <button @click="openProduct(p)" class="text-xs border border-sage-100 rounded-xl px-4 py-2">Manage variants</button>
+              </div>
+              <div v-if="p.variants?.length" class="grid sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-4">
+                <div v-for="v in p.variants" :key="v.sku" class="bg-ivory rounded-xl p-3 flex justify-between"><div><div class="text-sm font-medium">{{v.color}}</div><div class="text-[10px] text-gray-400">{{v.sku}}</div></div><div class="font-semibold">{{Number(v.stock||0)}}</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="tab==='orders'" class="fade space-y-5">
+          <div><p class="text-[10px] uppercase tracking-[.35em] text-rosegold font-bold">Customer Orders</p><h1 class="font-heading text-3xl mt-1">Orders</h1></div>
+          <div class="bg-white border border-sage-100 rounded-2xl p-4 flex flex-wrap gap-3">
+            <input v-model="orderSearch" placeholder="Search order, customer or phone..." class="flex-1 min-w-[220px] bg-ivory border border-sage-100 rounded-xl px-4 py-3 text-sm">
+            <select v-model="orderFilter" class="bg-ivory border border-sage-100 rounded-xl px-4 py-3 text-sm"><option value="">All statuses</option><option v-for="s in statuses" :key="s">{{s}}</option></select>
+          </div>
+          <div class="space-y-4">
+            <div v-for="o in filteredOrders" :key="o.orderId" class="bg-white border border-sage-100 rounded-2xl p-5">
+              <div class="flex flex-wrap justify-between gap-4">
+                <div><div class="font-semibold">{{o.orderId}}</div><div class="text-xs text-gray-400 mt-1">{{customerName(o)}} • {{customerPhone(o)}} • {{o.city||o.customer?.city||''}}</div></div>
+                <div class="text-right"><div class="font-heading text-xl">Rs. {{money(o.total)}}</div><select :value="o.status||'Pending'" @change="changeOrderStatus(o,$event.target.value)" class="mt-2 border border-sage-100 rounded-lg px-3 py-2 text-xs"><option v-for="s in statuses" :key="s">{{s}}</option></select></div>
+              </div>
+              <div class="grid md:grid-cols-2 gap-3 mt-4">
+                <div v-for="item in o.items||[]" :key="item.id+item.color" class="bg-ivory rounded-xl p-3 text-sm flex justify-between"><span>{{item.name}} <span class="text-gray-400">× {{item.qty||item.quantity||1}}</span></span><span>Rs. {{money(Number(item.price||0)*Number(item.qty||item.quantity||1))}}</span></div>
+              </div>
+            </div>
+            <div v-if="!filteredOrders.length" class="bg-white border border-sage-100 rounded-2xl text-center py-16 text-gray-400">No orders found.</div>
+          </div>
+        </section>
+
+        <section v-if="tab==='images'" class="fade space-y-5">
+          <div><p class="text-[10px] uppercase tracking-[.35em] text-rosegold font-bold">Approved GitHub Images</p><h1 class="font-heading text-3xl mt-1">Image Library</h1></div>
+          <p class="text-sm text-gray-500">These are the real image links you supplied. Click any image to copy its URL.</p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <button v-for="url in imageLibrary" :key="url" @click="copyUrl(url)" class="bg-white border border-sage-100 rounded-2xl p-2 hover:shadow-lg transition text-left">
+              <img :src="url" class="w-full aspect-square object-cover rounded-xl bg-sage-50"><div class="text-[10px] text-gray-400 truncate mt-2">Copy image URL</div>
+            </button>
+          </div>
+        </section>
+      </main>
     </div>
   </div>
 
-  <!-- DASHBOARD -->
-  <div class="dashboard" id="dashboard">
-    <!-- Firebase Status Banner -->
-    <div class="status-banner" id="firebaseBanner" style="display:none;"></div>
-    <div class="topbar">
-      <div class="topbar-left">
-        <img src="logo.png" alt="Trevo" />
-        <h1>Admin</h1>
-        <span>DASHBOARD</span>
+  <!-- Product Editor -->
+  <div v-if="productModal" class="fixed inset-0 z-50 bg-black/40 p-3 sm:p-6 overflow-y-auto" @click.self="closeProduct">
+    <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden fade">
+      <div class="bg-gradient-to-r from-sage-50 to-blush-50 border-b border-sage-100 p-6 flex justify-between">
+        <div><p class="text-[10px] tracking-[.3em] uppercase text-rosegold font-bold">Catalog Editor</p><h2 class="font-heading text-2xl">{{editing._docId?'Edit Product':'Add Product'}}</h2></div>
+        <button @click="closeProduct" class="text-2xl text-gray-400">×</button>
       </div>
-      <div class="topbar-right">
-        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">📥 Export CSV</button>
-        <button class="btn btn-ghost btn-sm" onclick="openImportModal()">📤 Import CSV</button>
-        <a href="index.html" class="btn btn-ghost btn-sm">🏪 Store</a>
-        <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
-      </div>
-    </div>
-
-    <div class="main">
-      <!-- Tab Navigation -->
-      <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchTab('orders',this)">📦 Orders</button>
-        <button class="tab-btn" onclick="switchTab('inventory',this)">🏪 Inventory</button>
-        <button class="tab-btn" onclick="switchTab('archive',this)">📦 Archived</button>
-      </div>
-
-      <!-- ORDERS TAB -->
-      <div class="tab-content active" id="tab-orders">
-        <div class="stats">
-          <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-label">Total Orders</div><div class="stat-value" id="statOrders">0</div></div>
-          <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-label">Total Revenue</div><div class="stat-value" id="statRevenue">Rs. 0</div></div>
-          <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-value" id="statPending">0</div></div>
-          <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-label">Delivered</div><div class="stat-value" id="statDelivered">0</div></div>
-        </div>
-        <div class="toolbar">
-          <div class="toolbar-search">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="searchInput" placeholder="Search orders…" oninput="renderOrders()" />
+      <form @submit.prevent="saveProduct" class="p-6 space-y-7">
+        <div class="grid md:grid-cols-[220px_1fr] gap-6">
+          <div>
+            <img :src="editing.img||fallbackImage" class="w-full aspect-square object-cover rounded-2xl bg-sage-50 border border-sage-100">
+            <button type="button" @click="imagePicker=true" class="w-full mt-3 border border-sage-100 rounded-xl py-3 text-xs font-semibold">Choose from Image Library</button>
+            <input v-model="editing.img" placeholder="Or paste image URL" class="w-full mt-2 border border-sage-100 rounded-xl px-3 py-3 text-xs">
           </div>
-          <select id="statusFilter" onchange="renderOrders()">
-            <option value="All">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Confirmed">Confirmed</option>
-            <option value="Shipped">Shipped</option>
-            <option value="Delivered">Delivered</option>
-          </select>
-          <button class="btn btn-danger btn-sm" onclick="clearAllOrders()">🗑 Clear All</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Order #</th><th>Date</th><th>Items</th><th>Delivery</th><th>Total</th><th>Status</th><th></th></tr></thead>
-            <tbody id="ordersBody"></tbody>
-          </table>
-          <div class="empty-state" id="emptyState" style="display:none;"><div class="icon">📋</div><h3>No orders yet</h3><p>Orders placed via WhatsApp checkout will appear here.</p></div>
-        </div>
-      </div>
-
-      <!-- INVENTORY TAB -->
-      <div class="tab-content" id="tab-inventory">
-        <div class="stats">
-          <div class="stat-card"><div class="stat-icon">🏷️</div><div class="stat-label">Total Products</div><div class="stat-value" id="statProducts">0</div></div>
-          <div class="stat-card"><div class="stat-icon">📂</div><div class="stat-label">Categories</div><div class="stat-value" id="statCategories">0</div></div>
-          <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-label">Low Stock (≤5)</div><div class="stat-value" id="statLowStock">0</div></div>
-          <div class="stat-card"><div class="stat-icon">🚫</div><div class="stat-label">Out of Stock</div><div class="stat-value" id="statOutOfStock">0</div></div>
-        </div>
-        <div class="toolbar">
-          <div class="toolbar-search">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="prodSearchInput" placeholder="Search products…" oninput="renderProducts()" />
-          </div>
-          <select id="prodCategoryFilter" onchange="renderProducts()"><option value="All">All Categories</option></select>
-          <button class="btn btn-ghost btn-sm" onclick="openProdImportModal()">📤 Import Products CSV</button>
-          <button class="btn btn-ghost btn-sm" onclick="exportProductsCSV()">📥 Export Products</button>
-          <button class="btn btn-success btn-sm" onclick="repairExistingProductImages()">🖼 Fix Existing Images</button>
-          <button class="btn btn-primary btn-sm" onclick="openProductModal()">＋ Add Product</button>
-          <button class="btn btn-danger btn-sm" onclick="archiveAllCurrentProducts()">📦 Archive Current Products</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th style="width:50px"></th><th>Name</th><th>Category</th><th>Price</th><th>Qty</th><th>Badge</th><th>Featured</th><th></th></tr></thead>
-            <tbody id="productsBody"></tbody>
-          </table>
-          <div class="empty-state" id="emptyProducts" style="display:none;"><div class="icon">🏷️</div><h3>No products</h3><p>Add your first product to get started.</p></div>
-        </div>
-      </div>
-
-      <!-- ARCHIVED PRODUCTS TAB -->
-      <div class="tab-content" id="tab-archive">
-        <div class="archive-banner">
-          <span class="archive-icon">📦</span>
-          <span>These are your old/archived products. They are <strong>not visible</strong> on your store — only you can see them here.</span>
-        </div>
-        <div class="stats">
-          <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-label">Archived Products</div><div class="stat-value" id="statArchived">0</div></div>
-          <div class="stat-card"><div class="stat-icon">📂</div><div class="stat-label">Categories</div><div class="stat-value" id="statArchiveCats">0</div></div>
-        </div>
-        <div class="toolbar">
-          <div class="toolbar-search">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="archiveSearchInput" placeholder="Search archived products…" oninput="renderArchivedProducts()" />
+          <div class="grid sm:grid-cols-2 gap-4">
+            <label class="sm:col-span-2 text-xs">Product Name<input required v-model="editing.name" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">SKU<input required v-model="editing.sku" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Category<input v-model="editing.category" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Collection<input v-model="editing.collection" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Style<input v-model="editing.style" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Regular Price (PKR)<input required type="number" min="0" v-model.number="editing.price" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Sale Price (PKR)<input type="number" min="0" v-model.number="editing.salePrice" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Wholesale Cost<input type="number" min="0" v-model.number="editing.wholesaleCost" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Stock Quantity<input type="number" min="0" v-model.number="editing.quantity" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs sm:col-span-2">Colors (comma separated)<input v-model="editing.colorsText" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs sm:col-span-2">Description<textarea v-model="editing.description" rows="3" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></textarea></label>
+            <label class="text-xs">Material<input v-model="editing.material" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Pattern<input v-model="editing.pattern" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs sm:col-span-2">Features (semicolon separated)<input v-model="editing.featuresText" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs sm:col-span-2">Care Instructions<textarea v-model="editing.careInstructions" rows="2" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></textarea></label>
+            <label class="text-xs sm:col-span-2">SEO Keywords<input v-model="editing.seoKeywords" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
           </div>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th style="width:50px"></th><th>Name</th><th>Category</th><th>Price</th><th>Qty</th><th>Archived On</th><th></th></tr></thead>
-            <tbody id="archivedBody"></tbody>
-          </table>
-          <div class="empty-state" id="emptyArchive" style="display:none;"><div class="icon">📦</div><h3>No archived products</h3><p>When you archive products, they'll appear here.</p></div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- IMPORT MODAL -->
-  <div class="modal-bg" id="importModal" onclick="if(event.target===this)closeImportModal()">
-    <div class="modal-box">
-      <h2>📤 Import Orders CSV</h2>
-      <p>Upload a previously exported CSV file to restore or merge orders.</p>
-      <div class="file-drop" id="fileDrop" onclick="document.getElementById('csvFile').click()">
-        <div style="font-size:2rem;margin-bottom:8px;">📁</div>
-        <div>Click or drag a CSV file here</div>
-        <input type="file" id="csvFile" accept=".csv" onchange="handleFileSelect(this)" />
-      </div>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-ghost btn-sm" onclick="closeImportModal()" style="flex:1">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PRODUCT MODAL -->
-  <div class="modal-bg prod-modal" id="productModal" onclick="if(event.target===this)closeProductModal()">
-    <div class="modal-box">
-      <h2 id="prodModalTitle">＋ Add New Product</h2>
-      <p id="prodModalDesc">Fill in the product details below.</p>
-      <form onsubmit="return false;" style="margin-top:12px;">
-        <div class="form-grid">
-          <div class="form-field"><label>Product Name *</label><input type="text" id="pf_name" required placeholder="e.g. Silicone Sponge" /></div>
-          <div class="form-field"><label>Category *</label><input type="text" id="pf_category" required placeholder="e.g. Kitchen" /></div>
-          <div class="form-field"><label>Price (Rs.) *</label><input type="number" id="pf_price" required min="1" placeholder="299" /></div>
-          <div class="form-field"><label>Old Price (Rs.)</label><input type="number" id="pf_oldPrice" min="0" placeholder="499 (optional)" /></div>
-          <div class="form-field"><label>Quantity</label><input type="number" id="pf_quantity" min="0" value="0" /></div>
-          <div class="form-field"><label>Badge</label><select id="pf_badge"><option value="">None</option><option value="sale">Sale</option><option value="new">New</option><option value="hot">Hot</option></select></div>
-          <div class="form-field full"><label>Image URL *</label><input type="url" id="pf_img" required placeholder="https://cdn.shopify.com/..." /></div>
-          <div class="form-field full"><label>Short Description *</label><input type="text" id="pf_desc" required placeholder="Brief one-line description" /></div>
-          <div class="form-field full"><label>Detailed HTML (optional)</label><textarea id="pf_bodyHtml" placeholder="Rich HTML body content…"></textarea></div>
-          <div class="form-field full" style="flex-direction:row;align-items:center;gap:8px;"><input type="checkbox" id="pf_featured" style="width:18px;height:18px;" /><label style="margin:0;">Show on Homepage (Featured)</label></div>
+        <div>
+          <div class="flex justify-between items-center"><h3 class="font-heading text-xl">Color Variants</h3><button type="button" @click="addVariant" class="text-xs text-sage-600 font-semibold">+ Add Variant</button></div>
+          <div class="space-y-3 mt-3">
+            <div v-for="(v,i) in editing.variants" :key="i" class="grid sm:grid-cols-5 gap-2 bg-ivory p-3 rounded-xl">
+              <input v-model="v.color" placeholder="Color" class="border border-sage-100 rounded-lg px-3 py-2 text-xs">
+              <input v-model="v.sku" placeholder="Variant SKU" class="border border-sage-100 rounded-lg px-3 py-2 text-xs">
+              <input v-model="v.barcode" placeholder="Barcode" class="border border-sage-100 rounded-lg px-3 py-2 text-xs">
+              <input type="number" min="0" v-model.number="v.stock" placeholder="Stock" class="border border-sage-100 rounded-lg px-3 py-2 text-xs">
+              <button type="button" @click="editing.variants.splice(i,1)" class="text-red-500 text-xs">Remove</button>
+            </div>
+          </div>
         </div>
-        <input type="hidden" id="pf_editId" value="" />
-        <div style="display:flex;gap:10px;margin-top:20px;">
-          <button class="btn btn-ghost btn-sm" type="button" onclick="closeProductModal()" style="flex:1">Cancel</button>
-          <button class="btn btn-primary btn-sm" type="button" onclick="saveProductForm()" style="flex:1">💾 Save Product</button>
+
+        <div class="flex flex-wrap justify-end gap-3 border-t border-sage-50 pt-5">
+          <button type="button" @click="closeProduct" class="border border-sage-100 rounded-xl px-5 py-3 text-xs">Cancel</button>
+          <button :disabled="saving" class="bg-sage-600 text-white rounded-xl px-6 py-3 text-xs font-semibold disabled:opacity-50">{{saving?'Saving…':'Save to Firebase'}}</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- PRODUCT IMPORT MODAL -->
-  <div class="modal-bg prod-import-modal" id="prodImportModal" onclick="if(event.target===this)closeProdImportModal()">
-    <div class="modal-box">
-      <!-- Step 1: File Upload -->
-      <div class="import-step active" id="importStep1">
-        <h2>📤 Import Products from CSV</h2>
-        <p>Upload your product CSV. Image links will be repaired automatically and products will be organized into four TREVO categories.</p>
-        <div class="import-info">💡 Supports Shopify exports, WhatsApp/Meta catalog exports, and any CSV or TSV file with product columns.</div>
-        <div class="file-drop" id="prodFileDrop" onclick="document.getElementById('prodCsvFile').click()">
-          <div style="font-size:2rem;margin-bottom:8px;">📁</div>
-          <div>Click or drag a CSV / TSV file here</div>
-          <input type="file" id="prodCsvFile" accept=".csv,.tsv,.txt" onchange="handleProdFileSelect(this)" />
-        </div>
-        <div class="import-actions">
-          <button class="btn btn-ghost btn-sm" onclick="closeProdImportModal()">Cancel</button>
-        </div>
-      </div>
-
-      <!-- Step 2: Column Mapping -->
-      <div class="import-step" id="importStep2">
-        <h2>🔗 Map CSV Columns</h2>
-        <p>We auto-detected column mappings. Adjust if needed.</p>
-        <div class="mapping-grid" id="mappingGrid"></div>
-        <div class="import-info" style="margin:12px 0">
-          👜 Categories are assigned automatically as: <strong>Tote Bags</strong>,
-          <strong>Pearl Bags</strong>, <strong>Premium Collection</strong>, and
-          <strong>Everyday Handbags</strong>. You can adjust any category in the preview.
-        </div>
-        <input type="hidden" id="importDefaultCategory" value="Everyday Handbags" />
-        <div class="import-actions">
-          <button class="btn btn-ghost btn-sm" onclick="goToImportStep(1)">← Back</button>
-          <button class="btn btn-primary btn-sm" onclick="previewImport()">Preview →</button>
-        </div>
-      </div>
-
-      <!-- Step 3: Preview & Confirm -->
-      <div class="import-step" id="importStep3">
-        <h2>👀 Preview Import</h2>
-        <div class="import-summary" id="importSummary"></div>
-        <div class="preview-table-wrap">
-          <table class="preview-table">
-            <thead><tr><th></th><th>Name</th><th>Category</th><th>Price</th><th>Old Price</th><th>Image</th><th>Status</th></tr></thead>
-            <tbody id="importPreviewBody"></tbody>
-          </table>
-        </div>
-        <div class="import-actions">
-          <button class="btn btn-ghost btn-sm" onclick="goToImportStep(2)">← Back</button>
-          <button class="btn btn-primary btn-sm" id="confirmImportBtn" onclick="confirmProductImport()">✅ Import Products</button>
-        </div>
+  <!-- Image Picker -->
+  <div v-if="imagePicker" class="fixed inset-0 z-[60] bg-black/50 p-4 overflow-y-auto" @click.self="imagePicker=false">
+    <div class="max-w-5xl mx-auto bg-white rounded-3xl p-6">
+      <div class="flex justify-between mb-5"><h2 class="font-heading text-2xl">Select Product Image</h2><button @click="imagePicker=false" class="text-2xl">×</button></div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+        <button v-for="url in imageLibrary" :key="url" @click="selectImage(url)" class="border border-sage-100 rounded-xl p-2 hover:border-sage-600"><img :src="url" class="w-full aspect-square rounded-lg object-cover"></button>
       </div>
     </div>
   </div>
 
-  <!-- LOADER -->
-  <div id="loaderOverlay">
-    <div class="loader-box">
-      <div class="loader-spinner"></div>
-      <div class="loader-msg" id="loaderMsg">Loading…</div>
-    </div>
-  </div>
+  <div v-if="toast" class="fixed bottom-5 right-5 z-[70] bg-gray-900 text-white px-5 py-3 rounded-xl shadow-xl text-sm">{{toast}}</div>
+</div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
+<script>
+const {createApp,ref,computed,onMounted}=Vue;
+const WORKBOOK_PRODUCTS=[{"id": "TRV-HJ-001", "sku": "TRV-HJ-001", "name": "Trevo Noor Mini Handbag", "collection": "Noor Collection", "category": "Handbags", "subCategory": "Mini Handbag", "style": "Top Handle", "colors": ["Mustard", "Maroon"], "material": "Faux Leather", "pattern": "Illustrated Hijab Print", "hardwareColor": "Gold", "description": "Compact top-handle handbag featuring an elegant modest-fashion illustration.", "features": ["Dual handles", "Zip closure", "Structured body"], "careInstructions": "Wipe gently with a soft dry cloth; keep away from moisture and direct heat.", "slug": "trevo-noor-mini-handbag", "seoKeywords": "Trevo Noor Mini Handbag, TREVO bags Pakistan, Mini Handbag, Top Handle, women handbags, online bags Pakistan", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #MiniHandbag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_td0mxktd0mxktd0m.png", "variants": [{"sku": "TRV-HJ-001-MST", "color": "Mustard", "barcode": "TRV0010001", "stock": 0, "status": "Active"}, {"sku": "TRV-HJ-001-MRN", "color": "Maroon", "barcode": "TRV0010002", "stock": 0, "status": "Active"}]}, {"id": "TRV-PC-001", "sku": "TRV-PC-001", "name": "Trevo Pearl Grace Shoulder Bag", "collection": "Pearl Grace Collection", "category": "Handbags", "subCategory": "Shoulder Bag", "style": "Shoulder / Evening", "colors": ["Black", "Navy Blue", "Emerald Green", "Plum"], "material": "Fabric / Faux Leather", "pattern": "Solid Pleated", "hardwareColor": "Gold & Pearl", "description": "Soft shoulder bag decorated with pearl and layered chain details.", "features": ["Pearl chain", "Layered metal chains", "Compact evening shape"], "careInstructions": "Store in a dust bag; avoid perfume, water and rough surfaces.", "slug": "trevo-pearl-grace-shoulder-bag", "seoKeywords": "Trevo Pearl Grace Shoulder Bag, TREVO bags Pakistan, Shoulder Bag, women handbags, online bags Pakistan", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #ShoulderBag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_yd44sqyd44sqyd44%20%281%29.png", "variants": [{"sku": "TRV-PC-001-BLK", "color": "Black", "barcode": "TRV0020001", "stock": 0, "status": "Active"}, {"sku": "TRV-PC-001-NVY", "color": "Navy Blue", "barcode": "TRV0020002", "stock": 0, "status": "Active"}, {"sku": "TRV-PC-001-EMR", "color": "Emerald Green", "barcode": "TRV0020003", "stock": 0, "status": "Active"}, {"sku": "TRV-PC-001-PLM", "color": "Plum", "barcode": "TRV0020004", "stock": 0, "status": "Active"}]}, {"id": "TRV-RG-001", "sku": "TRV-RG-001", "name": "Trevo Marble Ring Handle Bag", "collection": "Marble Luxe Collection", "category": "Handbags", "subCategory": "Top Handle Bag", "style": "Ring Handle", "colors": ["Berry", "Champagne", "Ivory", "Mauve"], "material": "Textured Fabric", "pattern": "Marble Vein", "hardwareColor": "Gold", "description": "Elegant ring-handle handbag with metallic marble-vein detailing.", "features": ["Round metal handles", "Structured body", "Formal styling"], "careInstructions": "Spot clean only; protect metallic print from abrasion.", "slug": "trevo-marble-ring-handle-bag", "seoKeywords": "Trevo Marble Ring Handle Bag, TREVO bags Pakistan, Top Handle Bag, Ring Handle, women handbags", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #TopHandleBag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8k3y198k3y198k3y.png", "variants": [{"sku": "TRV-RG-001-BRY", "color": "Berry", "barcode": "TRV0030001", "stock": 0, "status": "Active"}, {"sku": "TRV-RG-001-CHP", "color": "Champagne", "barcode": "TRV0030002", "stock": 0, "status": "Active"}, {"sku": "TRV-RG-001-IVR", "color": "Ivory", "barcode": "TRV0030003", "stock": 0, "status": "Active"}, {"sku": "TRV-RG-001-MVE", "color": "Mauve", "barcode": "TRV0030004", "stock": 0, "status": "Active"}]}, {"id": "TRV-DT-001", "sku": "TRV-DT-001", "name": "Trevo Pastel Premium Tote", "collection": "Premium Tote Collection", "category": "Handbags", "subCategory": "Tote Bag", "style": "Structured Tote", "colors": ["Pastel Multi", "Aqua", "Pink", "Mint"], "material": "Quilted Faux Leather", "pattern": "Pastel Chevron / Abstract", "hardwareColor": "Gold / Black", "description": "Spacious premium tote with pastel quilted pattern and reinforced handles.", "features": ["Large capacity", "Chain or top handles", "Structured base"], "careInstructions": "Wipe clean; do not machine wash; retain shape with stuffing.", "slug": "trevo-pastel-premium-tote", "seoKeywords": "Trevo Pastel Premium Tote, TREVO bags Pakistan, Tote Bag, Structured Tote, women handbags", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #ToteBag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_qz0oddqz0oddqz0o.png", "variants": [{"sku": "TRV-DT-001-PST", "color": "Pastel Multi", "barcode": "TRV0040001", "stock": 0, "status": "Active"}, {"sku": "TRV-DT-001-AQU", "color": "Aqua", "barcode": "TRV0040002", "stock": 0, "status": "Active"}, {"sku": "TRV-DT-001-PNK", "color": "Pink", "barcode": "TRV0040003", "stock": 0, "status": "Active"}, {"sku": "TRV-DT-001-MNT", "color": "Mint", "barcode": "TRV0040004", "stock": 0, "status": "Active"}]}, {"id": "TRV-PT-001", "sku": "TRV-PT-001", "name": "Trevo Heritage Printed Tote", "collection": "Heritage Tote Collection", "category": "Handbags", "subCategory": "Printed Tote", "style": "Everyday Tote", "colors": ["Assorted Prints"], "material": "Printed Fabric / Faux Leather", "pattern": "Tile / Geometric / Travel / Mosaic", "hardwareColor": "Gold / Bronze", "description": "Everyday tote collection featuring artistic heritage-inspired prints.", "features": ["Long handles", "Roomy interior", "Lightweight body"], "careInstructions": "Use a soft damp cloth on exterior; avoid soaking printed fabric.", "slug": "trevo-heritage-printed-tote", "seoKeywords": "Trevo Heritage Printed Tote, TREVO bags Pakistan, Printed Tote, Everyday Tote, women handbags", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #PrintedTote", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_a5wgm3a5wgm3a5wg.png", "variants": []}, {"id": "TRV-WL-001", "sku": "TRV-WL-001", "name": "Trevo Cloe Multi-Compartment Wallet", "collection": "Cloe Collection", "category": "Wallets", "subCategory": "Organizer Wallet", "style": "Clutch Wallet", "colors": ["Yellow", "Beige", "Black"], "material": "Faux Leather", "pattern": "Quilted Front Panel", "hardwareColor": "Tone-on-tone / Gold", "description": "Slim organizer wallet with multiple divided sections and rear slip pocket.", "features": ["Two inner pockets", "Divided sections", "Rear slip pocket"], "careInstructions": "Keep dry; clean with non-abrasive cloth; do not overfill.", "slug": "trevo-cloe-multi-compartment-wallet", "seoKeywords": "Trevo Cloe Multi-Compartment Wallet, TREVO bags Pakistan, Organizer Wallet, Clutch Wallet", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #OrganizerWallet", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.32.44%20PM.jpeg", "variants": [{"sku": "TRV-WL-001-YLW", "color": "Yellow", "barcode": "TRV0060001", "stock": 0, "status": "Active"}, {"sku": "TRV-WL-001-BGE", "color": "Beige", "barcode": "TRV0060002", "stock": 0, "status": "Active"}, {"sku": "TRV-WL-001-BLK", "color": "Black", "barcode": "TRV0060003", "stock": 0, "status": "Active"}]}, {"id": "TRV-ST-001", "sku": "TRV-ST-001", "name": "Trevo Aura Structured Satchel", "collection": "Aura Satchel Collection", "category": "Handbags", "subCategory": "Satchel Bag", "style": "Top Handle / Shoulder", "colors": ["Crimson Red", "Dark Navy"], "material": "Pebbled Faux Leather", "pattern": "Solid Pebbled", "hardwareColor": "Gold", "description": "Structured satchel with premium pebbled finish and detachable shoulder strap.", "features": ["Top handles", "Detachable strap", "Zip closure", "Metal feet"], "careInstructions": "Use leather-safe cleaner only; store upright in dust bag.", "slug": "trevo-aura-structured-satchel", "seoKeywords": "Trevo Aura Structured Satchel, TREVO bags Pakistan, Satchel Bag, Top Handle, Shoulder", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #SatchelBag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.42.52%20PM.jpeg", "variants": [{"sku": "TRV-ST-001-RED", "color": "Crimson Red", "barcode": "TRV0070001", "stock": 0, "status": "Active"}, {"sku": "TRV-ST-001-NVY", "color": "Dark Navy", "barcode": "TRV0070002", "stock": 0, "status": "Active"}]}, {"id": "TRV-PB-001", "sku": "TRV-PB-001", "name": "Trevo Forever Young Phone Wallet", "collection": "Forever Young Collection", "category": "Wallets", "subCategory": "Phone Bag & Wallet", "style": "Crossbody Phone Bag", "colors": ["Dusted Pink", "Lavender"], "material": "PU Leather", "pattern": "Solid / Croc Embossed", "hardwareColor": "Gold", "description": "Two-in-one phone bag and wallet with secure phone pocket and detachable strap.", "features": ["Phone pocket", "Zip wallet", "Detachable crossbody strap"], "careInstructions": "Avoid overloading; wipe with soft cloth; keep hardware dry.", "slug": "trevo-forever-young-phone-wallet", "seoKeywords": "Trevo Forever Young Phone Wallet, TREVO bags Pakistan, Phone Bag, Wallet, Crossbody", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #PhoneBag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.33.06%20PM.jpeg", "variants": [{"sku": "TRV-PB-001-PNK", "color": "Dusted Pink", "barcode": "TRV0080001", "stock": 0, "status": "Active"}, {"sku": "TRV-PB-001-LAV", "color": "Lavender", "barcode": "TRV0080002", "stock": 0, "status": "Active"}]}, {"id": "TRV-RD-001", "sku": "TRV-RD-001", "name": "Trevo Mandala Round Art Bag", "collection": "Mandala Art Collection", "category": "Handbags", "subCategory": "Round Bag", "style": "Crossbody", "colors": ["Blue", "Burgundy", "Grey"], "material": "Textured Fabric", "pattern": "Embroidered Mandala", "hardwareColor": "Gold", "description": "Statement round bag with vibrant mandala-style embroidered artwork.", "features": ["Round silhouette", "Colorful embroidery", "Crossbody format"], "careInstructions": "Spot clean embroidery carefully; do not rub or bleach.", "slug": "trevo-mandala-round-art-bag", "seoKeywords": "Trevo Mandala Round Art Bag, TREVO bags Pakistan, Round Bag, Crossbody, embroidered bag", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #RoundBag", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_rw5t4rw5t4rw5t4r.png", "variants": [{"sku": "TRV-RD-001-BLU", "color": "Blue", "barcode": "TRV0090001", "stock": 0, "status": "Active"}, {"sku": "TRV-RD-001-BRG", "color": "Burgundy", "barcode": "TRV0090002", "stock": 0, "status": "Active"}, {"sku": "TRV-RD-001-GRY", "color": "Grey", "barcode": "TRV0090003", "stock": 0, "status": "Active"}]}, {"id": "TRV-CW-001", "sku": "TRV-CW-001", "name": "Trevo Monochrome Cow Print Tote", "collection": "Urban Print Collection", "category": "Handbags", "subCategory": "Fashion Tote", "style": "Shoulder Tote", "colors": ["Black & White"], "material": "Textured Faux Leather", "pattern": "Cow Print", "hardwareColor": "Gold", "description": "Bold black-and-white cow-print tote with long shoulder handles and side buckle accents.", "features": ["Long handles", "Side buckle details", "Roomy tote shape"], "careInstructions": "Wipe clean with soft cloth; avoid prolonged sunlight.", "slug": "trevo-monochrome-cow-print-tote", "seoKeywords": "Trevo Monochrome Cow Print Tote, TREVO bags Pakistan, Fashion Tote, Shoulder Tote", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #FashionTote", "img": "", "variants": [{"sku": "TRV-CW-001-BW", "color": "Black & White", "barcode": "TRV0100001", "stock": 0, "status": "Active"}]}, {"id": "TRV-TT-001", "sku": "TRV-TT-001", "name": "Trevo Executive Office Tote", "collection": "Executive Collection", "category": "Handbags", "subCategory": "Office Tote", "style": "Structured Work Tote", "colors": ["Grey", "Sage"], "material": "Smooth Faux Leather", "pattern": "Solid Minimal", "hardwareColor": "Gold", "description": "Minimal structured office tote designed for documents, essentials and daily work use.", "features": ["Multiple compartments", "Reinforced handles", "Structured profile"], "careInstructions": "Clean with damp cloth; store filled to preserve shape.", "slug": "trevo-executive-office-tote", "seoKeywords": "Trevo Executive Office Tote, TREVO bags Pakistan, Office Tote, Structured Work Tote", "hashtags": "#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #OfficeTote", "img": "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_fqxdxifqxdxifqxd.png", "variants": [{"sku": "TRV-TT-001-GRY", "color": "Grey", "barcode": "TRV0110001", "stock": 0, "status": "Active"}, {"sku": "TRV-TT-001-SGE", "color": "Sage", "barcode": "TRV0110002", "stock": 0, "status": "Active"}]}];
+const APPROVED_IMAGES=["https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2003_56_40%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_41_09%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_44_46%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_47_53%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_50_20%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_51_53%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_54_10%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_56_56%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_58_43%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_59_53%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2005_06_04%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2005_10_41%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2005_14_41%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_4mmsk34mmsk34mms.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_6jb13e6jb13e6jb1.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_6k2zs46k2zs46k2z.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_86kkdv86kkdv86kk.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8a0od78a0od78a0o.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8k3y198k3y198k3y.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8mia8a8mia8a8mia.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_a5wgm3a5wgm3a5wg.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_etwllretwllretwl.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_fqxdxifqxdxifqxd.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_llu79sllu79sllu7.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_ocwp1kocwp1kocwp.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_p74fqqp74fqqp74f.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_po50igpo50igpo50.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_qdqv73qdqv73qdqv.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_qz0oddqz0oddqz0o.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_rw5t4rw5t4rw5t4r.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_sp6czcsp6czcsp6c.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_td0mxktd0mxktd0m.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_tjbljhtjbljhtjbl.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_u4mg36u4mg36u4mg.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_vqei0wvqei0wvqei.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_xse5wjxse5wjxse5.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_y9j4q4y9j4q4y9j4.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_yd44sqyd44sqyd44%20%281%29.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_ykwihxykwihxykwi.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_yyj4wdyyj4wdyyj4%20%281%29.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-11%20at%205.13.02%20PM%20%281%29.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-11%20at%205.13.02%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.32.44%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.33.06%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.42.52%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.45.54%20PM.jpeg"];
+const ADMIN_HASH='11b1545980adcbeeec9672ef356395b20d2b0fe9edd486e2e5e3ed864a7a29e8';
 
-  <script>
-    // Password stored as SHA-256 hash — plain text is never in source code
-    const ADMIN_HASH = '11b1545980adcbeeec9672ef356395b20d2b0fe9edd486e2e5e3ed864a7a29e8';
-    async function hashInput(str) {
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-    }
-    const STATUSES = ['Pending','Confirmed','Shipped','Delivered'];
-    let allOrders = []; // Holds current orders (from Firestore or localStorage)
-    let unsubscribeListener = null; // Firestore real-time listener handle
+createApp({
+setup(){
+  const loggedIn=ref(sessionStorage.getItem('trevoAdmin')==='1'),password=ref(''),loginError=ref('');
+  const firebaseConnected=ref(false),tab=ref('dashboard'),products=ref([]),orders=ref([]),toast=ref('');
+  const productModal=ref(false),imagePicker=ref(false),saving=ref(false),editing=ref({});
+  const productSearch=ref(''),categoryFilter=ref(''),orderSearch=ref(''),orderFilter=ref('');
+  const statuses=['Pending','Confirmed','Shipped','Delivered','Cancelled'];
+  const nav=[{id:'dashboard',icon:'✦',label:'Dashboard'},{id:'products',icon:'👜',label:'Products & Prices'},{id:'inventory',icon:'📦',label:'Inventory & Variants'},{id:'orders',icon:'🧾',label:'Orders'},{id:'images',icon:'🖼️',label:'Image Library'}];
+  const imageLibrary=APPROVED_IMAGES;
+  const fallbackImage='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500"><rect width="100%" height="100%" fill="#f4f6f4"/><text x="50%" y="48%" text-anchor="middle" font-size="70">👜</text><text x="50%" y="62%" text-anchor="middle" font-family="Arial" font-size="18" fill="#7D8F7A">Choose product image</text></svg>`);
+  let unProducts=null,unOrders=null;
 
-    // --- Auth ---
-    async function attemptLogin(){
-      const pw = document.getElementById('passwordInput').value;
-      const hash = await hashInput(pw);
-      if(hash === ADMIN_HASH){
-        sessionStorage.setItem('trevoAdmin','1');
-        showDashboard();
-      } else {
-        document.getElementById('loginError').style.display='block';
-        document.getElementById('passwordInput').value='';
-        document.getElementById('passwordInput').focus();
+  const dbReady=()=>typeof firebaseReady!=='undefined'&&firebaseReady&&typeof db!=='undefined';
+  const pCollection=()=>typeof PRODUCTS_COLLECTION!=='undefined'?PRODUCTS_COLLECTION:'products';
+  const oCollection=()=>typeof ORDERS_COLLECTION!=='undefined'?ORDERS_COLLECTION:'orders';
+
+  async function hash(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+  async function login(){if(await hash(password.value)===ADMIN_HASH){loggedIn.value=true;sessionStorage.setItem('trevoAdmin','1');connect()}else{loginError.value='Incorrect password.'}}
+  function logout(){sessionStorage.removeItem('trevoAdmin');location.reload()}
+  function notify(msg){toast.value=msg;setTimeout(()=>toast.value='',2600)}
+  function money(v){return Math.round(Number(v||0)).toLocaleString('en-PK')}
+  function customerName(o){return o.name||o.customer?.name||'Customer'}
+  function customerPhone(o){return o.phone||o.customer?.phone||''}
+
+  function normalizeProduct(d,id){
+    const variants=Array.isArray(d.variants)?d.variants:[];
+    const variantStock=variants.reduce((s,v)=>s+Number(v.stock||v.quantity||0),0);
+    const explicit=Number(d.quantity??d.stock??0);
+    return {...d,_docId:id,id:d.id||id,sku:d.sku||d.id||id,price:Number(d.price||d.sellingPrice||0),salePrice:Number(d.salePrice||0)||null,
+      quantity:variants.length?variantStock:explicit,stock:variants.length?variantStock:explicit,variants,
+      colors:Array.isArray(d.colors)?d.colors:String(d.color||'').split(/[,/|]/).map(x=>x.trim()).filter(Boolean),
+      img:d.img||d.image||d.imageUrl||d.image_url||(Array.isArray(d.images)?d.images[0]:'')};
+  }
+  function connect(){
+    if(!dbReady()){firebaseConnected.value=false;return}
+    firebaseConnected.value=true;
+    if(unProducts)unProducts(); if(unOrders)unOrders();
+    unProducts=db.collection(pCollection()).onSnapshot(s=>{products.value=s.docs.map(x=>normalizeProduct(x.data(),x.id)).sort((a,b)=>a.name.localeCompare(b.name))},e=>{console.error(e);firebaseConnected.value=false});
+    unOrders=db.collection(oCollection()).orderBy('date','desc').onSnapshot(s=>orders.value=s.docs.map(x=>({...x.data(),_docId:x.id,orderId:x.data().orderId||x.id})),e=>{
+      console.warn(e);db.collection(oCollection()).onSnapshot(s=>orders.value=s.docs.map(x=>({...x.data(),_docId:x.id,orderId:x.data().orderId||x.id})))
+    });
+  }
+
+  const totalUnits=computed(()=>products.value.reduce((s,p)=>s+Number(p.quantity||0),0));
+  const retailValue=computed(()=>products.value.reduce((s,p)=>s+Number(p.quantity||0)*Number(p.salePrice||p.price||0),0));
+  const lowStockProducts=computed(()=>products.value.filter(p=>Number(p.quantity||0)<=5).sort((a,b)=>a.quantity-b.quantity));
+  const revenue=computed(()=>orders.value.filter(o=>o.status==='Delivered').reduce((s,o)=>s+Number(o.total||0),0));
+  const pending=computed(()=>orders.value.filter(o=>!o.status||o.status==='Pending').length);
+  const kpis=computed(()=>[
+    {icon:'👜',label:'Live Products',value:products.value.length,note:`${products.value.filter(p=>p.quantity>0).length} available`},
+    {icon:'📦',label:'Units in Stock',value:totalUnits.value,note:`${lowStockProducts.value.length} low or out`},
+    {icon:'💰',label:'Stock Value',value:'Rs. '+money(retailValue.value),note:'Retail value'},
+    {icon:'🧾',label:'Delivered Revenue',value:'Rs. '+money(revenue.value),note:`${pending.value} pending orders`}
+  ]);
+  const categories=computed(()=>[...new Set(products.value.map(p=>p.category).filter(Boolean))]);
+  const filteredProducts=computed(()=>{const q=productSearch.value.toLowerCase();return products.value.filter(p=>(!categoryFilter.value||p.category===categoryFilter.value)&&(!q||`${p.name} ${p.sku} ${p.category}`.toLowerCase().includes(q)))});
+  const filteredOrders=computed(()=>{const q=orderSearch.value.toLowerCase();return orders.value.filter(o=>(!orderFilter.value||(o.status||'Pending')===orderFilter.value)&&(!q||`${o.orderId} ${customerName(o)} ${customerPhone(o)}`.toLowerCase().includes(q)))});
+
+  function openProduct(p=null){
+    const base=p?JSON.parse(JSON.stringify(p)):{name:'',sku:'',category:'Handbags',collection:'',style:'',price:0,salePrice:null,wholesaleCost:0,quantity:0,img:'',description:'',material:'',pattern:'',careInstructions:'',seoKeywords:'',colors:[],features:[],variants:[]};
+    base.colorsText=(base.colors||[]).join(', ');
+    base.featuresText=(base.features||[]).join('; ');
+    editing.value=base;productModal.value=true;
+  }
+  function closeProduct(){productModal.value=false;imagePicker.value=false}
+  function addVariant(){editing.value.variants.push({color:'',sku:'',barcode:'',stock:0,status:'Active'})}
+  function selectImage(url){editing.value.img=url;imagePicker.value=false}
+  async function saveProduct(){
+    if(!dbReady()){alert('Firebase is not connected.');return}
+    saving.value=true;
+    try{
+      const old=editing.value._docId?products.value.find(p=>p._docId===editing.value._docId):null;
+      const variants=(editing.value.variants||[]).map(v=>({...v,stock:Math.max(0,Number(v.stock||0))}));
+      const quantity=variants.length?variants.reduce((s,v)=>s+v.stock,0):Math.max(0,Number(editing.value.quantity||0));
+      const docId=String(editing.value._docId||editing.value.sku||editing.value.id||('TRV-'+Date.now()));
+      const data={...editing.value,id:editing.value.id||editing.value.sku||docId,sku:editing.value.sku||docId,
+        colors:String(editing.value.colorsText||'').split(',').map(x=>x.trim()).filter(Boolean),
+        features:String(editing.value.featuresText||'').split(';').map(x=>x.trim()).filter(Boolean),
+        variants,quantity,stock:quantity,inStock:quantity>0,price:Number(editing.value.price||0),salePrice:Number(editing.value.salePrice||0)||null,
+        updatedAt:new Date().toISOString()};
+      delete data._docId;delete data.colorsText;delete data.featuresText;
+      await db.collection(pCollection()).doc(docId).set(data,{merge:true});
+      if(old&&Number(old.price)!==Number(data.price)){
+        await db.collection('price_history').add({productId:docId,sku:data.sku,name:data.name,oldPrice:Number(old.price||0),newPrice:Number(data.price||0),changedAt:new Date().toISOString()});
       }
+      notify('Product saved to Firebase');closeProduct();
+    }catch(e){console.error(e);alert('Save failed: '+e.message)}finally{saving.value=false}
+  }
+  async function quickStock(p,val){
+    if(!dbReady())return;
+    const qty=Math.max(0,Number(val||0));
+    if(p.variants?.length){alert('This product uses color variants. Edit the product and update each variant stock.');return}
+    await db.collection(pCollection()).doc(p._docId).update({quantity:qty,stock:qty,inStock:qty>0,updatedAt:new Date().toISOString()});
+    await db.collection('inventory_movements').add({productId:p._docId,sku:p.sku,name:p.name,type:'Manual adjustment',quantityAfter:qty,date:new Date().toISOString()});
+    notify('Stock updated');
+  }
+  async function deleteProduct(p){if(!confirm(`Delete "${p.name}"?`))return;await db.collection(pCollection()).doc(p._docId).delete();notify('Product deleted')}
+  async function importWorkbookCatalog(){
+    if(!dbReady()){alert('Firebase is not connected.');return}
+    if(!confirm('Import the 11 workbook products into Firebase? Existing products with the same SKU will be updated, while your current prices and stock will be preserved when already entered.'))return;
+    const batch=db.batch();
+    for(const raw of WORKBOOK_PRODUCTS){
+      const ref=db.collection(pCollection()).doc(raw.id);
+      const existing=products.value.find(p=>p._docId===raw.id||p.sku===raw.sku);
+      const variants=(raw.variants||[]).map(v=>({...v,image:raw.img||''}));
+      const qty=existing?Number(existing.quantity||0):variants.reduce((s,v)=>s+Number(v.stock||0),0);
+      batch.set(ref,{...raw,variants,price:existing?.price||0,salePrice:existing?.salePrice||null,wholesaleCost:existing?.wholesaleCost||0,
+        quantity:qty,stock:qty,inStock:qty>0,publishStatus:existing?.publishStatus||'Draft',updatedAt:new Date().toISOString()},{merge:true});
     }
-    function logout(){
-      if(unsubscribeListener) unsubscribeListener();
-      if(prodListener) prodListener();
-      sessionStorage.removeItem('trevoAdmin');
-      location.reload();
-    }
-    // showDashboard() is defined below with loadProducts() integrated
-
-    // --- Loader ---
-    function showLoader(msg='Loading…'){
-      document.getElementById('loaderMsg').textContent = msg;
-      document.getElementById('loaderOverlay').classList.add('active');
-    }
-    function hideLoader(){
-      document.getElementById('loaderOverlay').classList.remove('active');
-    }
-
-    // --- Firebase Status Banner ---
-    function showFirebaseBanner(){
-      const banner = document.getElementById('firebaseBanner');
-      if(firebaseReady){
-        banner.className = 'status-banner connected';
-        banner.innerHTML = '<span class="pulse-dot"></span> Live — Connected to Firebase. Orders update in real-time.';
-      } else {
-        banner.className = 'status-banner offline';
-        banner.innerHTML = '<span class="pulse-dot"></span> Offline Mode — Using local storage. Update firebase-config.js to enable cloud sync.';
-      }
-      banner.style.display = 'flex';
-    }
-
-    // --- Data Source Initialization ---
-    function initDataSource(){
-      showFirebaseBanner();
-      if(firebaseReady){
-        showLoader('Loading orders…');
-        let firstLoad = true;
-        // Real-time listener — orders update automatically across devices
-        unsubscribeListener = db.collection(ORDERS_COLLECTION)
-          .orderBy('date','desc')
-          .onSnapshot(snapshot => {
-            allOrders = snapshot.docs.map(doc => doc.data());
-            if(firstLoad){ hideLoader(); firstLoad = false; }
-            renderOrders();
-          }, err => {
-            hideLoader();
-            console.error('Firestore listener error:', err);
-            // Fallback to localStorage
-            allOrders = JSON.parse(localStorage.getItem('trevoOrders')||'[]');
-            renderOrders();
-          });
-      } else {
-        // localStorage fallback
-        allOrders = JSON.parse(localStorage.getItem('trevoOrders')||'[]');
-        renderOrders();
-      }
-    }
-
-    // --- Local Storage helpers (fallback) ---
-    function getLocalOrders(){ return JSON.parse(localStorage.getItem('trevoOrders')||'[]'); }
-    function saveLocalOrders(orders){ localStorage.setItem('trevoOrders',JSON.stringify(orders)); }
-
-    // --- Render ---
-    function renderOrders(){
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const statusFilter = document.getElementById('statusFilter').value;
-      let orders = [...allOrders]; // Work with a copy
-
-      // Stats (unfiltered)
-      document.getElementById('statOrders').textContent = orders.length;
-      document.getElementById('statRevenue').textContent = 'Rs. ' + orders.reduce((s,o)=>s+(o.total||0),0).toLocaleString();
-      document.getElementById('statPending').textContent = orders.filter(o=>o.status==='Pending').length;
-      document.getElementById('statDelivered').textContent = orders.filter(o=>o.status==='Delivered').length;
-
-      // Filter
-      if(statusFilter!=='All') orders = orders.filter(o=>o.status===statusFilter);
-      if(search) orders = orders.filter(o=> o.orderId.toLowerCase().includes(search) || o.items.some(i=>i.name.toLowerCase().includes(search)));
-
-      const tbody = document.getElementById('ordersBody');
-      const empty = document.getElementById('emptyState');
-
-      if(!orders.length){
-        tbody.innerHTML='';
-        empty.style.display='block';
-        return;
-      }
-      empty.style.display='none';
-
-      // Sort newest first
-      orders.sort((a,b)=>new Date(b.date)-new Date(a.date));
-
-      tbody.innerHTML = orders.map(o=>{
-        const d = new Date(o.date);
-        const dateStr = d.toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'}) + '<br><span style="color:var(--text-light);font-size:.75rem;">' + d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) + '</span>';
-        const itemsHtml = o.items.map(i=>'<div><strong>'+i.qty+'x</strong> '+i.name+' <span style="color:var(--text-light)">@ Rs. '+i.price.toLocaleString()+'</span></div>').join('');
-        return '<tr><td style="font-weight:700;color:var(--purple-dark);white-space:nowrap">'+o.orderId+'</td><td>'+dateStr+'</td><td><div class="items-list">'+itemsHtml+'</div></td><td style="white-space:nowrap">'+(o.deliveryType||'Standard')+'<br><span style="color:var(--text-light);font-size:.78rem">Rs. '+(o.deliveryCost||0).toLocaleString()+'</span></td><td style="font-weight:700;white-space:nowrap">Rs. '+(o.total||0).toLocaleString()+'</td><td><span class="status status-'+o.status+'" onclick="cycleStatus(\''+o.orderId+'\')" title="Click to change">● '+o.status+'</span></td><td><button class="delete-btn" onclick="deleteOrder(\''+o.orderId+'\')" title="Delete">🗑</button></td></tr>';
-      }).join('');
-    }
-
-    // --- Order Actions (Firestore-first, localStorage fallback) ---
-    async function cycleStatus(orderId){
-      const o = allOrders.find(x=>x.orderId===orderId);
-      if(!o) return;
-      const idx = STATUSES.indexOf(o.status);
-      const newStatus = STATUSES[(idx+1)%STATUSES.length];
-
-      if(firebaseReady){
-        showLoader('Updating status…');
-        await firestoreUpdateOrder(orderId, { status: newStatus });
-        hideLoader();
-        // onSnapshot will auto-update allOrders and re-render
-      } else {
-        o.status = newStatus;
-        saveLocalOrders(allOrders);
-        renderOrders();
-      }
-    }
-
-    async function deleteOrder(orderId){
-      if(!confirm('Delete order '+orderId+'?')) return;
-
-      if(firebaseReady){
-        showLoader('Deleting order…');
-        await firestoreDeleteOrder(orderId);
-        hideLoader();
-        // onSnapshot will auto-update
-      } else {
-        allOrders = allOrders.filter(o=>o.orderId!==orderId);
-        saveLocalOrders(allOrders);
-        renderOrders();
-      }
-    }
-
-    async function clearAllOrders(){
-      if(!confirm('Delete ALL orders? This cannot be undone.')) return;
-
-      if(firebaseReady){
-        showLoader('Clearing all orders…');
-        await firestoreClearAllOrders();
-        hideLoader();
-        // onSnapshot will auto-update
-      } else {
-        allOrders = [];
-        saveLocalOrders([]);
-        renderOrders();
-      }
-    }
-
-    // --- CSV Export ---
-    function exportCSV(){
-      if(!allOrders.length){alert('No orders to export.');return;}
-      const rows = [['Order ID','Date','Items','Quantities','Prices','Delivery Type','Delivery Cost','Subtotal','Total','Status']];
-      allOrders.forEach(o=>{
-        rows.push([
-          o.orderId,
-          new Date(o.date).toLocaleString('en-PK'),
-          o.items.map(i=>i.name).join(' | '),
-          o.items.map(i=>i.qty).join(' | '),
-          o.items.map(i=>i.price).join(' | '),
-          o.deliveryType||'',
-          o.deliveryCost||0,
-          o.subtotal||0,
-          o.total||0,
-          o.status
-        ]);
-      });
-      const csv = rows.map(r=>r.map(c=>'"'+(c+'').replace(/"/g,'""')+'"').join(',')).join('\n');
-      const blob = new Blob([csv],{type:'text/csv'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'trevo_orders_'+new Date().toISOString().slice(0,10)+'.csv';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    // --- CSV Import ---
-    function openImportModal(){document.getElementById('importModal').classList.add('open');}
-    function closeImportModal(){document.getElementById('importModal').classList.remove('open');}
-
-    const fileDrop = document.getElementById('fileDrop');
-    fileDrop.addEventListener('dragover',e=>{e.preventDefault();fileDrop.classList.add('dragover');});
-    fileDrop.addEventListener('dragleave',()=>fileDrop.classList.remove('dragover'));
-    fileDrop.addEventListener('drop',e=>{e.preventDefault();fileDrop.classList.remove('dragover');if(e.dataTransfer.files.length)processCSV(e.dataTransfer.files[0]);});
-
-    function handleFileSelect(input){if(input.files.length)processCSV(input.files[0]);}
-
-    async function processCSV(file){
-      if(!file.name.endsWith('.csv')){alert('Please select a CSV file.');return;}
-      const reader = new FileReader();
-      reader.onload = async function(e){
-        const lines = e.target.result.split('\n').filter(l=>l.trim());
-        if(lines.length<2){alert('CSV file is empty.');return;}
-        const existingIds = new Set(allOrders.map(o=>o.orderId));
-        let imported = 0;
-        const newOrders = [];
-        for(let i=1;i<lines.length;i++){
-          const cols = parseCSVLine(lines[i]);
-          if(cols.length<10) continue;
-          const orderId = cols[0].trim();
-          if(existingIds.has(orderId)) continue;
-          const names = cols[2].split(' | ');
-          const qtys = cols[3].split(' | ');
-          const prices = cols[4].split(' | ');
-          const items = names.map((n,j)=>({name:n.trim(),qty:parseInt(qtys[j])||1,price:parseInt(prices[j])||0}));
-          const order = {
-            orderId: orderId,
-            orderNum: parseInt(orderId.replace('TRV-',''))||0,
-            date: new Date(cols[1]).toISOString()||new Date().toISOString(),
-            items: items,
-            deliveryType: cols[5].trim(),
-            deliveryCost: parseInt(cols[6])||199,
-            subtotal: parseInt(cols[7])||0,
-            total: parseInt(cols[8])||0,
-            status: cols[9].trim()||'Pending'
-          };
-          newOrders.push(order);
-          imported++;
-        }
-
-        if(firebaseReady && newOrders.length){
-          showLoader('Importing '+newOrders.length+' order(s)…');
-          // Batch write to Firestore
-          const batch = db.batch();
-          newOrders.forEach(order => {
-            batch.set(db.collection(ORDERS_COLLECTION).doc(order.orderId), order);
-          });
-          await batch.commit();
-          hideLoader();
-          // onSnapshot will auto-update
-        } else if(newOrders.length) {
-          allOrders = allOrders.concat(newOrders);
-          saveLocalOrders(allOrders);
-          renderOrders();
-        }
-
-        closeImportModal();
-        alert('Imported '+imported+' new order(s). '+(lines.length-1-imported)+' duplicates skipped.');
-      };
-      reader.readAsText(file);
-    }
-
-    function parseCSVLine(line){
-      const result=[];let cur='';let inQuotes=false;
-      for(let i=0;i<line.length;i++){
-        const c=line[i];
-        if(c==='"'){if(inQuotes&&line[i+1]==='"'){cur+='"';i++;}else{inQuotes=!inQuotes;}}
-        else if(c===','&&!inQuotes){result.push(cur);cur='';}
-        else{cur+=c;}
-      }
-      result.push(cur);
-      return result;
-    }
-
-    // --- Tab Switching ---
-    function switchTab(tab, btn) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('tab-' + tab).classList.add('active');
-      btn.classList.add('active');
-      if (tab === 'inventory' && allProducts.length === 0) loadProducts();
-      if (tab === 'archive' && archivedProducts.length === 0) loadArchivedProducts();
-    }
-
-    // --- Archived Products ---
-    let archivedProducts = [];
-
-    async function loadArchivedProducts() {
-      if (!firebaseReady) return;
-      showLoader('Loading archived products…');
-      try {
-        const snapshot = await db.collection(PRODUCTS_ARCHIVE_COLLECTION).orderBy('id').get();
-        archivedProducts = snapshot.docs.map(doc => doc.data());
-        hideLoader();
-        renderArchivedProducts();
-      } catch (err) {
-        hideLoader();
-        console.error('Archived products load error:', err);
-      }
-    }
-
-    function renderArchivedProducts() {
-      const search = (document.getElementById('archiveSearchInput').value || '').toLowerCase();
-      let prods = [...archivedProducts];
-
-      // Stats
-      document.getElementById('statArchived').textContent = prods.length;
-      document.getElementById('statArchiveCats').textContent = new Set(prods.map(p => p.category).filter(Boolean)).size;
-
-      if (search) prods = prods.filter(p => (p.name || '').toLowerCase().includes(search) || (p.category || '').toLowerCase().includes(search));
-
-      const tbody = document.getElementById('archivedBody');
-      const empty = document.getElementById('emptyArchive');
-
-      if (!prods.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
-      empty.style.display = 'none';
-
-      tbody.innerHTML = prods.map(p => {
-        const archivedDate = p.archivedAt ? new Date(p.archivedAt).toLocaleDateString('en-PK', {day:'2-digit',month:'short',year:'numeric'}) : '—';
-        return '<tr>' +
-          '<td><img class="prod-img-thumb" src="' + (p.img || '') + '" alt="" onerror="this.style.display=\'none\'" /></td>' +
-          '<td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (p.name || '') + '">' + (p.name || '') + '</td>' +
-          '<td>' + (p.category || '') + '</td>' +
-          '<td style="font-weight:600;">Rs. ' + (p.price || 0).toLocaleString() + '</td>' +
-          '<td>' + (p.quantity || 0) + '</td>' +
-          '<td style="color:var(--text-muted);font-size:.82rem;">' + archivedDate + '</td>' +
-          '<td><button class="delete-btn" onclick="deleteArchivedProduct(' + p.id + ')" title="Delete permanently">🗑</button></td>' +
-          '</tr>';
-      }).join('');
-    }
-
-    async function deleteArchivedProduct(id) {
-      const p = archivedProducts.find(x => x.id === id);
-      if (!confirm('Permanently delete "' + (p ? p.name : id) + '" from archive?')) return;
-      showLoader('Deleting…');
-      await firestoreDeleteArchivedProduct(id);
-      archivedProducts = archivedProducts.filter(x => x.id !== id);
-      hideLoader();
-      renderArchivedProducts();
-    }
-
-    async function archiveAllCurrentProducts() {
-      if (!allProducts.length) { alert('No products to archive.'); return; }
-      if (!confirm('Move all ' + allProducts.length + ' current products to the archive?\n\nThey will be removed from your store and only visible in the Archived tab.')) return;
-      showLoader('Archiving ' + allProducts.length + ' products…');
-      const count = await firestoreArchiveAllProducts();
-      hideLoader();
-      if (count > 0) {
-        alert('✅ ' + count + ' products archived successfully!\nYou can view them in the "Archived" tab.');
-        archivedProducts = []; // Reset so it reloads
-      } else {
-        alert('No products were archived.');
-      }
-    }
-
-    // --- Inventory Management ---
-    let allProducts = [];
-    let prodListener = null;
-
-    async function loadProducts() {
-      if (!firebaseReady) return;
-      showLoader('Loading products…');
-      // Real-time listener for products
-      if (prodListener) prodListener();
-      let firstLoad = true;
-      prodListener = db.collection(PRODUCTS_COLLECTION)
-        .orderBy('id')
-        .onSnapshot(snapshot => {
-          allProducts = snapshot.docs.map(doc => doc.data());
-          if (firstLoad) { hideLoader(); firstLoad = false; }
-          renderProducts();
-          updateProdCategoryFilter();
-        }, err => {
-          hideLoader();
-          console.error('Products listener error:', err);
-        });
-    }
-
-    function updateProdCategoryFilter() {
-      const cats = ['All', ...new Set(allProducts.map(p => p.category).filter(Boolean))];
-      const sel = document.getElementById('prodCategoryFilter');
-      const cur = sel.value;
-      sel.innerHTML = cats.map(c => '<option value="' + c + '"' + (c === cur ? ' selected' : '') + '>' + c + '</option>').join('');
-    }
-
-    function renderProducts() {
-      const search = (document.getElementById('prodSearchInput').value || '').toLowerCase();
-      const catFilter = document.getElementById('prodCategoryFilter').value;
-      let prods = [...allProducts];
-
-      // Stats (unfiltered)
-      document.getElementById('statProducts').textContent = prods.length;
-      document.getElementById('statCategories').textContent = new Set(prods.map(p => p.category)).size;
-      document.getElementById('statLowStock').textContent = prods.filter(p => (p.quantity || 0) > 0 && (p.quantity || 0) <= 5).length;
-      document.getElementById('statOutOfStock').textContent = prods.filter(p => (p.quantity || 0) === 0).length;
-
-      // Filter
-      if (catFilter !== 'All') prods = prods.filter(p => p.category === catFilter);
-      if (search) prods = prods.filter(p => p.name.toLowerCase().includes(search) || (p.category || '').toLowerCase().includes(search));
-
-      const tbody = document.getElementById('productsBody');
-      const empty = document.getElementById('emptyProducts');
-
-      if (!prods.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
-      empty.style.display = 'none';
-
-      tbody.innerHTML = prods.map(p => {
-        const badgeHtml = p.badge ? '<span class="prod-badge prod-badge-' + p.badge + '">' + p.badge + '</span>' : '<span style="color:var(--text-light);font-size:.78rem;">—</span>';
-        const qty = p.quantity || 0;
-        const qtyStyle = qty === 0 ? 'color:#dc2626;font-weight:700' : qty <= 5 ? 'color:#92400e;font-weight:600' : '';
-        return '<tr>' +
-          '<td><img class="prod-img-thumb" src="' + (p.img || '') + '" alt="" onerror="this.style.display=\'none\'" /></td>' +
-          '<td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (p.name || '') + '">' + (p.name || '') + '</td>' +
-          '<td>' + (p.category || '') + '</td>' +
-          '<td style="font-weight:600;">Rs. ' + (p.price || 0).toLocaleString() + (p.oldPrice ? '<br><span style="color:var(--text-light);text-decoration:line-through;font-size:.78rem;font-weight:400;">Rs. ' + p.oldPrice.toLocaleString() + '</span>' : '') + '</td>' +
-          '<td><input class="qty-inline" type="number" min="0" value="' + qty + '" style="' + qtyStyle + '" onchange="updateProductQty(' + p.id + ', this.value)" /></td>' +
-          '<td>' + badgeHtml + '</td>' +
-          '<td style="text-align:center"><span class="featured-dot ' + (p.featured ? 'yes' : 'no') + '" title="' + (p.featured ? 'Featured' : 'Not featured') + '"></span></td>' +
-          '<td><button class="btn btn-ghost btn-sm" onclick="editProduct(' + p.id + ')" title="Edit" style="padding:6px 10px;">✏️</button><button class="delete-btn" onclick="deleteProduct(' + p.id + ')" title="Delete">🗑</button></td>' +
-          '</tr>';
-      }).join('');
-    }
-
-    async function updateProductQty(productId, val) {
-      const qty = parseInt(val) || 0;
-      if (firebaseReady) {
-        await firestoreUpdateProduct(productId, { quantity: qty });
-      }
-    }
-
-    // --- Product Modal ---
-    function openProductModal(editId) {
-      document.getElementById('pf_editId').value = '';
-      document.getElementById('pf_name').value = '';
-      document.getElementById('pf_category').value = '';
-      document.getElementById('pf_price').value = '';
-      document.getElementById('pf_oldPrice').value = '';
-      document.getElementById('pf_quantity').value = '0';
-      document.getElementById('pf_badge').value = '';
-      document.getElementById('pf_img').value = '';
-      document.getElementById('pf_desc').value = '';
-      document.getElementById('pf_bodyHtml').value = '';
-      document.getElementById('pf_featured').checked = false;
-      document.getElementById('prodModalTitle').textContent = '＋ Add New Product';
-      document.getElementById('prodModalDesc').textContent = 'Fill in the product details below.';
-      document.getElementById('productModal').classList.add('open');
-    }
-
-    function editProduct(id) {
-      const p = allProducts.find(x => x.id === id);
-      if (!p) return;
-      document.getElementById('pf_editId').value = id;
-      document.getElementById('pf_name').value = p.name || '';
-      document.getElementById('pf_category').value = p.category || '';
-      document.getElementById('pf_price').value = p.price || '';
-      document.getElementById('pf_oldPrice').value = p.oldPrice || '';
-      document.getElementById('pf_quantity').value = p.quantity || 0;
-      document.getElementById('pf_badge').value = p.badge || '';
-      document.getElementById('pf_img').value = p.img || '';
-      document.getElementById('pf_desc').value = p.desc || '';
-      document.getElementById('pf_bodyHtml').value = p.bodyHtml || '';
-      document.getElementById('pf_featured').checked = !!p.featured;
-      document.getElementById('prodModalTitle').textContent = '✏️ Edit Product';
-      document.getElementById('prodModalDesc').textContent = 'Update product details for "' + p.name + '".';
-      document.getElementById('productModal').classList.add('open');
-    }
-
-    function closeProductModal() {
-      document.getElementById('productModal').classList.remove('open');
-    }
-
-    async function saveProductForm() {
-      const name = document.getElementById('pf_name').value.trim();
-      const category = document.getElementById('pf_category').value.trim();
-      const price = parseInt(document.getElementById('pf_price').value);
-      const img = document.getElementById('pf_img').value.trim();
-      const desc = document.getElementById('pf_desc').value.trim();
-      if (!name || !category || !price || !img || !desc) { alert('Please fill in all required fields.'); return; }
-
-      const editId = document.getElementById('pf_editId').value;
-      const oldPriceVal = parseInt(document.getElementById('pf_oldPrice').value) || null;
-      const badge = document.getElementById('pf_badge').value || null;
-
-      let product;
-      if (editId) {
-        // Editing existing product — preserve existing fields
-        const existing = allProducts.find(x => x.id === parseInt(editId));
-        product = { ...(existing || {}),
-          name, category, price, oldPrice: oldPriceVal, img, desc,
-          badge, featured: document.getElementById('pf_featured').checked,
-          quantity: parseInt(document.getElementById('pf_quantity').value) || 0,
-          bodyHtml: document.getElementById('pf_bodyHtml').value || '',
-          images: (existing && existing.images) ? existing.images : [img]
-        };
-      } else {
-        // New product
-        const nextId = await firestoreNextProductId();
-        product = {
-          id: nextId, name, category, price, oldPrice: oldPriceVal, img, desc,
-          badge, featured: document.getElementById('pf_featured').checked,
-          quantity: parseInt(document.getElementById('pf_quantity').value) || 0,
-          bodyHtml: document.getElementById('pf_bodyHtml').value || '',
-          images: [img]
-        };
-      }
-
-      showLoader('Saving product…');
-      await firestoreSaveProduct(product);
-      hideLoader();
-      closeProductModal();
-    }
-
-    async function deleteProduct(id) {
-      const p = allProducts.find(x => x.id === id);
-      if (!confirm('Delete "' + (p ? p.name : id) + '"? This cannot be undone.')) return;
-      showLoader('Deleting product…');
-      await firestoreDeleteProduct(id);
-      hideLoader();
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //  📤 PRODUCT CSV IMPORT
-    // ═══════════════════════════════════════════════════════════
-    let importCsvData = [];    // Parsed rows from CSV
-    let importCsvHeaders = []; // CSV column headers
-    let importMappedProducts = []; // Products ready for import
-
-
-    // Fixed public GitHub image URLs supplied for TREVO products.
-    const TREVO_FIXED_IMAGE_URLS = ["https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2003_56_40%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_41_09%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_44_46%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_47_53%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_50_20%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_51_53%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_54_10%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_56_56%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_58_43%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_59_53%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2005_06_04%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2005_10_41%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2005_14_41%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_4mmsk34mmsk34mms.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_6jb13e6jb13e6jb1.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_6k2zs46k2zs46k2z.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_86kkdv86kkdv86kk.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8a0od78a0od78a0o.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8k3y198k3y198k3y.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8mia8a8mia8a8mia.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_a5wgm3a5wgm3a5wg.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_etwllretwllretwl.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_fqxdxifqxdxifqxd.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_llu79sllu79sllu7.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_ocwp1kocwp1kocwp.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_p74fqqp74fqqp74f.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_po50igpo50igpo50.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_qdqv73qdqv73qdqv.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_qz0oddqz0oddqz0o.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_rw5t4rw5t4rw5t4r.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_sp6czcsp6czcsp6c.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_td0mxktd0mxktd0m.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_tjbljhtjbljhtjbl.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_u4mg36u4mg36u4mg.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_vqei0wvqei0wvqei.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_xse5wjxse5wjxse5.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_y9j4q4y9j4q4y9j4.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_yd44sqyd44sqyd44%20%281%29.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_ykwihxykwihxykwi.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_yyj4wdyyj4wdyyj4%20%281%29.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-11%20at%205.13.02%20PM%20%281%29.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-11%20at%205.13.02%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.32.44%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.33.06%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.42.52%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.45.54%20PM.jpeg"];
-
-    const TREVO_CATEGORIES = [
-      'Tote Bags',
-      'Pearl Bags',
-      'Premium Collection',
-      'Everyday Handbags'
-    ];
-
-    function normalizeSku(value) {
-      return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    }
-
-    function chooseTrevoCategory(name, desc, tags, csvCategory) {
-      const text = [name, desc, tags, csvCategory].join(' ').toLowerCase();
-
-      if (/pearl|bead|beaded|moti|embellish/.test(text)) return 'Pearl Bags';
-      if (/tote|shopper|shoulder tote|large carry|college|work bag/.test(text)) return 'Tote Bags';
-      if (/premium|luxury|imported|designer|party|clutch|evening|formal|velvet|crystal|rhinestone/.test(text)) return 'Premium Collection';
-      return 'Everyday Handbags';
-    }
-
-    function getFixedImageUrl(csvImage, rowIndex, sku) {
-      const original = String(csvImage || '').trim();
-
-      // Keep only image links that already exist in the approved TREVO list.
-      if (TREVO_FIXED_IMAGE_URLS.includes(original)) return original;
-
-      // Convert a GitHub blob URL into its raw equivalent, then keep it
-      // only when it matches one of the approved image links.
-      const githubMatch = original.match(
-        /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/i
-      );
-      if (githubMatch) {
-        const rawUrl = 'https://raw.githubusercontent.com/' +
-          githubMatch[1] + '/' + githubMatch[2] + '/' +
-          githubMatch[3] + '/' + githubMatch[4];
-        if (TREVO_FIXED_IMAGE_URLS.includes(rawUrl)) return rawUrl;
-      }
-
-      // Assign the supplied links in the same order as CSV product rows.
-      return TREVO_FIXED_IMAGE_URLS[rowIndex % TREVO_FIXED_IMAGE_URLS.length] || original;
-    }
-
-      // The supplied image list does not contain SKU metadata, so use stable
-      // CSV row order as the fallback. This keeps each import deterministic.
-      if (TREVO_FIXED_IMAGE_URLS.length) {
-        return TREVO_FIXED_IMAGE_URLS[rowIndex % TREVO_FIXED_IMAGE_URLS.length];
-      }
-
-      return original;
-    }
-
-    // Known column name aliases for auto-mapping
-    const COLUMN_ALIASES = {
-      name: ['title','product name','name','product_name','product title','item name','item_name','product'],
-      price: ['variant price','price','sale price','selling price','variant_price','amount','cost'],
-      oldPrice: ['variant compare at price','compare at price','compare_at_price','original price','old price','mrp','was price'],
-      img: ['image src','image_src','image url','image','photo','photo url','picture','main image','image link','image_link','thumbnail','photo_url'],
-      desc: ['body (html)','body html','body_html','description','product description','short description','details','summary'],
-      category: ['product category','category','type','product type','product_type','collection','department','google_product_category','fb_product_category','google product category','fb product category'],
-      quantity: ['variant inventory qty','inventory','quantity','stock','qty','inventory qty','variant_inventory_qty','stock quantity'],
-      tags: ['tags','tag','labels','keywords'],
-      badge: ['badge','label','ribbon'],
-      sku: ['variant sku','sku','product sku','item sku','variant_sku','id']
-    };
-    let importDelimiter = ','; // auto-detected: ',' for CSV, '\t' for TSV
-
-    function openProdImportModal() {
-      importCsvData = [];
-      importCsvHeaders = [];
-      importMappedProducts = [];
-      document.getElementById('prodCsvFile').value = '';
-      goToImportStep(1);
-      document.getElementById('prodImportModal').classList.add('open');
-    }
-    function closeProdImportModal() {
-      document.getElementById('prodImportModal').classList.remove('open');
-    }
-
-    function goToImportStep(step) {
-      document.querySelectorAll('.import-step').forEach(s => s.classList.remove('active'));
-      document.getElementById('importStep' + step).classList.add('active');
-    }
-
-    // Drag & drop for product CSV
-    const prodFileDrop = document.getElementById('prodFileDrop');
-    prodFileDrop.addEventListener('dragover', e => { e.preventDefault(); prodFileDrop.classList.add('dragover'); });
-    prodFileDrop.addEventListener('dragleave', () => prodFileDrop.classList.remove('dragover'));
-    prodFileDrop.addEventListener('drop', e => { e.preventDefault(); prodFileDrop.classList.remove('dragover'); if (e.dataTransfer.files.length) parseProdCSV(e.dataTransfer.files[0]); });
-    function handleProdFileSelect(input) { if (input.files.length) parseProdCSV(input.files[0]); }
-
-
-    function parseProdCSV(file) {
-      const ext = file.name.split('.').pop().toLowerCase();
-      if (!['csv', 'tsv', 'txt'].includes(ext)) {
-        alert('Please select a CSV or TSV file.');
-        return;
-      }
-
-      const reader = new FileReader();
-
-      reader.onerror = function() {
-        alert('Could not read the selected file. Please try again.');
-      };
-
-      reader.onload = function(e) {
-        try {
-          let rawText = String(e.target.result || '');
-
-          // Remove UTF-8 BOM often added by Excel.
-          rawText = rawText.replace(/^\uFEFF/, '');
-
-          if (!rawText.trim()) {
-            alert('The selected file is empty.');
-            return;
+    await batch.commit();notify('Workbook catalog imported successfully');
+  }
+  async function changeOrderStatus(order,newStatus){
+    if(!dbReady())return;
+    const orderRef=db.collection(oCollection()).doc(order._docId);
+    try{
+      await db.runTransaction(async tx=>{
+        const os=await tx.get(orderRef);if(!os.exists)throw new Error('Order not found');
+        const live=os.data(),items=live.items||[],changes=[];
+        if(newStatus==='Confirmed'&&!live.inventoryAdjusted){
+          for(const item of items){
+            const id=String(item.id||item.productId||'');if(!id)continue;
+            const pr=db.collection(pCollection()).doc(id),ps=await tx.get(pr);if(!ps.exists)continue;
+            const p=normalizeProduct(ps.data(),ps.id),qty=Number(item.qty||item.quantity||1);
+            if(p.quantity<qty)throw new Error(`Not enough stock for ${item.name}. Available: ${p.quantity}`);
+            if(p.variants?.length&&item.color){
+              const variants=p.variants.map(v=>v.color===item.color?{...v,stock:Math.max(0,Number(v.stock||0)-qty)}:v);
+              const total=variants.reduce((s,v)=>s+Number(v.stock||0),0);changes.push({ref:pr,data:{variants,quantity:total,stock:total,inStock:total>0}});
+            }else changes.push({ref:pr,data:{quantity:p.quantity-qty,stock:p.quantity-qty,inStock:p.quantity-qty>0}});
           }
-
-          // Detect delimiter from the first physical line.
-          const firstPhysicalLine = rawText.split(/\r?\n/, 1)[0];
-          const tabCount = (firstPhysicalLine.match(/\t/g) || []).length;
-          const commaCount = (firstPhysicalLine.match(/,/g) || []).length;
-          importDelimiter = tabCount > commaCount ? '\t' : ',';
-
-          // Parse the complete file in one pass. This preserves:
-          // - commas inside quoted descriptions
-          // - line breaks inside quoted HTML/descriptions
-          // - escaped quotes ("")
-          const rows = parseDelimitedText(rawText, importDelimiter);
-
-          if (rows.length < 2) {
-            alert('File is empty or has no product rows.');
-            return;
+          changes.forEach(c=>tx.update(c.ref,{...c.data,updatedAt:new Date().toISOString()}));
+          tx.update(orderRef,{status:newStatus,inventoryAdjusted:true,inventoryAdjustedAt:new Date().toISOString()});
+        }else if(newStatus==='Cancelled'&&live.inventoryAdjusted){
+          for(const item of items){
+            const id=String(item.id||item.productId||'');if(!id)continue;
+            const pr=db.collection(pCollection()).doc(id),ps=await tx.get(pr);if(!ps.exists)continue;
+            const p=normalizeProduct(ps.data(),ps.id),qty=Number(item.qty||item.quantity||1);
+            if(p.variants?.length&&item.color){
+              const variants=p.variants.map(v=>v.color===item.color?{...v,stock:Number(v.stock||0)+qty}:v);
+              const total=variants.reduce((s,v)=>s+Number(v.stock||0),0);changes.push({ref:pr,data:{variants,quantity:total,stock:total,inStock:true}});
+            }else changes.push({ref:pr,data:{quantity:p.quantity+qty,stock:p.quantity+qty,inStock:true}});
           }
+          changes.forEach(c=>tx.update(c.ref,{...c.data,updatedAt:new Date().toISOString()}));
+          tx.update(orderRef,{status:newStatus,inventoryAdjusted:false,inventoryRestoredAt:new Date().toISOString()});
+        }else tx.update(orderRef,{status:newStatus,updatedAt:new Date().toISOString()});
+      });notify('Order status updated');
+    }catch(e){alert(e.message)}
+  }
+  function exportProducts(){
+    const rows=[['SKU','Product Name','Category','Regular Price','Sale Price','Stock','Image URL'],...products.value.map(p=>[p.sku,p.name,p.category,p.price,p.salePrice||'',p.quantity,p.img||''])];
+    const csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='TREVO_Firebase_Products.csv';a.click();
+  }
+  async function copyUrl(url){await navigator.clipboard.writeText(url);notify('Image URL copied')}
 
-          importCsvHeaders = rows[0].map(h =>
-            String(h || '').replace(/^\uFEFF/, '').trim()
-          );
-
-          importCsvData = rows
-            .slice(1)
-            .filter(row => row.some(cell => String(cell || '').trim() !== ''));
-
-          if (!importCsvData.length) {
-            alert('No product rows were found in this file.');
-            return;
-          }
-
-          buildMappingUI();
-          goToImportStep(2);
-        } catch (err) {
-          console.error('CSV parsing error:', err);
-          alert('Could not parse this CSV file: ' + err.message);
-        }
-      };
-
-      reader.readAsText(file, 'UTF-8');
-    }
-
-    function parseDelimitedText(text, delimiter) {
-      const rows = [];
-      let row = [];
-      let value = '';
-      let inQuotes = false;
-
-      for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        const next = text[i + 1];
-
-        if (char === '"') {
-          if (inQuotes && next === '"') {
-            value += '"';
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
-          continue;
-        }
-
-        if (char === delimiter && !inQuotes) {
-          row.push(value);
-          value = '';
-          continue;
-        }
-
-        if ((char === '\n' || char === '\r') && !inQuotes) {
-          if (char === '\r' && next === '\n') i++;
-          row.push(value);
-          rows.push(row);
-          row = [];
-          value = '';
-          continue;
-        }
-
-        value += char;
-      }
-
-      row.push(value);
-      if (row.some(cell => String(cell).length > 0)) rows.push(row);
-
-      return rows;
-    }
-
-    // Parse a single line using the auto-detected delimiter (kept for order import compatibility)
-    function parseImportLine(line) {
-      if (importDelimiter === '\t') {
-        // TSV: split by tabs, strip surrounding quotes
-        return line.split('\t').map(c => c.replace(/^"|"$/g, '').replace(/""/g, '"').trim());
-      }
-      // CSV: use the existing robust parser
-      return parseCSVLine(line);
-    }
-
-    function autoDetectColumn(fieldKey) {
-      const aliases = COLUMN_ALIASES[fieldKey] || [];
-      for (let i = 0; i < importCsvHeaders.length; i++) {
-        const h = importCsvHeaders[i].toLowerCase().trim();
-        if (aliases.includes(h)) return i;
-      }
-      return -1;
-    }
-
-    function buildMappingUI() {
-      const fields = [
-        { key: 'name', label: 'Product Name *', required: true },
-        { key: 'price', label: 'Price *', required: true },
-        { key: 'oldPrice', label: 'Old / Compare Price' },
-        { key: 'img', label: 'Image URL *', required: true },
-        { key: 'desc', label: 'Description' },
-        { key: 'category', label: 'Category' },
-        { key: 'quantity', label: 'Inventory Qty' },
-        { key: 'tags', label: 'Tags' },
-        { key: 'sku', label: 'SKU / Product ID' }
-      ];
-
-      const options = '<option value="-1">— Skip —</option>' +
-        importCsvHeaders.map((h, i) => '<option value="' + i + '">' + h + '</option>').join('');
-
-      let html = '';
-      fields.forEach(f => {
-        const detected = autoDetectColumn(f.key);
-        html += '<div class="map-label">' + f.label + '</div>';
-        html += '<div class="map-arrow">←</div>';
-        html += '<select id="map_' + f.key + '">' +
-          options.replace('value="' + detected + '"', 'value="' + detected + '" selected') +
-          '</select>';
-      });
-      document.getElementById('mappingGrid').innerHTML = html;
-    }
-
-    function getMappedVal(row, fieldKey) {
-      const sel = document.getElementById('map_' + fieldKey);
-      if (!sel) return '';
-      const idx = parseInt(sel.value);
-      if (idx < 0 || idx >= row.length) return '';
-      return (row[idx] || '').trim();
-    }
-
-    function previewImport() {
-      const nameIdx = parseInt(document.getElementById('map_name').value);
-      const priceIdx = parseInt(document.getElementById('map_price').value);
-      const imgIdx = parseInt(document.getElementById('map_img').value);
-
-      if (nameIdx < 0) { alert('Please map the Product Name column.'); return; }
-      if (priceIdx < 0) { alert('Please map the Price column.'); return; }
-
-      const defaultCat = document.getElementById('importDefaultCategory').value.trim() || 'Imported';
-      const existingNames = new Set(allProducts.map(p => (p.name || '').toLowerCase().trim()));
-
-      importMappedProducts = [];
-      const seenNames = new Set();
-
-      for (let rowIndex = 0; rowIndex < importCsvData.length; rowIndex++) {
-        const row = importCsvData[rowIndex];
-        const name = getMappedVal(row, 'name');
-        if (!name) continue; // Skip rows without a name (like Shopify extra-image rows)
-        if (seenNames.has(name.toLowerCase())) continue; // Skip duplicate rows within CSV
-        seenNames.add(name.toLowerCase());
-
-        const priceStr = getMappedVal(row, 'price');
-        // Handle prices like "1499.00 PKR", "PKR 1499", "Rs. 499", "0 PKR", or just "499"
-        const priceNum = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
-        const price = parseInt(priceNum) || 0;
-
-        const oldPriceStr = getMappedVal(row, 'oldPrice');
-        const oldPrice = parseInt(parseFloat(oldPriceStr.replace(/[^0-9.]/g, ''))) || null;
-        const csvImage = getMappedVal(row, 'img');
-        const rawDesc = getMappedVal(row, 'desc');
-        const tags = getMappedVal(row, 'tags');
-        const sku = getMappedVal(row, 'sku');
-
-        // Strip HTML tags for short description.
-        const desc = rawDesc.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 200);
-
-        // Repair/replace imported image links with the supplied public GitHub links.
-        const img = getFixedImageUrl(csvImage, rowIndex, sku);
-
-        // Keep the storefront clean with exactly four customer-friendly categories.
-        const csvCategory = getMappedVal(row, 'category') || defaultCat;
-        const simpleCategory = chooseTrevoCategory(name, desc, tags, csvCategory);
-
-        const quantity = parseInt(getMappedVal(row, 'quantity')) || 0;
-        const normalizedTags = String(tags || '').toLowerCase();
-        let badge = null;
-        if (normalizedTags.includes('sale')) badge = 'sale';
-        else if (normalizedTags.includes('new')) badge = 'new';
-        else if (normalizedTags.includes('hot')) badge = 'hot';
-
-        const isDuplicate = existingNames.has(name.toLowerCase());
-
-        importMappedProducts.push({
-          name, price, oldPrice, img, desc, bodyHtml: rawDesc,
-          category: simpleCategory, quantity, badge, featured: false,
-          sku, isDuplicate
-        });
-      }
-
-      // Render preview — only show NEW products, hide duplicates
-      // Only import usable products. Invalid rows remain visible through the summary.
-      const invalidProducts = importMappedProducts.filter(
-        p => !p.isDuplicate && (!p.name || p.price <= 0 || !p.img)
-      );
-      invalidProducts.forEach(p => { p.isInvalid = true; });
-
-      const newProducts = importMappedProducts.filter(
-        p => !p.isDuplicate && !p.isInvalid
-      );
-      const dupCount = importMappedProducts.filter(p => p.isDuplicate).length;
-      const invalidCount = invalidProducts.length;
-      const newCount = newProducts.length;
-      document.getElementById('importSummary').innerHTML =
-        '<strong>' + importMappedProducts.length + '</strong> products found in CSV. ' +
-        '<strong style="color:#16a34a">' + newCount + ' new</strong> will be imported.' +
-        (dupCount ? '<br>🔒 <strong style="color:#92400e">' + dupCount + ' already in your store</strong> — skipped.' : '') +
-        (invalidCount ? '<br>⚠️ <strong style="color:#dc2626">' + invalidCount + ' invalid row(s)</strong> — missing a valid price or image URL.' : '');
-
-      const tbody = document.getElementById('importPreviewBody');
-      tbody.innerHTML = newProducts.map((p, i) => {
-        return '<tr>' +
-          '<td>' + (i + 1) + '</td>' +
-          '<td title="' + p.name + '">' + p.name.substring(0, 40) + (p.name.length > 40 ? '…' : '') + '</td>' +
-          '<td>' + p.category + '</td>' +
-          '<td>Rs. ' + p.price.toLocaleString() + '</td>' +
-          '<td>' + (p.oldPrice ? 'Rs. ' + p.oldPrice.toLocaleString() : '—') + '</td>' +
-          '<td>' + (p.img ? '✅' : '❌') + '</td>' +
-          '<td><span class="new-tag">New</span></td>' +
-          '</tr>';
-      }).join('');
-
-      if (newCount === 0) {
-        document.getElementById('confirmImportBtn').disabled = true;
-        document.getElementById('confirmImportBtn').textContent = 'No new products to import';
-      } else {
-        document.getElementById('confirmImportBtn').disabled = false;
-        document.getElementById('confirmImportBtn').textContent = '✅ Import ' + newCount + ' Products';
-      }
-
-      goToImportStep(3);
-    }
-
-    async function confirmProductImport() {
-      if (!firebaseReady || typeof db === 'undefined') {
-        alert('Firebase is not connected. Products cannot be published to the live store until firebase-config.js is loaded and Firestore access is available.');
-        return;
-      }
-
-      const toImport = importMappedProducts.filter(p => !p.isDuplicate && !p.isInvalid);
-      if (!toImport.length) { alert('No new products to import.'); return; }
-
-      if (!confirm('Import ' + toImport.length + ' new products into your store?')) return;
-
-      showLoader('Importing ' + toImport.length + ' products…');
-
-      try {
-        let nextId = await firestoreNextProductId();
-        const BATCH_SIZE = 500; // Firestore batch limit
-
-        for (let i = 0; i < toImport.length; i += BATCH_SIZE) {
-          const chunk = toImport.slice(i, i + BATCH_SIZE);
-          const batch = db.batch();
-          chunk.forEach(p => {
-            const product = {
-              id: nextId,
-              name: p.name,
-              category: p.category,
-              price: p.price,
-              oldPrice: p.oldPrice,
-              img: p.img,
-              desc: p.desc,
-              bodyHtml: p.bodyHtml || '',
-              quantity: p.quantity,
-              badge: p.badge,
-              featured: false,
-              images: p.img ? [p.img] : [],
-              sku: p.sku || ''
-            };
-            batch.set(db.collection(PRODUCTS_COLLECTION).doc(String(nextId)), product);
-            nextId++;
-          });
-          await batch.commit();
-        }
-
-        hideLoader();
-        closeProdImportModal();
-        alert('✅ Successfully imported ' + toImport.length + ' products!');
-      } catch (err) {
-        hideLoader();
-        console.error('Product import error:', err);
-        alert('❌ Import failed: ' + err.message);
-      }
-    }
-
-
-    async function repairExistingProductImages() {
-      if (!firebaseReady || typeof db === 'undefined') {
-        alert('Firebase is not connected.');
-        return;
-      }
-      if (!allProducts.length) {
-        alert('No products found to repair.');
-        return;
-      }
-      if (!confirm('Replace image links for all current products using the approved TREVO image list?')) return;
-
-      showLoader('Repairing product images…');
-      try {
-        const BATCH_SIZE = 450;
-        for (let start = 0; start < allProducts.length; start += BATCH_SIZE) {
-          const chunk = allProducts.slice(start, start + BATCH_SIZE);
-          const batch = db.batch();
-
-          chunk.forEach((product, offset) => {
-            const globalIndex = start + offset;
-            const fixedUrl = TREVO_FIXED_IMAGE_URLS[
-              globalIndex % TREVO_FIXED_IMAGE_URLS.length
-            ];
-            const ref = db.collection(PRODUCTS_COLLECTION).doc(String(product.id));
-            batch.update(ref, {
-              img: fixedUrl,
-              images: [fixedUrl]
-            });
-          });
-
-          await batch.commit();
-        }
-
-        hideLoader();
-        alert('✅ Image links repaired for ' + allProducts.length + ' products.');
-      } catch (err) {
-        hideLoader();
-        console.error('Image repair error:', err);
-        alert('❌ Image repair failed: ' + err.message);
-      }
-    }
-
-    // --- Export Products CSV ---
-    function exportProductsCSV() {
-      if (!allProducts.length) { alert('No products to export.'); return; }
-      const rows = [['ID','Name','Category','Price','Old Price','Quantity','Badge','Featured','Image URL','Description']];
-      allProducts.forEach(p => {
-        rows.push([
-          p.id, p.name, p.category, p.price, p.oldPrice || '',
-          p.quantity || 0, p.badge || '', p.featured ? 'Yes' : 'No',
-          p.img, (p.desc || '').replace(/"/g, '""')
-        ]);
-      });
-      const csv = rows.map(r => r.map(c => '"' + (c + '').replace(/"/g, '""') + '"').join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'trevo_products_' + new Date().toISOString().slice(0, 10) + '.csv';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    // --- Init ---
-    function showDashboard() {
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      initDataSource();
-      loadProducts(); // Also load products for inventory tab
-    }
-    if (sessionStorage.getItem('trevoAdmin') === '1') showDashboard();
-  </script>
+  onMounted(()=>{if(loggedIn.value)connect()});
+  return{loggedIn,password,loginError,login,logout,firebaseConnected,tab,nav,products,orders,statuses,imageLibrary,fallbackImage,
+    productSearch,categoryFilter,orderSearch,orderFilter,kpis,categories,filteredProducts,filteredOrders,totalUnits,retailValue,lowStockProducts,
+    productModal,imagePicker,editing,saving,toast,money,customerName,customerPhone,openProduct,closeProduct,addVariant,selectImage,saveProduct,
+    quickStock,deleteProduct,importWorkbookCatalog,changeOrderStatus,exportProducts,copyUrl};
+}}).mount('#app');
+</script>
 </body>
 </html>
