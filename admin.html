@@ -347,7 +347,7 @@
       <!-- Step 1: File Upload -->
       <div class="import-step active" id="importStep1">
         <h2>📤 Import Products from CSV</h2>
-        <p>Upload a CSV file exported from Shopify, WhatsApp Business, or Meta Commerce Manager.</p>
+        <p>Upload your product CSV. Image links will be repaired automatically and products will be organized into four TREVO categories.</p>
         <div class="import-info">💡 Supports Shopify exports, WhatsApp/Meta catalog exports, and any CSV or TSV file with product columns.</div>
         <div class="file-drop" id="prodFileDrop" onclick="document.getElementById('prodCsvFile').click()">
           <div style="font-size:2rem;margin-bottom:8px;">📁</div>
@@ -364,10 +364,12 @@
         <h2>🔗 Map CSV Columns</h2>
         <p>We auto-detected column mappings. Adjust if needed.</p>
         <div class="mapping-grid" id="mappingGrid"></div>
-        <div class="form-field" style="margin:12px 0">
-          <label>Default Category for imported products:</label>
-          <input type="text" id="importDefaultCategory" value="Imported" placeholder="e.g. Kitchen, Home" />
+        <div class="import-info" style="margin:12px 0">
+          👜 Categories are assigned automatically as: <strong>Tote Bags</strong>,
+          <strong>Pearl Bags</strong>, <strong>Premium Collection</strong>, and
+          <strong>Everyday Handbags</strong>. You can adjust any category in the preview.
         </div>
+        <input type="hidden" id="importDefaultCategory" value="Everyday Handbags" />
         <div class="import-actions">
           <button class="btn btn-ghost btn-sm" onclick="goToImportStep(1)">← Back</button>
           <button class="btn btn-primary btn-sm" onclick="previewImport()">Preview →</button>
@@ -934,6 +936,55 @@
     let importCsvHeaders = []; // CSV column headers
     let importMappedProducts = []; // Products ready for import
 
+
+    // Fixed public GitHub image URLs supplied for TREVO products.
+    const TREVO_FIXED_IMAGE_URLS = ["https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2003_56_40%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_41_09%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_44_46%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_47_53%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_50_20%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_51_53%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_54_10%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_56_56%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_58_43%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_59_53%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2005_06_04%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2005_10_41%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2005_14_41%20PM.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_4mmsk34mmsk34mms.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_6jb13e6jb13e6jb1.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_6k2zs46k2zs46k2z.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_86kkdv86kkdv86kk.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8a0od78a0od78a0o.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8k3y198k3y198k3y.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8mia8a8mia8a8mia.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_a5wgm3a5wgm3a5wg.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_etwllretwllretwl.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_fqxdxifqxdxifqxd.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_llu79sllu79sllu7.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_ocwp1kocwp1kocwp.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_p74fqqp74fqqp74f.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_po50igpo50igpo50.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_qdqv73qdqv73qdqv.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_qz0oddqz0oddqz0o.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_rw5t4rw5t4rw5t4r.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_sp6czcsp6czcsp6c.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_td0mxktd0mxktd0m.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_tjbljhtjbljhtjbl.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_u4mg36u4mg36u4mg.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_vqei0wvqei0wvqei.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_xse5wjxse5wjxse5.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_y9j4q4y9j4q4y9j4.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_yd44sqyd44sqyd44%20%281%29.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_ykwihxykwihxykwi.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_yyj4wdyyj4wdyyj4%20%281%29.png", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-11%20at%205.13.02%20PM%20%281%29.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-11%20at%205.13.02%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.32.44%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.33.06%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.42.52%20PM.jpeg", "https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.45.54%20PM.jpeg"];
+
+    const TREVO_CATEGORIES = [
+      'Tote Bags',
+      'Pearl Bags',
+      'Premium Collection',
+      'Everyday Handbags'
+    ];
+
+    function normalizeSku(value) {
+      return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    }
+
+    function chooseTrevoCategory(name, desc, tags, csvCategory) {
+      const text = [name, desc, tags, csvCategory].join(' ').toLowerCase();
+
+      if (/pearl|bead|beaded|moti|embellish/.test(text)) return 'Pearl Bags';
+      if (/tote|shopper|shoulder tote|large carry|college|work bag/.test(text)) return 'Tote Bags';
+      if (/premium|luxury|imported|designer|party|clutch|evening|formal|velvet|crystal|rhinestone/.test(text)) return 'Premium Collection';
+      return 'Everyday Handbags';
+    }
+
+    function getFixedImageUrl(csvImage, rowIndex, sku) {
+      const original = String(csvImage || '').trim();
+
+      // Keep an already-valid public GitHub raw link.
+      if (/^https:\/\/raw\.githubusercontent\.com\//i.test(original)) return original;
+
+      // Convert normal GitHub "blob" URLs into raw URLs.
+      const githubMatch = original.match(
+        /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/i
+      );
+      if (githubMatch) {
+        return 'https://raw.githubusercontent.com/' +
+          githubMatch[1] + '/' + githubMatch[2] + '/' +
+          githubMatch[3] + '/' + githubMatch[4];
+      }
+
+      // The supplied image list does not contain SKU metadata, so use stable
+      // CSV row order as the fallback. This keeps each import deterministic.
+      if (TREVO_FIXED_IMAGE_URLS.length) {
+        return TREVO_FIXED_IMAGE_URLS[rowIndex % TREVO_FIXED_IMAGE_URLS.length];
+      }
+
+      return original;
+    }
+
     // Known column name aliases for auto-mapping
     const COLUMN_ALIASES = {
       name: ['title','product name','name','product_name','product title','item name','item_name','product'],
@@ -1112,7 +1163,8 @@
         { key: 'desc', label: 'Description' },
         { key: 'category', label: 'Category' },
         { key: 'quantity', label: 'Inventory Qty' },
-        { key: 'tags', label: 'Tags' }
+        { key: 'tags', label: 'Tags' },
+        { key: 'sku', label: 'SKU / Product ID' }
       ];
 
       const options = '<option value="-1">— Skip —</option>' +
@@ -1152,7 +1204,8 @@
       importMappedProducts = [];
       const seenNames = new Set();
 
-      for (const row of importCsvData) {
+      for (let rowIndex = 0; rowIndex < importCsvData.length; rowIndex++) {
+        const row = importCsvData[rowIndex];
         const name = getMappedVal(row, 'name');
         if (!name) continue; // Skip rows without a name (like Shopify extra-image rows)
         if (seenNames.has(name.toLowerCase())) continue; // Skip duplicate rows within CSV
@@ -1165,14 +1218,21 @@
 
         const oldPriceStr = getMappedVal(row, 'oldPrice');
         const oldPrice = parseInt(parseFloat(oldPriceStr.replace(/[^0-9.]/g, ''))) || null;
-        const img = getMappedVal(row, 'img');
+        const csvImage = getMappedVal(row, 'img');
         const rawDesc = getMappedVal(row, 'desc');
-        // Strip HTML tags for short desc
+        const tags = getMappedVal(row, 'tags');
+        const sku = getMappedVal(row, 'sku');
+
+        // Strip HTML tags for short description.
         const desc = rawDesc.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 200);
-        const category = getMappedVal(row, 'category') || defaultCat;
-        // Simplify Shopify-style categories: "Home & Garden > Kitchen > Tools" → "Kitchen"
-        const catParts = category.split('>');
-        const simpleCategory = catParts.length > 1 ? catParts[catParts.length - 2].trim() : catParts[0].trim();
+
+        // Repair/replace imported image links with the supplied public GitHub links.
+        const img = getFixedImageUrl(csvImage, rowIndex, sku);
+
+        // Keep the storefront clean with exactly four customer-friendly categories.
+        const csvCategory = getMappedVal(row, 'category') || defaultCat;
+        const simpleCategory = chooseTrevoCategory(name, desc, tags, csvCategory);
+
         const quantity = parseInt(getMappedVal(row, 'quantity')) || 0;
         const tags = getMappedVal(row, 'tags').toLowerCase();
         let badge = null;
@@ -1265,7 +1325,8 @@
               quantity: p.quantity,
               badge: p.badge,
               featured: false,
-              images: p.img ? [p.img] : []
+              images: p.img ? [p.img] : [],
+              sku: p.sku || ''
             };
             batch.set(db.collection(PRODUCTS_COLLECTION).doc(String(nextId)), product);
             nextId++;
