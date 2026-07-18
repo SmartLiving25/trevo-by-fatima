@@ -40,5 +40,18 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    // ── Products Archive Collection ───────────────────────────────
+    match /products_archive/{productId} {
+
+      // ✅ Anyone can READ archived products (admin panel needs access)
+      allow read: if true;
+
+      // ✅ Allow create (archiving moves products here)
+      allow create: if true;
+
+      // ✅ Allow deletes (admin panel can remove archived products)
+      allow delete: if true;
+    }
+
   }
 }

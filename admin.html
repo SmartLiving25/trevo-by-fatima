@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trevo – Admin Panel</title>
-  <link rel="icon" type="image/png" href="cart.png" />
+  <link rel="icon" type="image/png" href="logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
   <style>
     :root{--purple:#7B2D8B;--purple-dark:#5C1F6B;--purple-deep:#1C1C2E;--purple-mid:#A855C0;--purple-light:#F3E8F7;--purple-soft:#EDD9F4;--purple-glow:rgba(123,45,139,.18);--text:#1a0a22;--text-muted:#6b5478;--text-light:#a08ab0;--border:#e4d4ee;--bg:#faf5fc;--bg-card:#fff;--shadow-sm:0 1px 3px rgba(90,20,110,.06);--shadow:0 4px 18px rgba(90,20,110,.10);--shadow-lg:0 12px 44px rgba(90,20,110,.15);--radius:16px;--radius-sm:10px;--radius-full:999px}
@@ -142,7 +142,33 @@
     .form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-glow)}
     .form-field textarea{min-height:80px;resize:vertical}
 
-    @media(max-width:768px){.topbar{padding:12px 16px}.main{padding:20px 16px}.stats{grid-template-columns:1fr 1fr}.toolbar{flex-direction:column;align-items:stretch}.toolbar-search{max-width:100%}.form-grid{grid-template-columns:1fr}}
+    /* PRODUCT IMPORT MODAL */
+    .prod-import-modal .modal-box{max-width:780px;max-height:90vh;overflow-y:auto}
+    .import-step{display:none}
+    .import-step.active{display:block}
+    .mapping-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:8px 12px;align-items:center;margin:16px 0}
+    .mapping-grid .map-label{font-size:.82rem;font-weight:600;color:var(--text)}
+    .mapping-grid .map-arrow{color:var(--text-light);font-size:1.1rem}
+    .mapping-grid select{padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.82rem;background:#fff;color:var(--text);cursor:pointer;outline:none}
+    .mapping-grid select:focus{border-color:var(--purple)}
+    .archive-banner{display:flex;align-items:center;gap:10px;padding:14px 20px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:var(--radius-sm);margin-bottom:20px;font-size:.88rem;color:#92400e;font-weight:500}
+    .archive-banner .archive-icon{font-size:1.4rem}
+    .preview-table-wrap{max-height:280px;overflow:auto;border:1px solid var(--border);border-radius:var(--radius-sm);margin:16px 0}
+    .preview-table{width:100%;border-collapse:collapse;font-size:.78rem}
+    .preview-table th{background:var(--purple-light);padding:8px 10px;text-align:left;font-weight:600;color:var(--purple-dark);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0;z-index:1}
+    .preview-table td{padding:6px 10px;border-top:1px solid var(--border);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .preview-table tr:hover td{background:#fdf8ff}
+    .import-summary{background:var(--purple-light);border-radius:var(--radius-sm);padding:16px;margin:12px 0;font-size:.88rem}
+    .import-summary strong{color:var(--purple-dark)}
+    .import-actions{display:flex;gap:10px;margin-top:20px}
+    .import-actions .btn{flex:1}
+    .import-info{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#dbeafe;border-radius:var(--radius-sm);font-size:.82rem;color:#1e40af;margin-bottom:12px}
+    .import-warning{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fef3c7;border-radius:var(--radius-sm);font-size:.82rem;color:#92400e;margin-bottom:12px}
+    .dup-tag{display:inline-block;padding:1px 6px;border-radius:var(--radius-full);font-size:.68rem;font-weight:600;background:#fef3c7;color:#92400e}
+    .new-tag{display:inline-block;padding:1px 6px;border-radius:var(--radius-full);font-size:.68rem;font-weight:600;background:#dcfce7;color:#16a34a}
+    .cat-select-inline{padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.82rem;min-width:120px}
+
+    @media(max-width:768px){.topbar{padding:12px 16px}.main{padding:20px 16px}.stats{grid-template-columns:1fr 1fr}.toolbar{flex-direction:column;align-items:stretch}.toolbar-search{max-width:100%}.form-grid{grid-template-columns:1fr}.mapping-grid{grid-template-columns:1fr}}
     @media(max-width:480px){.stats{grid-template-columns:1fr}.login-card{padding:32px 24px}.tab-nav{flex-direction:column}}
   </style>
 </head>
@@ -183,6 +209,7 @@
       <div class="tab-nav">
         <button class="tab-btn active" onclick="switchTab('orders',this)">📦 Orders</button>
         <button class="tab-btn" onclick="switchTab('inventory',this)">🏪 Inventory</button>
+        <button class="tab-btn" onclick="switchTab('archive',this)">📦 Archived</button>
       </div>
 
       <!-- ORDERS TAB -->
@@ -230,7 +257,10 @@
             <input type="text" id="prodSearchInput" placeholder="Search products…" oninput="renderProducts()" />
           </div>
           <select id="prodCategoryFilter" onchange="renderProducts()"><option value="All">All Categories</option></select>
+          <button class="btn btn-ghost btn-sm" onclick="openProdImportModal()">📤 Import Products CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportProductsCSV()">📥 Export Products</button>
           <button class="btn btn-primary btn-sm" onclick="openProductModal()">＋ Add Product</button>
+          <button class="btn btn-danger btn-sm" onclick="archiveAllCurrentProducts()">📦 Archive Current Products</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -238,6 +268,31 @@
             <tbody id="productsBody"></tbody>
           </table>
           <div class="empty-state" id="emptyProducts" style="display:none;"><div class="icon">🏷️</div><h3>No products</h3><p>Add your first product to get started.</p></div>
+        </div>
+      </div>
+
+      <!-- ARCHIVED PRODUCTS TAB -->
+      <div class="tab-content" id="tab-archive">
+        <div class="archive-banner">
+          <span class="archive-icon">📦</span>
+          <span>These are your old/archived products. They are <strong>not visible</strong> on your store — only you can see them here.</span>
+        </div>
+        <div class="stats">
+          <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-label">Archived Products</div><div class="stat-value" id="statArchived">0</div></div>
+          <div class="stat-card"><div class="stat-icon">📂</div><div class="stat-label">Categories</div><div class="stat-value" id="statArchiveCats">0</div></div>
+        </div>
+        <div class="toolbar">
+          <div class="toolbar-search">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="archiveSearchInput" placeholder="Search archived products…" oninput="renderArchivedProducts()" />
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th style="width:50px"></th><th>Name</th><th>Category</th><th>Price</th><th>Qty</th><th>Archived On</th><th></th></tr></thead>
+            <tbody id="archivedBody"></tbody>
+          </table>
+          <div class="empty-state" id="emptyArchive" style="display:none;"><div class="icon">📦</div><h3>No archived products</h3><p>When you archive products, they'll appear here.</p></div>
         </div>
       </div>
     </div>
@@ -283,6 +338,57 @@
           <button class="btn btn-primary btn-sm" type="button" onclick="saveProductForm()" style="flex:1">💾 Save Product</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- PRODUCT IMPORT MODAL -->
+  <div class="modal-bg prod-import-modal" id="prodImportModal" onclick="if(event.target===this)closeProdImportModal()">
+    <div class="modal-box">
+      <!-- Step 1: File Upload -->
+      <div class="import-step active" id="importStep1">
+        <h2>📤 Import Products from CSV</h2>
+        <p>Upload a CSV file exported from Shopify, WhatsApp Business, or Meta Commerce Manager.</p>
+        <div class="import-info">💡 Supports Shopify exports, WhatsApp/Meta catalog exports, and any CSV or TSV file with product columns.</div>
+        <div class="file-drop" id="prodFileDrop" onclick="document.getElementById('prodCsvFile').click()">
+          <div style="font-size:2rem;margin-bottom:8px;">📁</div>
+          <div>Click or drag a CSV / TSV file here</div>
+          <input type="file" id="prodCsvFile" accept=".csv,.tsv,.txt" onchange="handleProdFileSelect(this)" />
+        </div>
+        <div class="import-actions">
+          <button class="btn btn-ghost btn-sm" onclick="closeProdImportModal()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Column Mapping -->
+      <div class="import-step" id="importStep2">
+        <h2>🔗 Map CSV Columns</h2>
+        <p>We auto-detected column mappings. Adjust if needed.</p>
+        <div class="mapping-grid" id="mappingGrid"></div>
+        <div class="form-field" style="margin:12px 0">
+          <label>Default Category for imported products:</label>
+          <input type="text" id="importDefaultCategory" value="Imported" placeholder="e.g. Kitchen, Home" />
+        </div>
+        <div class="import-actions">
+          <button class="btn btn-ghost btn-sm" onclick="goToImportStep(1)">← Back</button>
+          <button class="btn btn-primary btn-sm" onclick="previewImport()">Preview →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Preview & Confirm -->
+      <div class="import-step" id="importStep3">
+        <h2>👀 Preview Import</h2>
+        <div class="import-summary" id="importSummary"></div>
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead><tr><th></th><th>Name</th><th>Category</th><th>Price</th><th>Old Price</th><th>Image</th><th>Status</th></tr></thead>
+            <tbody id="importPreviewBody"></tbody>
+          </table>
+        </div>
+        <div class="import-actions">
+          <button class="btn btn-ghost btn-sm" onclick="goToImportStep(2)">← Back</button>
+          <button class="btn btn-primary btn-sm" id="confirmImportBtn" onclick="confirmProductImport()">✅ Import Products</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -414,35 +520,11 @@
       orders.sort((a,b)=>new Date(b.date)-new Date(a.date));
 
       tbody.innerHTML = orders.map(o=>{
-  const d = new Date(o.date);
-  const dateStr = d.toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'}) + '<br><span style="color:var(--text-light);font-size:.75rem;">' + d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) + '</span>';
-  const itemsHtml = o.items.map(i=>'<div><strong>'+i.qty+'x</strong> '+i.name+' <span style="color:var(--text-light)">@ Rs. '+i.price.toLocaleString()+'</span></div>').join('');
-
-  // Customer info (only form orders have this)
-  const customerHtml = o.customer
-    ? '<div style="font-weight:600;color:var(--text);">'+o.customer.name+'</div>' +
-      '<div style="font-size:.78rem;color:var(--text-muted);">📍 '+o.customer.address+'</div>' +
-      '<div style="font-size:.78rem;color:var(--text-muted);">🏙️ '+o.customer.city+'</div>' +
-      '<div style="font-size:.78rem;color:var(--text-muted);">📞 '+o.customer.phone+'</div>'
-    : '<span style="color:var(--text-light);font-size:.8rem;">Via WhatsApp</span>';
-
-  // Source badge
-  const sourceBadge = o.source === 'form'
-    ? '<span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;">📋 Form</span>'
-    : '<span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;">💬 WhatsApp</span>';
-
-  return '<tr>' +
-    '<td style="font-weight:700;color:var(--purple-dark);white-space:nowrap">'+o.orderId+'</td>' +
-    '<td>'+dateStr+'</td>' +
-    '<td style="min-width:160px;">'+customerHtml+'</td>' +
-    '<td><div class="items-list">'+itemsHtml+'</div></td>' +
-    '<td style="white-space:nowrap">'+(o.deliveryType||'Standard')+'<br><span style="color:var(--text-light);font-size:.78rem">Rs. '+(o.deliveryCost||0).toLocaleString()+'</span></td>' +
-    '<td style="font-weight:700;white-space:nowrap">Rs. '+(o.total||0).toLocaleString()+'</td>' +
-    '<td>'+sourceBadge+'</td>' +
-    '<td><span class="status status-'+o.status+'" onclick="cycleStatus(\''+o.orderId+'\')" title="Click to change">● '+o.status+'</span></td>' +
-    '<td><button class="delete-btn" onclick="deleteOrder(\''+o.orderId+'\')" title="Delete">🗑</button></td>' +
-    '</tr>';
-}).join('');
+        const d = new Date(o.date);
+        const dateStr = d.toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'}) + '<br><span style="color:var(--text-light);font-size:.75rem;">' + d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) + '</span>';
+        const itemsHtml = o.items.map(i=>'<div><strong>'+i.qty+'x</strong> '+i.name+' <span style="color:var(--text-light)">@ Rs. '+i.price.toLocaleString()+'</span></div>').join('');
+        return '<tr><td style="font-weight:700;color:var(--purple-dark);white-space:nowrap">'+o.orderId+'</td><td>'+dateStr+'</td><td><div class="items-list">'+itemsHtml+'</div></td><td style="white-space:nowrap">'+(o.deliveryType||'Standard')+'<br><span style="color:var(--text-light);font-size:.78rem">Rs. '+(o.deliveryCost||0).toLocaleString()+'</span></td><td style="font-weight:700;white-space:nowrap">Rs. '+(o.total||0).toLocaleString()+'</td><td><span class="status status-'+o.status+'" onclick="cycleStatus(\''+o.orderId+'\')" title="Click to change">● '+o.status+'</span></td><td><button class="delete-btn" onclick="deleteOrder(\''+o.orderId+'\')" title="Delete">🗑</button></td></tr>';
+      }).join('');
     }
 
     // --- Order Actions (Firestore-first, localStorage fallback) ---
@@ -496,35 +578,30 @@
 
     // --- CSV Export ---
     function exportCSV(){
-  if(!allOrders.length){alert('No orders to export.');return;}
-  const rows = [['Order ID','Date','Customer Name','Address','City','Phone','Items','Quantities','Prices','Delivery Type','Delivery Cost','Subtotal','Total','Status','Source']];
-  allOrders.forEach(o=>{
-    rows.push([
-      o.orderId,
-      new Date(o.date).toLocaleString('en-PK'),
-      o.customer ? o.customer.name  : '',
-      o.customer ? o.customer.address : '',
-      o.customer ? o.customer.city  : '',
-      o.customer ? o.customer.phone : '',
-      o.items.map(i=>i.name).join(' | '),
-      o.items.map(i=>i.qty).join(' | '),
-      o.items.map(i=>i.price).join(' | '),
-      o.deliveryType||'',
-      o.deliveryCost||0,
-      o.subtotal||0,
-      o.total||0,
-      o.status,
-      o.source||'whatsapp'
-    ]);
-  });
-  const csv = rows.map(r=>r.map(c=>'"'+(c+'').replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob = new Blob([csv],{type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'trevo_orders_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
+      if(!allOrders.length){alert('No orders to export.');return;}
+      const rows = [['Order ID','Date','Items','Quantities','Prices','Delivery Type','Delivery Cost','Subtotal','Total','Status']];
+      allOrders.forEach(o=>{
+        rows.push([
+          o.orderId,
+          new Date(o.date).toLocaleString('en-PK'),
+          o.items.map(i=>i.name).join(' | '),
+          o.items.map(i=>i.qty).join(' | '),
+          o.items.map(i=>i.price).join(' | '),
+          o.deliveryType||'',
+          o.deliveryCost||0,
+          o.subtotal||0,
+          o.total||0,
+          o.status
+        ]);
+      });
+      const csv = rows.map(r=>r.map(c=>'"'+(c+'').replace(/"/g,'""')+'"').join(',')).join('\n');
+      const blob = new Blob([csv],{type:'text/csv'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'trevo_orders_'+new Date().toISOString().slice(0,10)+'.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
 
     // --- CSV Import ---
     function openImportModal(){document.getElementById('importModal').classList.add('open');}
@@ -611,6 +688,78 @@
       document.getElementById('tab-' + tab).classList.add('active');
       btn.classList.add('active');
       if (tab === 'inventory' && allProducts.length === 0) loadProducts();
+      if (tab === 'archive' && archivedProducts.length === 0) loadArchivedProducts();
+    }
+
+    // --- Archived Products ---
+    let archivedProducts = [];
+
+    async function loadArchivedProducts() {
+      if (!firebaseReady) return;
+      showLoader('Loading archived products…');
+      try {
+        const snapshot = await db.collection(PRODUCTS_ARCHIVE_COLLECTION).orderBy('id').get();
+        archivedProducts = snapshot.docs.map(doc => doc.data());
+        hideLoader();
+        renderArchivedProducts();
+      } catch (err) {
+        hideLoader();
+        console.error('Archived products load error:', err);
+      }
+    }
+
+    function renderArchivedProducts() {
+      const search = (document.getElementById('archiveSearchInput').value || '').toLowerCase();
+      let prods = [...archivedProducts];
+
+      // Stats
+      document.getElementById('statArchived').textContent = prods.length;
+      document.getElementById('statArchiveCats').textContent = new Set(prods.map(p => p.category).filter(Boolean)).size;
+
+      if (search) prods = prods.filter(p => (p.name || '').toLowerCase().includes(search) || (p.category || '').toLowerCase().includes(search));
+
+      const tbody = document.getElementById('archivedBody');
+      const empty = document.getElementById('emptyArchive');
+
+      if (!prods.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+
+      tbody.innerHTML = prods.map(p => {
+        const archivedDate = p.archivedAt ? new Date(p.archivedAt).toLocaleDateString('en-PK', {day:'2-digit',month:'short',year:'numeric'}) : '—';
+        return '<tr>' +
+          '<td><img class="prod-img-thumb" src="' + (p.img || '') + '" alt="" onerror="this.style.display=\'none\'" /></td>' +
+          '<td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (p.name || '') + '">' + (p.name || '') + '</td>' +
+          '<td>' + (p.category || '') + '</td>' +
+          '<td style="font-weight:600;">Rs. ' + (p.price || 0).toLocaleString() + '</td>' +
+          '<td>' + (p.quantity || 0) + '</td>' +
+          '<td style="color:var(--text-muted);font-size:.82rem;">' + archivedDate + '</td>' +
+          '<td><button class="delete-btn" onclick="deleteArchivedProduct(' + p.id + ')" title="Delete permanently">🗑</button></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    async function deleteArchivedProduct(id) {
+      const p = archivedProducts.find(x => x.id === id);
+      if (!confirm('Permanently delete "' + (p ? p.name : id) + '" from archive?')) return;
+      showLoader('Deleting…');
+      await firestoreDeleteArchivedProduct(id);
+      archivedProducts = archivedProducts.filter(x => x.id !== id);
+      hideLoader();
+      renderArchivedProducts();
+    }
+
+    async function archiveAllCurrentProducts() {
+      if (!allProducts.length) { alert('No products to archive.'); return; }
+      if (!confirm('Move all ' + allProducts.length + ' current products to the archive?\n\nThey will be removed from your store and only visible in the Archived tab.')) return;
+      showLoader('Archiving ' + allProducts.length + ' products…');
+      const count = await firestoreArchiveAllProducts();
+      hideLoader();
+      if (count > 0) {
+        alert('✅ ' + count + ' products archived successfully!\nYou can view them in the "Archived" tab.');
+        archivedProducts = []; // Reset so it reloads
+      } else {
+        alert('No products were archived.');
+      }
     }
 
     // --- Inventory Management ---
@@ -776,6 +925,300 @@
       showLoader('Deleting product…');
       await firestoreDeleteProduct(id);
       hideLoader();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  📤 PRODUCT CSV IMPORT
+    // ═══════════════════════════════════════════════════════════
+    let importCsvData = [];    // Parsed rows from CSV
+    let importCsvHeaders = []; // CSV column headers
+    let importMappedProducts = []; // Products ready for import
+
+    // Known column name aliases for auto-mapping
+    const COLUMN_ALIASES = {
+      name: ['title','product name','name','product_name','product title','item name','item_name','product'],
+      price: ['variant price','price','sale price','selling price','variant_price','amount','cost'],
+      oldPrice: ['variant compare at price','compare at price','compare_at_price','original price','old price','mrp','was price'],
+      img: ['image src','image_src','image url','image','photo','photo url','picture','main image','image link','image_link','thumbnail','photo_url'],
+      desc: ['body (html)','body html','body_html','description','product description','short description','details','summary'],
+      category: ['product category','category','type','product type','product_type','collection','department','google_product_category','fb_product_category','google product category','fb product category'],
+      quantity: ['variant inventory qty','inventory','quantity','stock','qty','inventory qty','variant_inventory_qty','stock quantity'],
+      tags: ['tags','tag','labels','keywords'],
+      badge: ['badge','label','ribbon'],
+      sku: ['variant sku','sku','product sku','item sku','variant_sku','id']
+    };
+    let importDelimiter = ','; // auto-detected: ',' for CSV, '\t' for TSV
+
+    function openProdImportModal() {
+      importCsvData = [];
+      importCsvHeaders = [];
+      importMappedProducts = [];
+      document.getElementById('prodCsvFile').value = '';
+      goToImportStep(1);
+      document.getElementById('prodImportModal').classList.add('open');
+    }
+    function closeProdImportModal() {
+      document.getElementById('prodImportModal').classList.remove('open');
+    }
+
+    function goToImportStep(step) {
+      document.querySelectorAll('.import-step').forEach(s => s.classList.remove('active'));
+      document.getElementById('importStep' + step).classList.add('active');
+    }
+
+    // Drag & drop for product CSV
+    const prodFileDrop = document.getElementById('prodFileDrop');
+    prodFileDrop.addEventListener('dragover', e => { e.preventDefault(); prodFileDrop.classList.add('dragover'); });
+    prodFileDrop.addEventListener('dragleave', () => prodFileDrop.classList.remove('dragover'));
+    prodFileDrop.addEventListener('drop', e => { e.preventDefault(); prodFileDrop.classList.remove('dragover'); if (e.dataTransfer.files.length) parseProdCSV(e.dataTransfer.files[0]); });
+    function handleProdFileSelect(input) { if (input.files.length) parseProdCSV(input.files[0]); }
+
+    function parseProdCSV(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext !== 'csv' && ext !== 'tsv' && ext !== 'txt') { alert('Please select a CSV or TSV file.'); return; }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        // Split into lines (respecting quoted fields that span multiple lines)
+        const lines = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < text.length; i++) {
+          const c = text[i];
+          if (c === '"') { if (inQ && text[i+1] === '"') { cur += '"'; i++; } else { inQ = !inQ; } }
+          else if ((c === '\n' || (c === '\r' && text[i+1] === '\n')) && !inQ) {
+            lines.push(cur); cur = '';
+            if (c === '\r') i++;
+          } else { cur += c; }
+        }
+        if (cur.trim()) lines.push(cur);
+
+        if (lines.length < 2) { alert('File is empty or has no data rows.'); return; }
+
+        // Auto-detect delimiter: if first line has more tabs than commas, it's TSV
+        const firstLine = lines[0];
+        const tabCount = (firstLine.match(/\t/g) || []).length;
+        const commaCount = (firstLine.match(/,/g) || []).length;
+        importDelimiter = tabCount > commaCount ? '\t' : ',';
+        console.log('Detected delimiter:', importDelimiter === '\t' ? 'TAB (TSV)' : 'COMMA (CSV)', '— Tabs:', tabCount, 'Commas:', commaCount);
+
+        importCsvHeaders = parseImportLine(lines[0]).map(h => h.trim());
+
+        // Parse all data rows
+        const allRows = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = parseImportLine(lines[i]);
+          if (cols.length >= 2) allRows.push(cols);
+        }
+        importCsvData = allRows;
+
+        buildMappingUI();
+        goToImportStep(2);
+      };
+      reader.readAsText(file);
+    }
+
+    // Parse a single line using the auto-detected delimiter (CSV or TSV)
+    function parseImportLine(line) {
+      if (importDelimiter === '\t') {
+        // TSV: split by tabs, strip surrounding quotes
+        return line.split('\t').map(c => c.replace(/^"|"$/g, '').replace(/""/g, '"').trim());
+      }
+      // CSV: use the existing robust parser
+      return parseCSVLine(line);
+    }
+
+    function autoDetectColumn(fieldKey) {
+      const aliases = COLUMN_ALIASES[fieldKey] || [];
+      for (let i = 0; i < importCsvHeaders.length; i++) {
+        const h = importCsvHeaders[i].toLowerCase().trim();
+        if (aliases.includes(h)) return i;
+      }
+      return -1;
+    }
+
+    function buildMappingUI() {
+      const fields = [
+        { key: 'name', label: 'Product Name *', required: true },
+        { key: 'price', label: 'Price *', required: true },
+        { key: 'oldPrice', label: 'Old / Compare Price' },
+        { key: 'img', label: 'Image URL *', required: true },
+        { key: 'desc', label: 'Description' },
+        { key: 'category', label: 'Category' },
+        { key: 'quantity', label: 'Inventory Qty' },
+        { key: 'tags', label: 'Tags' }
+      ];
+
+      const options = '<option value="-1">— Skip —</option>' +
+        importCsvHeaders.map((h, i) => '<option value="' + i + '">' + h + '</option>').join('');
+
+      let html = '';
+      fields.forEach(f => {
+        const detected = autoDetectColumn(f.key);
+        html += '<div class="map-label">' + f.label + '</div>';
+        html += '<div class="map-arrow">←</div>';
+        html += '<select id="map_' + f.key + '">' +
+          options.replace('value="' + detected + '"', 'value="' + detected + '" selected') +
+          '</select>';
+      });
+      document.getElementById('mappingGrid').innerHTML = html;
+    }
+
+    function getMappedVal(row, fieldKey) {
+      const sel = document.getElementById('map_' + fieldKey);
+      if (!sel) return '';
+      const idx = parseInt(sel.value);
+      if (idx < 0 || idx >= row.length) return '';
+      return (row[idx] || '').trim();
+    }
+
+    function previewImport() {
+      const nameIdx = parseInt(document.getElementById('map_name').value);
+      const priceIdx = parseInt(document.getElementById('map_price').value);
+      const imgIdx = parseInt(document.getElementById('map_img').value);
+
+      if (nameIdx < 0) { alert('Please map the Product Name column.'); return; }
+      if (priceIdx < 0) { alert('Please map the Price column.'); return; }
+
+      const defaultCat = document.getElementById('importDefaultCategory').value.trim() || 'Imported';
+      const existingNames = new Set(allProducts.map(p => (p.name || '').toLowerCase().trim()));
+
+      importMappedProducts = [];
+      const seenNames = new Set();
+
+      for (const row of importCsvData) {
+        const name = getMappedVal(row, 'name');
+        if (!name) continue; // Skip rows without a name (like Shopify extra-image rows)
+        if (seenNames.has(name.toLowerCase())) continue; // Skip duplicate rows within CSV
+        seenNames.add(name.toLowerCase());
+
+        const priceStr = getMappedVal(row, 'price');
+        // Handle prices like "1499.00 PKR", "PKR 1499", "Rs. 499", "0 PKR", or just "499"
+        const priceNum = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+        const price = parseInt(priceNum) || 0;
+
+        const oldPriceStr = getMappedVal(row, 'oldPrice');
+        const oldPrice = parseInt(parseFloat(oldPriceStr.replace(/[^0-9.]/g, ''))) || null;
+        const img = getMappedVal(row, 'img');
+        const rawDesc = getMappedVal(row, 'desc');
+        // Strip HTML tags for short desc
+        const desc = rawDesc.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 200);
+        const category = getMappedVal(row, 'category') || defaultCat;
+        // Simplify Shopify-style categories: "Home & Garden > Kitchen > Tools" → "Kitchen"
+        const catParts = category.split('>');
+        const simpleCategory = catParts.length > 1 ? catParts[catParts.length - 2].trim() : catParts[0].trim();
+        const quantity = parseInt(getMappedVal(row, 'quantity')) || 0;
+        const tags = getMappedVal(row, 'tags').toLowerCase();
+        let badge = null;
+        if (tags.includes('sale')) badge = 'sale';
+        else if (tags.includes('new')) badge = 'new';
+        else if (tags.includes('hot')) badge = 'hot';
+
+        const isDuplicate = existingNames.has(name.toLowerCase());
+
+        importMappedProducts.push({
+          name, price, oldPrice, img, desc, bodyHtml: rawDesc,
+          category: simpleCategory, quantity, badge, featured: false,
+          isDuplicate
+        });
+      }
+
+      // Render preview — only show NEW products, hide duplicates
+      const newProducts = importMappedProducts.filter(p => !p.isDuplicate);
+      const dupCount = importMappedProducts.filter(p => p.isDuplicate).length;
+      const newCount = newProducts.length;
+      document.getElementById('importSummary').innerHTML =
+        '<strong>' + importMappedProducts.length + '</strong> products found in CSV. ' +
+        '<strong style="color:#16a34a">' + newCount + ' new</strong> will be imported.' +
+        (dupCount ? '<br>🔒 <strong style="color:#92400e">' + dupCount + ' already in your store</strong> — hidden from this list.' : '');
+
+      const tbody = document.getElementById('importPreviewBody');
+      tbody.innerHTML = newProducts.map((p, i) => {
+        return '<tr>' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td title="' + p.name + '">' + p.name.substring(0, 40) + (p.name.length > 40 ? '…' : '') + '</td>' +
+          '<td>' + p.category + '</td>' +
+          '<td>Rs. ' + p.price.toLocaleString() + '</td>' +
+          '<td>' + (p.oldPrice ? 'Rs. ' + p.oldPrice.toLocaleString() : '—') + '</td>' +
+          '<td>' + (p.img ? '✅' : '❌') + '</td>' +
+          '<td><span class="new-tag">New</span></td>' +
+          '</tr>';
+      }).join('');
+
+      if (newCount === 0) {
+        document.getElementById('confirmImportBtn').disabled = true;
+        document.getElementById('confirmImportBtn').textContent = 'No new products to import';
+      } else {
+        document.getElementById('confirmImportBtn').disabled = false;
+        document.getElementById('confirmImportBtn').textContent = '✅ Import ' + newCount + ' Products';
+      }
+
+      goToImportStep(3);
+    }
+
+    async function confirmProductImport() {
+      const toImport = importMappedProducts.filter(p => !p.isDuplicate);
+      if (!toImport.length) { alert('No new products to import.'); return; }
+
+      if (!confirm('Import ' + toImport.length + ' new products into your store?')) return;
+
+      showLoader('Importing ' + toImport.length + ' products…');
+
+      try {
+        let nextId = await firestoreNextProductId();
+        const BATCH_SIZE = 500; // Firestore batch limit
+
+        for (let i = 0; i < toImport.length; i += BATCH_SIZE) {
+          const chunk = toImport.slice(i, i + BATCH_SIZE);
+          const batch = db.batch();
+          chunk.forEach(p => {
+            const product = {
+              id: nextId,
+              name: p.name,
+              category: p.category,
+              price: p.price,
+              oldPrice: p.oldPrice,
+              img: p.img,
+              desc: p.desc,
+              bodyHtml: p.bodyHtml || '',
+              quantity: p.quantity,
+              badge: p.badge,
+              featured: false,
+              images: p.img ? [p.img] : []
+            };
+            batch.set(db.collection(PRODUCTS_COLLECTION).doc(String(nextId)), product);
+            nextId++;
+          });
+          await batch.commit();
+        }
+
+        hideLoader();
+        closeProdImportModal();
+        alert('✅ Successfully imported ' + toImport.length + ' products!');
+      } catch (err) {
+        hideLoader();
+        console.error('Product import error:', err);
+        alert('❌ Import failed: ' + err.message);
+      }
+    }
+
+    // --- Export Products CSV ---
+    function exportProductsCSV() {
+      if (!allProducts.length) { alert('No products to export.'); return; }
+      const rows = [['ID','Name','Category','Price','Old Price','Quantity','Badge','Featured','Image URL','Description']];
+      allProducts.forEach(p => {
+        rows.push([
+          p.id, p.name, p.category, p.price, p.oldPrice || '',
+          p.quantity || 0, p.badge || '', p.featured ? 'Yes' : 'No',
+          p.img, (p.desc || '').replace(/"/g, '""')
+        ]);
+      });
+      const csv = rows.map(r => r.map(c => '"' + (c + '').replace(/"/g, '""') + '"').join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'trevo_products_' + new Date().toISOString().slice(0, 10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
     }
 
     // --- Init ---

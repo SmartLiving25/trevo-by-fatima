@@ -184,3 +184,61 @@ async function firestoreNextProductId() {
     return Date.now(); // Fallback to timestamp-based ID
   }
 }
+
+// ── Products Archive Collection Helpers ───────────────────
+const PRODUCTS_ARCHIVE_COLLECTION = 'products_archive';
+
+/**
+ * Get all archived products from Firestore (one-time fetch).
+ */
+async function firestoreGetArchivedProducts() {
+  if (!firebaseReady) return null;
+  try {
+    const snapshot = await db.collection(PRODUCTS_ARCHIVE_COLLECTION).orderBy('id').get();
+    return snapshot.docs.map(doc => doc.data());
+  } catch (err) {
+    console.error('Firestore archived products read error:', err);
+    return null;
+  }
+}
+
+/**
+ * Move all current products to archive, then clear the products collection.
+ * Returns the number of products archived.
+ */
+async function firestoreArchiveAllProducts() {
+  if (!firebaseReady) return 0;
+  try {
+    const snapshot = await db.collection(PRODUCTS_COLLECTION).get();
+    if (snapshot.empty) return 0;
+    const docs = snapshot.docs;
+    for (let i = 0; i < docs.length; i += 250) {
+      const batch = db.batch();
+      const chunk = docs.slice(i, i + 250);
+      chunk.forEach(doc => {
+        const data = doc.data();
+        data.archivedAt = new Date().toISOString();
+        batch.set(db.collection(PRODUCTS_ARCHIVE_COLLECTION).doc(doc.id), data);
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+    }
+    return docs.length;
+  } catch (err) {
+    console.error('Firestore archive error:', err);
+    return 0;
+  }
+}
+
+/**
+ * Delete an archived product document.
+ */
+async function firestoreDeleteArchivedProduct(productId) {
+  if (!firebaseReady) return;
+  try {
+    await db.collection(PRODUCTS_ARCHIVE_COLLECTION).doc(String(productId)).delete();
+  } catch (err) {
+    console.error('Firestore archived product delete error:', err);
+  }
+}
+
