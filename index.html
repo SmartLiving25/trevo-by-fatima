@@ -83,8 +83,15 @@
                     </span>
                 </button>
 
+                <!-- Mobile Menu Button -->
+                <button @click="mobileMenuOpen = true"
+                        class="md:hidden ml-auto w-10 h-10 rounded-xl border border-sage-100 bg-white flex items-center justify-center text-gray-800"
+                        aria-label="Open menu">
+                    <span class="text-xl leading-none">☰</span>
+                </button>
+
                 <!-- Responsive Storefront Navigation -->
-                <nav class="flex-1 mx-2 md:mx-4 overflow-x-auto md:overflow-visible scrollbar-hide">
+                <nav class="hidden md:block flex-1 mx-4 overflow-visible">
                     <div class="flex md:justify-center gap-2 md:gap-6 min-w-max text-[11px] md:text-xs font-semibold uppercase tracking-[0.16em] text-gray-600">
                         <button @click="scrollToStoreSection('home-section')"
                                 class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition">
@@ -157,6 +164,60 @@
                 </div>
             </div>
         </header>
+
+        <!-- Mobile Navigation Drawer -->
+        <div v-if="mobileMenuOpen" class="fixed inset-0 z-[150] md:hidden">
+            <div class="absolute inset-0 bg-black/35" @click="mobileMenuOpen = false"></div>
+            <aside class="absolute left-0 top-0 bottom-0 w-[84%] max-w-sm bg-white shadow-2xl p-5 overflow-y-auto">
+                <div class="flex items-center justify-between pb-5 border-b border-sage-100">
+                    <div class="flex items-center gap-3">
+                        <img src="logo.png" alt="TREVO logo" class="w-11 h-11 rounded-xl object-contain border border-sage-100">
+                        <div>
+                            <div class="font-heading text-2xl font-black tracking-widest text-gray-900">TREVO</div>
+                            <div class="text-[8px] tracking-[0.24em] uppercase text-rosegold">Premium Handbags</div>
+                        </div>
+                    </div>
+                    <button @click="mobileMenuOpen = false" class="w-9 h-9 rounded-full bg-sage-50 text-xl">×</button>
+                </div>
+
+                <nav class="py-5 space-y-1">
+                    <button @click="mobileMenuOpen=false; scrollToStoreSection('home-section')"
+                            class="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold hover:bg-sage-50">
+                        Home
+                    </button>
+                    <button @click="mobileMenuOpen=false; openCompleteRange()"
+                            class="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold hover:bg-sage-50">
+                        Complete Range
+                    </button>
+
+                    <div class="rounded-xl border border-sage-100 overflow-hidden">
+                        <button @click="mobileFeaturedOpen = !mobileFeaturedOpen"
+                                class="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold bg-[#fbfaf7]">
+                            Featured Collection
+                            <span :class="mobileFeaturedOpen ? 'rotate-180' : ''" class="transition-transform">⌄</span>
+                        </button>
+                        <div v-if="mobileFeaturedOpen" class="p-2 bg-white">
+                            <button v-for="cat in categories"
+                                    :key="'mobile-'+cat.name"
+                                    @click="mobileMenuOpen=false; mobileFeaturedOpen=false; openFeaturedCategory(cat.name)"
+                                    class="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-sage-50 text-left">
+                                <img v-if="cat.img" :src="cat.img" :alt="cat.name" class="w-10 h-10 rounded-lg object-cover">
+                                <span class="text-sm">{{ cat.name }}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button @click="mobileMenuOpen=false; scrollToStoreSection('story-section')"
+                            class="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold hover:bg-sage-50">
+                        Our Story
+                    </button>
+                    <button @click="mobileMenuOpen=false; scrollToStoreSection('contact-section')"
+                            class="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold hover:bg-sage-50">
+                        Contact Us
+                    </button>
+                </nav>
+            </aside>
+        </div>
 
         <!-- Main Workspace Router -->
         <main class="flex-grow">
@@ -642,44 +703,33 @@
                 <div v-if="cart.length > 0" class="border-t border-gray-100 pt-4 space-y-4">
                     <div class="space-y-4">
                         <div class="rounded-xl border border-sage-100 bg-white p-4">
-                            <h4 class="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-800">Delivery Method</h4>
-                            <div class="mt-3 space-y-2">
-                                <label class="flex items-start gap-3 cursor-pointer rounded-lg border p-3"
-                                       :class="checkout.delivery === 'Standard Delivery' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
-                                    <input type="radio" value="Standard Delivery" v-model="checkout.delivery" class="mt-0.5">
-                                    <span>
-                                        <span class="block text-xs font-semibold text-gray-800">Standard Delivery</span>
-                                        <span class="block text-[10px] text-gray-500 mt-1">PKR 200 — Free at PKR 1,500 or above</span>
-                                    </span>
-                                </label>
-                                <label class="flex items-start gap-3 cursor-pointer rounded-lg border p-3"
-                                       :class="checkout.delivery === 'Urgent Delivery' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
-                                    <input type="radio" value="Urgent Delivery" v-model="checkout.delivery" class="mt-0.5">
-                                    <span>
-                                        <span class="block text-xs font-semibold text-gray-800">Urgent Delivery</span>
-                                        <span class="block text-[10px] text-gray-500 mt-1">PKR 400 — Free at PKR 1,500 or above</span>
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="rounded-xl border border-sage-100 bg-white p-4">
                             <h4 class="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-800">Payment Method</h4>
                             <div class="mt-3 space-y-2">
                                 <label class="flex items-start gap-3 cursor-pointer rounded-lg border p-3"
                                        :class="checkout.paymentMethod === 'Advance Payment' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
                                     <input type="radio" value="Advance Payment" v-model="checkout.paymentMethod" class="mt-0.5">
-                                    <span>
+                                    <span class="flex-1">
                                         <span class="block text-xs font-semibold text-gray-800">Advance Payment</span>
-                                        <span class="block text-[10px] text-gray-500 mt-1">No extra charge</span>
+                                        <span class="block text-[10px] text-gray-500 mt-1">Pay through JazzCash, Easypaisa or bank transfer. No extra charges.</span>
                                     </span>
                                 </label>
+
+                                <div v-if="checkout.paymentMethod === 'Advance Payment'" class="grid grid-cols-3 gap-2 pl-1">
+                                    <button v-for="channel in ['JazzCash','Easypaisa','Bank Transfer']"
+                                            :key="channel"
+                                            @click="checkout.advanceChannel = channel"
+                                            :class="checkout.advanceChannel === channel ? 'bg-sage-700 text-white border-sage-700' : 'bg-white text-gray-700 border-sage-100'"
+                                            class="border rounded-lg px-2 py-2 text-[9px] font-semibold transition">
+                                        {{ channel }}
+                                    </button>
+                                </div>
+
                                 <label class="flex items-start gap-3 cursor-pointer rounded-lg border p-3"
                                        :class="checkout.paymentMethod === 'Cash on Delivery' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
                                     <input type="radio" value="Cash on Delivery" v-model="checkout.paymentMethod" class="mt-0.5">
-                                    <span>
+                                    <span class="flex-1">
                                         <span class="block text-xs font-semibold text-gray-800">Cash on Delivery</span>
-                                        <span class="block text-[10px] text-gray-500 mt-1">COD charge: PKR 100</span>
+                                        <span class="block text-[10px] text-gray-500 mt-1">PKR 200 must be paid in advance. The remaining balance is paid at delivery.</span>
                                     </span>
                                 </label>
                             </div>
@@ -688,10 +738,23 @@
                         <div class="rounded-xl bg-sage-50 border border-sage-100 p-4 text-xs text-gray-700 space-y-2">
                             <div class="flex justify-between"><span>Items Subtotal</span><strong>PKR {{ formatPrice(cartSubtotal) }}</strong></div>
                             <div class="flex justify-between"><span>Delivery Charges</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
-                            <div class="flex justify-between"><span>COD Charges</span><strong>{{ codCharge === 0 ? 'PKR 0' : 'PKR ' + formatPrice(codCharge) }}</strong></div>
                             <div class="flex justify-between border-t border-sage-200 pt-2 text-sm text-gray-900">
                                 <span class="font-bold">Order Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong>
                             </div>
+                            <template v-if="checkout.paymentMethod === 'Cash on Delivery'">
+                                <div class="flex justify-between text-sage-700 pt-1">
+                                    <span>Pay Now</span><strong>PKR {{ formatPrice(payableNow) }}</strong>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Balance on Delivery</span><strong>PKR {{ formatPrice(balanceOnDelivery) }}</strong>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <div class="flex justify-between text-sage-700 pt-1">
+                                    <span>Advance via {{ checkout.advanceChannel }}</span><strong>PKR {{ formatPrice(payableNow) }}</strong>
+                                </div>
+                            </template>
+                        </div>
                         </div>
                     </div>
 
@@ -742,8 +805,16 @@
                         <label class="text-xs font-semibold text-gray-700">
                             Payment Method
                             <select v-model="checkout.paymentMethod" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600 bg-white">
-                                <option value="Advance Payment">Advance Payment</option>
-                                <option value="Cash on Delivery">Cash on Delivery (+ PKR 100)</option>
+                                <option value="Advance Payment">Advance Payment — No extra charges</option>
+                                <option value="Cash on Delivery">Cash on Delivery — PKR 200 advance required</option>
+                            </select>
+                        </label>
+                        <label v-if="checkout.paymentMethod === 'Advance Payment'" class="text-xs font-semibold text-gray-700">
+                            Advance Payment Via
+                            <select v-model="checkout.advanceChannel" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600 bg-white">
+                                <option>JazzCash</option>
+                                <option>Easypaisa</option>
+                                <option>Bank Transfer</option>
                             </select>
                         </label>
                     </div>
@@ -761,8 +832,10 @@
                     <div class="flex justify-between"><span>Items Subtotal</span><strong>PKR {{ formatPrice(cartSubtotal) }}</strong></div>
                     <div class="flex justify-between mt-2"><span>Delivery Charges</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
                     <div class="flex justify-between mt-2"><span>Payment</span><strong>{{ checkout.paymentMethod }}</strong></div>
-                    <div class="flex justify-between mt-2"><span>COD Charges</span><strong>{{ codCharge === 0 ? 'PKR 0' : 'PKR ' + formatPrice(codCharge) }}</strong></div>
+                    <div v-if="checkout.paymentMethod === 'Advance Payment'" class="flex justify-between mt-2"><span>Payment Channel</span><strong>{{ checkout.advanceChannel }}</strong></div>
                     <div class="flex justify-between mt-3 pt-3 border-t border-sage-200 text-sm"><span class="font-bold">Order Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong></div>
+                    <div v-if="checkout.paymentMethod === 'Cash on Delivery'" class="flex justify-between mt-2 text-sage-700"><span>Pay Now</span><strong>PKR {{ formatPrice(payableNow) }}</strong></div>
+                    <div v-if="checkout.paymentMethod === 'Cash on Delivery'" class="flex justify-between mt-2"><span>Balance on Delivery</span><strong>PKR {{ formatPrice(balanceOnDelivery) }}</strong></div>
                 </div>
 
                 <button @click="sendCheckoutToWhatsApp" class="mt-5 w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg hover:opacity-90 transition">
@@ -895,6 +968,8 @@
                 const activeCollection = ref('All');
                 const shopMode = ref('all');
                 const featuredMenuOpen = ref(false);
+                const mobileMenuOpen = ref(false);
+                const mobileFeaturedOpen = ref(false);
                 const cardVariantSelections = ref({});
                 
                 // Modals Visibility Triggers States
@@ -909,6 +984,7 @@
                     address: '',
                     delivery: 'Standard Delivery',
                     paymentMethod: 'Cash on Delivery',
+                    advanceChannel: 'JazzCash',
                     notes: ''
                 });
 
@@ -1217,17 +1293,32 @@
                 const cartCount = computed(() => cart.value.reduce((total, item) => total + item.quantity, 0));
                 const cartSubtotal = computed(() => cart.value.reduce((total, item) => total + (item.price * item.quantity), 0));
                 const deliveryCharge = computed(() => {
-                    if (cartSubtotal.value >= 1500) return 0;
-                    return checkout.value.delivery === 'Urgent Delivery' ? 400 : 200;
+                    if (checkout.value.delivery === 'Urgent Delivery') return 400;
+                    return cartSubtotal.value >= 1500 ? 0 : 200;
                 });
 
-                const codCharge = computed(() => {
-                    return checkout.value.paymentMethod === 'Cash on Delivery' ? 100 : 0;
+                // COD does not add an extra fee. The customer pays PKR 200 in advance
+                // as delivery security, and the remaining amount is paid on delivery.
+                const codAdvance = computed(() => {
+                    return checkout.value.paymentMethod === 'Cash on Delivery' ? 200 : 0;
+                });
+
+                const codCharge = computed(() => 0);
+                const payableNow = computed(() => {
+                    if (checkout.value.paymentMethod === 'Advance Payment') {
+                        return cartSubtotal.value + deliveryCharge.value;
+                    }
+                    return Math.min(200, cartSubtotal.value + deliveryCharge.value);
+                });
+
+                const balanceOnDelivery = computed(() => {
+                    if (checkout.value.paymentMethod !== 'Cash on Delivery') return 0;
+                    return Math.max(0, cartSubtotal.value + deliveryCharge.value - payableNow.value);
                 });
 
                 const cartDiscount = computed(() => 0);
                 const cartTotal = computed(() =>
-                    cartSubtotal.value + deliveryCharge.value + codCharge.value
+                    cartSubtotal.value + deliveryCharge.value
                 );
 
                 // SYSTEM ACTION INTERFACE OPERATIONS METHODS
@@ -1386,57 +1477,73 @@
                     };
                 };
 
+                const buildCartLine = (product) => {
+                    const selectedProduct = productWithSelectedVariant(product);
+                    const colors = availableColorsFor(selectedProduct);
+                    const chosenColor = selectedProduct.selectedVariantColor || colors[0] || 'Default';
+                    const variant = getVariantForColor(selectedProduct, chosenColor);
+                    const availableQty = Number(variant?.stock ?? selectedProduct.quantity ?? selectedProduct.stock ?? 0);
+                    const productDocId = String(selectedProduct._docId || selectedProduct.parentId || selectedProduct.id || selectedProduct.sku || '');
+                    const variantSku = String(variant?.sku || selectedProduct.variantSku || '');
+                    const lineId = variantSku || `${productDocId}-${chosenColor}`;
+
+                    return {
+                        lineId,
+                        id: productDocId,
+                        productId: productDocId,
+                        parentId: productDocId,
+                        sku: selectedProduct.sku || productDocId,
+                        variantSku,
+                        name: selectedProduct.name,
+                        price: Number(variant?.salePrice || variant?.price || selectedProduct.price || 0),
+                        img: variant?.img || variant?.image || selectedProduct.img || '',
+                        color: chosenColor,
+                        quantity: 1,
+                        availableQty,
+                        inStock: availableQty > 0
+                    };
+                };
+
                 const addToCart = (product) => {
-                    product = productWithSelectedVariant(product);
-                    if (!product.inStock || product.quantity <= 0) {
-                        alert('This product is currently out of stock.');
-                        return;
+                    const line = buildCartLine(product);
+
+                    if (!line.inStock) {
+                        alert('This colour is currently out of stock.');
+                        return false;
                     }
 
-                    const colors = availableColorsFor(product);
-                    const defaultColor = product.selectedVariantColor || colors[0] || 'Default';
-                    const variant = getVariantForColor(product, defaultColor);
-                    const availableQty = variant ? variant.stock : product.quantity;
-                    const lineId = variant?.sku || product.id;
-                    const existingItem = cart.value.find(item => item.lineId === lineId);
+                    const existingItem = cart.value.find(item => item.lineId === line.lineId);
 
                     if (existingItem) {
-                        if (existingItem.quantity >= availableQty) {
-                            alert(`Only ${availableQty} unit(s) are available in ${defaultColor}.`);
-                            return;
+                        if (Number(existingItem.quantity) >= line.availableQty) {
+                            alert(`Only ${line.availableQty} unit(s) are available in ${line.color}.`);
+                            return false;
                         }
-                        existingItem.quantity++;
+                        existingItem.quantity = Number(existingItem.quantity) + 1;
                     } else {
-                        cart.value.push({
-                            lineId,
-                            id: product.id,
-                            productId: product._docId || product.id,
-                            variantSku: variant?.sku || '',
-                            name: product.name,
-                            price: variant?.salePrice || variant?.price || product.price,
-                            img: variant?.img || product.img || '',
-                            color: defaultColor,
-                            quantity: 1,
-                            availableQty
-                        });
+                        cart.value.push(line);
                     }
+
                     cartDrawerOpen.value = true;
+                    return true;
                 };
 
                 const buyNow = (product) => {
-                    const selectedProduct = productWithSelectedVariant(product);
-                    if (!selectedProduct.inStock || selectedProduct.quantity <= 0) {
-                        alert('This product is currently out of stock.');
+                    const line = buildCartLine(product);
+
+                    if (!line.inStock) {
+                        alert('This colour is currently out of stock.');
                         return;
                     }
 
-                    cart.value = [];
-                    addToCart(selectedProduct);
+                    // Buy Now always creates a clean one-product checkout.
+                    cart.value = [{ ...line, quantity: 1 }];
+                    cartDrawerOpen.value = false;
 
-                    setTimeout(() => {
-                        cartDrawerOpen.value = false;
+                    // Wait for Vue to update totals before displaying checkout.
+                    requestAnimationFrame(() => {
                         checkoutOpen.value = true;
-                    }, 50);
+                    });
                 };
 
                 const buyConfiguredNow = () => {
@@ -1577,7 +1684,10 @@
                         notes: checkout.value.notes || '',
                         items: cart.value.map(item => ({
                             id: item.productId || item.id,
-                            productId: item.productId || item.id,
+                            id: item.productId || item.parentId || item.id,
+                            productId: item.productId || item.parentId || item.id,
+                            parentId: item.productId || item.parentId || item.id,
+                            sku: item.sku || '',
                             variantSku: item.variantSku || '',
                             name: item.name,
                             color: item.color,
@@ -1588,14 +1698,19 @@
                         })),
                         subtotal: cartSubtotal.value,
                         discount: cartDiscount.value,
-                        subtotal: cartSubtotal.value,
                         deliveryMethod: checkout.value.delivery,
                         deliveryCharge: deliveryCharge.value,
                         paymentMethod: checkout.value.paymentMethod,
-                        codCharge: codCharge.value,
+                        advanceChannel: checkout.value.paymentMethod === 'Advance Payment' ? checkout.value.advanceChannel : '',
+                        codAdvance: checkout.value.paymentMethod === 'Cash on Delivery' ? payableNow.value : 0,
+                        payableNow: payableNow.value,
+                        balanceOnDelivery: balanceOnDelivery.value,
+                        codCharge: 0,
                         total: cartTotal.value,
                         status: 'Pending',
-                        source: 'Website WhatsApp Checkout'
+                        source: 'Website WhatsApp Checkout',
+                        schemaVersion: 2,
+                        createdAt: new Date().toISOString()
                     };
 
                     if (typeof firebaseReady !== 'undefined' && firebaseReady && typeof db !== 'undefined') {
@@ -1610,49 +1725,31 @@
                         }
                     }
 
-                    let text = `👜 *NEW TREVO ORDER*
-`;
-                    text += `Order ID: *${orderId}*
+                    let text = `👜 *NEW TREVO ORDER*\n`;
+                    text += `Order ID: *${orderId}*\n\n`;
+                    text += `*Customer Details*\n`;
+                    text += `Name: ${checkout.value.name}\n`;
+                    text += `Phone: ${checkout.value.phone}\n`;
+                    text += `City: ${checkout.value.city}\n`;
+                    text += `Address: ${checkout.value.address}\n\n`;
 
-`;
-                    text += `*Customer Details*
-`;
-                    text += `Name: ${checkout.value.name}
-`;
-                    text += `Phone: ${checkout.value.phone}
-`;
-                    text += `City: ${checkout.value.city}
-`;
-                    text += `Address: ${checkout.value.address}
-`;
-                    text += `Delivery: ${checkout.value.delivery}
-`;
-                    if (checkout.value.notes) text += `Notes: ${checkout.value.notes}
-`;
-
-                    text += `
-*Order Items*
-`;
+                    text += `*Order Items*\n`;
                     cart.value.forEach((item, index) => {
-                        text += `${index + 1}. ${item.name}
-`;
-                        text += `   Color: ${item.color}
-`;
-                        text += `   Qty: ${item.quantity}
-`;
-                        text += `   Price: PKR ${formatPrice(item.price * item.quantity)}
-`;
+                        text += `${index + 1}. ${item.name}\n`;
+                        text += `   Colour: ${item.color}\n`;
+                        text += `   Variant SKU: ${item.variantSku || 'N/A'}\n`;
+                        text += `   Qty: ${item.quantity}\n`;
+                        text += `   Amount: PKR ${formatPrice(item.price * item.quantity)}\n`;
                     });
 
-                    text += `
-Subtotal: PKR ${formatPrice(cartSubtotal.value)}
-`;
-                    text += `Launch Discount: -PKR ${formatPrice(cartDiscount.value)}
-`;
-                    text += `*Total: PKR ${formatPrice(cartTotal.value)}*
-
-`;
-                    text += `Please confirm availability and delivery time.`;
+                    text += `\nItems Subtotal: PKR ${formatPrice(cartSubtotal.value)}\n`;
+                    text += `Delivery Method: ${checkout.value.delivery}\n`;
+                    text += `Delivery Charges: ${deliveryCharge.value === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge.value)}\n`;
+                    text += `Payment Method: ${checkout.value.paymentMethod}\n`;
+                    text += `COD Charges: PKR ${formatPrice(codCharge.value)}\n`;
+                    text += `*Order Total: PKR ${formatPrice(cartTotal.value)}*\n`;
+                    if (checkout.value.notes) text += `Notes: ${checkout.value.notes}\n`;
+                    text += `\nPlease confirm this order.`;
 
                     localStorage.setItem('trevoLastOrder', JSON.stringify(orderData));
                     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(text)}`, '_blank');
@@ -1673,7 +1770,7 @@ Subtotal: PKR ${formatPrice(cartSubtotal.value)}
                 };
 
                 return {
-                    currentPage, searchQuery, sortBy, activeCollection, shopMode, featuredMenuOpen, cardVariantSelections, collectionTabs, completeRangeVariants, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
+                    currentPage, searchQuery, sortBy, activeCollection, shopMode, featuredMenuOpen, mobileMenuOpen, mobileFeaturedOpen, cardVariantSelections, collectionTabs, completeRangeVariants, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
                     selectedColor, quantity, filters, categories, availableColors, products, reviews, valueProps,
                     cart, wishlist, filteredProducts, cartCount, cartSubtotal, cartDiscount, cartTotal,
                     navigateTo, setFilter, selectCategory, scrollToSection, scrollToStoreSection, openCompleteRange, openFeaturedCategory, formatPrice, selectCardVariant, selectedVariantSku, selectedProductStock, selectedProductPrice, selectedProductImage, addToCart, addConfiguredToCart,
