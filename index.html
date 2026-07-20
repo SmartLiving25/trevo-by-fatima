@@ -46,13 +46,9 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
-        html { scroll-behavior: smooth; }
-        section[id], div[id] { scroll-margin-top: 110px; }
         .smooth-transition {
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         /* Custom scrollbar to match luxury theme */
         ::-webkit-scrollbar {
             width: 6px;
@@ -69,76 +65,28 @@
 <body class="bg-ivory text-gray-800 font-sans antialiased selection:bg-blush-200">
 
     <div id="app" class="min-h-screen flex flex-col justify-between">
-<!-- Navigation Header -->
+        <!-- Top Announcement Bar -->
+        <div class="bg-sage-600 text-ivory text-xs tracking-widest uppercase text-center py-2 px-4 font-medium">
+            ✨ Free Nationwide Delivery on All Orders This Week • Order Easily Through WhatsApp
+        </div>
+        <div v-if="firebaseMessage" :class="firebaseConnected ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'" class="text-center text-[11px] py-1.5 px-4 border-b">
+            {{ firebaseMessage }}
+        </div>
+
+        <!-- Navigation Header -->
         <header class="sticky top-0 z-40 w-full border-b border-sage-100 glass smooth-transition">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                <!-- TREVO Brand Logo -->
-                <button @click="scrollToStoreSection('home-section')" class="group flex items-center gap-3 flex-shrink-0 text-left">
-                    <img src="logo.png" alt="TREVO logo"
-                         class="w-11 h-11 rounded-xl object-contain bg-white border border-sage-100 shadow-sm"
-                         onerror="this.style.display='none'">
-                    <span class="flex flex-col">
-                        <span class="font-heading text-2xl md:text-3xl font-black tracking-widest text-gray-900 group-hover:text-sage-600 transition">TREVO</span>
-                        <span class="text-[8px] md:text-[9px] tracking-[0.26em] text-rosegold uppercase -mt-1">Premium Handbags</span>
-                    </span>
-                </button>
+                <!-- Brand Text Logo as per structural specification -->
+                <a href="#" @click.prevent="navigateTo('home')" class="group flex flex-col items-start">
+                    <span class="font-heading text-3xl font-black tracking-widest text-gray-900 group-hover:text-sage-600 transition duration-300">TREVO</span>
+                    <span class="text-[9px] tracking-[0.3em] text-rosegold uppercase -mt-1">Premium Handbags</span>
+                </a>
 
-                <!-- Mobile Menu Button -->
-                <button @click="mobileMenuOpen = true"
-                        class="md:hidden ml-auto w-10 h-10 rounded-xl border border-sage-100 bg-white flex items-center justify-center text-gray-800"
-                        aria-label="Open menu">
-                    <span class="text-xl leading-none">☰</span>
-                </button>
-
-                <!-- Responsive Storefront Navigation -->
-                <nav class="hidden md:block flex-1 mx-4 overflow-visible">
-                    <div class="flex md:justify-center gap-2 md:gap-6 min-w-max text-[11px] md:text-xs font-semibold uppercase tracking-[0.16em] text-gray-600">
-                        <button @click="scrollToStoreSection('home-section')"
-                                class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition">
-                            Home
-                        </button>
-                        <button @click="openCompleteRange"
-                                class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition">
-                            Complete Range
-                        </button>
-
-                        <div class="relative" @mouseleave="featuredMenuOpen = false">
-                            <button @click.stop="featuredMenuOpen = !featuredMenuOpen"
-                                    :aria-expanded="featuredMenuOpen"
-                                    class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition flex items-center gap-1">
-                                Featured Collection
-                                <span class="text-[9px] transition-transform" :class="featuredMenuOpen ? 'rotate-180' : ''">▼</span>
-                            </button>
-                            <div v-if="featuredMenuOpen"
-                                 class="absolute left-0 md:left-1/2 md:-translate-x-1/2 top-full pt-2 z-[100]">
-                                <div class="w-72 bg-white border border-sage-100 rounded-2xl shadow-2xl p-3">
-                                    <p class="px-3 pt-2 pb-1 text-[9px] uppercase tracking-[0.22em] text-rosegold font-bold">
-                                        Shop by Category
-                                    </p>
-                                    <button v-for="cat in categories"
-                                            :key="'nav-'+cat.name"
-                                            @click.stop="openFeaturedCategory(cat.name); featuredMenuOpen = false"
-                                            class="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-sage-50 text-left normal-case tracking-normal transition">
-                                        <img v-if="cat.img" :src="cat.img" :alt="cat.name" class="w-11 h-11 rounded-lg object-cover border border-sage-50">
-                                        <span v-else class="w-11 h-11 rounded-lg bg-sage-50 flex items-center justify-center">{{ cat.emoji }}</span>
-                                        <span class="flex-1">
-                                            <span class="block text-xs font-semibold text-gray-800">{{ cat.name }}</span>
-                                        </span>
-                                        <span class="text-sage-500">→</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button @click="scrollToStoreSection('story-section')"
-                                class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition">
-                            Our Story
-                        </button>
-                        <button @click="scrollToStoreSection('contact-section')"
-                                class="px-3 py-2 rounded-full hover:bg-sage-50 hover:text-sage-600 transition">
-                            Contact Us
-                        </button>
-                    </div>
+                <!-- Desktop Navigation Links -->
+                <nav class="hidden md:flex space-x-8 text-xs font-semibold uppercase tracking-widest text-gray-600">
+                    <a href="#" @click.prevent="navigateTo('home')" :class="{'text-sage-600 border-b border-sage-600': currentPage === 'home'}" class="pb-1 hover:text-sage-600 transition">Home</a>
+                    <a href="#" @click.prevent="navigateTo('shop')" :class="{'text-sage-600 border-b border-sage-600': currentPage === 'shop'}" class="pb-1 hover:text-sage-600 transition">Collections</a>
+                    <a href="#" @click.prevent="navigateTo('about')" :class="{'text-sage-600 border-b border-sage-600': currentPage === 'about'}" class="pb-1 hover:text-sage-600 transition">Our Story</a>
                 </nav>
 
                 <!-- Search and Dynamic Utility Actions -->
@@ -165,65 +113,11 @@
             </div>
         </header>
 
-        <!-- Mobile Navigation Drawer -->
-        <div v-if="mobileMenuOpen" class="fixed inset-0 z-[150] md:hidden">
-            <div class="absolute inset-0 bg-black/35" @click="mobileMenuOpen = false"></div>
-            <aside class="absolute left-0 top-0 bottom-0 w-[84%] max-w-sm bg-white shadow-2xl p-5 overflow-y-auto">
-                <div class="flex items-center justify-between pb-5 border-b border-sage-100">
-                    <div class="flex items-center gap-3">
-                        <img src="logo.png" alt="TREVO logo" class="w-11 h-11 rounded-xl object-contain border border-sage-100">
-                        <div>
-                            <div class="font-heading text-2xl font-black tracking-widest text-gray-900">TREVO</div>
-                            <div class="text-[8px] tracking-[0.24em] uppercase text-rosegold">Premium Handbags</div>
-                        </div>
-                    </div>
-                    <button @click="mobileMenuOpen = false" class="w-9 h-9 rounded-full bg-sage-50 text-xl">×</button>
-                </div>
-
-                <nav class="py-5 space-y-1">
-                    <button @click="mobileMenuOpen=false; scrollToStoreSection('home-section')"
-                            class="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold hover:bg-sage-50">
-                        Home
-                    </button>
-                    <button @click="mobileMenuOpen=false; openCompleteRange()"
-                            class="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold hover:bg-sage-50">
-                        Complete Range
-                    </button>
-
-                    <div class="rounded-xl border border-sage-100 overflow-hidden">
-                        <button @click="mobileFeaturedOpen = !mobileFeaturedOpen"
-                                class="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold bg-[#fbfaf7]">
-                            Featured Collection
-                            <span :class="mobileFeaturedOpen ? 'rotate-180' : ''" class="transition-transform">⌄</span>
-                        </button>
-                        <div v-if="mobileFeaturedOpen" class="p-2 bg-white">
-                            <button v-for="cat in categories"
-                                    :key="'mobile-'+cat.name"
-                                    @click="mobileMenuOpen=false; mobileFeaturedOpen=false; openFeaturedCategory(cat.name)"
-                                    class="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-sage-50 text-left">
-                                <img v-if="cat.img" :src="cat.img" :alt="cat.name" class="w-10 h-10 rounded-lg object-cover">
-                                <span class="text-sm">{{ cat.name }}</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <button @click="mobileMenuOpen=false; scrollToStoreSection('story-section')"
-                            class="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold hover:bg-sage-50">
-                        Our Story
-                    </button>
-                    <button @click="mobileMenuOpen=false; scrollToStoreSection('contact-section')"
-                            class="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold hover:bg-sage-50">
-                        Contact Us
-                    </button>
-                </nav>
-            </aside>
-        </div>
-
         <!-- Main Workspace Router -->
         <main class="flex-grow">
             
             <!-- PAGE 1: HOME STATE VIEW -->
-            <div v-if="currentPage === 'home'" id="home-section" class="animate-fadeIn">
+            <div v-if="currentPage === 'home'" class="animate-fadeIn">
                 <!-- High-End Editorial Hero Section -->
                 <section class="relative bg-gradient-to-tr from-sage-50 via-ivory to-blush-100 py-20 sm:py-28 overflow-hidden">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -284,43 +178,18 @@
                 <!-- Featured Category Cards Section -->
                 <section id="categories" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                     <div class="text-center max-w-xl mx-auto mb-12">
-                        <span class="text-[10px] tracking-[0.4em] font-bold text-sage-600 uppercase block mb-2">TREVO Collections</span>
-                        <h2 class="font-heading text-3xl text-gray-900">Shop by Signature Style</h2>
+                        <span class="text-[10px] tracking-[0.4em] font-bold text-sage-600 uppercase block mb-2">Curated Silhouettes</span>
+                        <h2 class="font-heading text-3xl text-gray-900">Featured Categories</h2>
                         <div class="w-12 h-[2px] bg-blush-200 mx-auto mt-3"></div>
                     </div>
 
-                    <div class="grid grid-cols-2 lg:grid-cols-5 gap-6">
-                        <div @click="navigateTo('shop')"
-                             class="group cursor-pointer bg-white rounded-2xl p-4 shadow-sm hover:shadow-xl smooth-transition transform hover:-translate-y-1 border border-sage-50/50">
-                            <div class="aspect-square bg-gradient-to-br from-blush-50 via-white to-sage-50 rounded-xl flex flex-col items-center justify-center relative overflow-hidden mb-4">
-                                <div class="grid grid-cols-2 gap-1 w-full h-full p-2">
-                                    <img v-for="product in products.slice(0,4)"
-                                         :key="product.id"
-                                         :src="selectedProductImage(product)"
-                                         :alt="product.name"
-                                         class="w-full h-full object-cover rounded-md bg-sage-50"
-                                         loading="lazy">
-                                </div>
-                                <div class="absolute inset-0 bg-black/10"></div>
-                            </div>
-                            <div class="flex items-center justify-between px-1">
-                                <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-800">All Products</h3>
-                                <span class="text-rosegold group-hover:translate-x-1 smooth-transition text-xs">&rarr;</span>
-                            </div>
-                        </div>
-
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
                         <div v-for="cat in categories" :key="cat.name" 
                              @click="selectCategory(cat.name)"
                              class="group cursor-pointer bg-white rounded-2xl p-4 shadow-sm hover:shadow-xl smooth-transition transform hover:-translate-y-1 border border-sage-50/50">
                             <div class="aspect-square bg-gradient-to-br from-sage-50 to-ivory rounded-xl flex flex-col items-center justify-center relative overflow-hidden mb-4">
-                                <img v-if="cat.img"
-                                     :src="cat.img"
-                                     :alt="cat.productName"
-                                     class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                                     loading="lazy">
-                                <div v-else class="text-4xl group-hover:scale-110 transition duration-300">{{ cat.emoji }}</div>
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-60"></div>
-                                </span>
+                                <div class="text-4xl group-hover:scale-110 transition duration-300">{{ cat.emoji }}</div>
+                                <div class="absolute inset-0 bg-sage-600/5 opacity-0 group-hover:opacity-100 transition duration-300"></div>
                             </div>
                             <div class="flex items-center justify-between px-1">
                                 <h3 class="text-xs font-semibold uppercase tracking-widest text-gray-800">{{ cat.name }}</h3>
@@ -375,13 +244,15 @@
                                     </div>
 
                                     <!-- Quick Add Action Layer -->
-                                    <div class="pt-3 grid grid-cols-2 gap-2">
-                                        <button @click="addToCart(product)" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
-                                            Add To Cart
-                                        </button>
-                                        <button @click="buyNow(product)" class="w-full bg-sage-600 text-white hover:bg-sage-700 text-[10px] sm:text-xs font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
-                                            Buy Now
-                                        </button>
+                                    <div class="pt-3">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <button @click="addToCart(product)" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                                Add To Cart
+                                            </button>
+                                            <button @click="buyNow(product)" class="w-full bg-sage-600 text-white hover:bg-sage-700 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                                Buy Now
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -390,7 +261,7 @@
                 </section>
 
                 <!-- Dedicated Brand Manifesto Editorial -->
-                <section id="story-section" class="bg-gradient-to-b from-white to-ivory py-20 border-t border-sage-50">
+                <section class="bg-gradient-to-b from-white to-ivory py-20 border-t border-sage-50">
                     <div class="max-w-4xl mx-auto px-4 text-center space-y-6">
                         <span class="text-xs font-bold tracking-[0.5em] text-rosegold uppercase block">Our Philosophy</span>
                         <h2 class="font-heading text-4xl text-gray-900 italic">"Carry confidence. Carry TREVO."</h2>
@@ -441,116 +312,131 @@
                 </section>
             </div>
 
-            <!-- PAGE 2: CLEAN PROFESSIONAL SHOP VIEW -->
-            <div v-if="currentPage === 'shop'" class="bg-[#fbfaf7] min-h-screen animate-fadeIn">
-                <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-                    <div class="mb-8 md:mb-10">
-                        <p class="text-[10px] uppercase tracking-[0.3em] text-rosegold font-bold">
-                            {{ shopMode === 'complete' ? 'TREVO Complete Range' : 'Featured Collection' }}
-                        </p>
-                        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mt-2">
-                            <div>
-                                <h1 class="font-heading text-3xl md:text-5xl font-bold text-gray-900">
-                                    {{ shopMode === 'complete' ? 'Explore Every Design' : (filters.category || 'Featured Collection') }}
-                                </h1>
-                                <p class="mt-3 text-sm text-gray-500 max-w-2xl leading-7">
-                                    {{ shopMode === 'complete'
-                                        ? 'Discover all eleven TREVO handbag designs. Select your preferred colour beneath each design.'
-                                        : 'A refined edit of TREVO handbags selected by style.' }}
-                                </p>
-                            </div>
-                            <button v-if="shopMode !== 'complete'"
-                                    @click="openCompleteRange"
-                                    class="self-start md:self-auto px-5 py-2.5 rounded-full border border-sage-200 bg-white text-sage-700 text-[10px] uppercase tracking-[0.18em] font-bold hover:bg-sage-50 transition">
-                                View Complete Range
-                            </button>
+            <!-- PAGE 2: COLLECTIONS VAULT (SHOP VIEW) -->
+            <div v-if="currentPage === 'shop'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fadeIn">
+                <div class="flex flex-col lg:flex-row gap-8">
+                    
+                    <!-- Structural Sidebar Filters -->
+                    <aside class="w-full lg:w-64 space-y-8 bg-white p-6 rounded-2xl shadow-sm border border-sage-50 h-fit sticky top-28">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <h3 class="text-xs font-bold tracking-widest uppercase text-gray-900">Filter Products</h3>
+                            <button @click="resetFilters" class="text-[10px] font-semibold text-rosegold uppercase tracking-wider hover:underline">Reset</button>
                         </div>
-                    </div>
 
-                    <div v-if="filteredProducts.length > 0"
-                         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
-                        <article v-for="product in filteredProducts"
-                                 :key="product.id"
-                                 class="group bg-white rounded-2xl border border-sage-50 shadow-sm hover:shadow-lg transition overflow-hidden min-w-0">
-                            <div class="relative aspect-square bg-sage-50 overflow-hidden">
-                                <img :src="selectedProductImage(product)"
-                                     :alt="product.name"
-                                     class="w-full h-full object-cover group-hover:scale-[1.03] transition duration-500"
-                                     loading="lazy">
-                                <button @click="toggleWishlist(product)"
-                                        class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-600 hover:text-rosegold transition">
-                                    ♡
-                                </button>
-                                <span v-if="product.discount"
-                                      class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-rosegold text-white text-[9px] font-bold">
-                                    -{{ product.discount }}%
-                                </span>
+                        <!-- Category Filters -->
+                        <div class="space-y-2.5">
+                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Category</h4>
+                            <div class="space-y-1.5 text-xs">
+                                <label class="flex items-center space-x-2 text-gray-600 cursor-pointer">
+                                    <input type="radio" value="" v-model="filters.category" class="accent-sage-600">
+                                    <span>All Styles</span>
+                                </label>
+                                <label v-for="cat in categories" :key="cat.name" class="flex items-center space-x-2 text-gray-600 cursor-pointer">
+                                    <input type="radio" :value="cat.name" v-model="filters.category" class="accent-sage-600">
+                                    <span>{{ cat.name }}</span>
+                                </label>
                             </div>
+                        </div>
 
-                            <div class="p-4">
-                                <p class="text-[9px] uppercase tracking-[0.2em] text-rosegold font-bold">
-                                    {{ product.category }}
-                                </p>
-                                <h2 class="font-heading text-lg font-semibold text-gray-900 mt-1 leading-snug">
-                                    {{ product.name }}
-                                </h2>
+                        <!-- Price Threshold Slider -->
+                        <div class="space-y-2.5">
+                            <div class="flex justify-between items-center text-xs">
+                                <h4 class="font-bold text-gray-800 uppercase tracking-wide">Maximum Price</h4>
+                                <span class="text-sage-600 font-bold">PKR {{ formatPrice(filters.priceRange) }}</span>
+                            </div>
+                            <input type="range" min="3000" max="25000" step="500" v-model="filters.priceRange" class="w-full accent-sage-600">
+                        </div>
 
-                                <div class="flex items-center gap-2 mt-2">
-                                    <span class="text-sm font-bold text-gray-900">
-                                        PKR {{ formatPrice(selectedProductPrice(product)) }}
-                                    </span>
-                                    <span v-if="product.oldPrice"
-                                          class="text-[11px] text-gray-400 line-through">
-                                        PKR {{ formatPrice(product.oldPrice) }}
-                                    </span>
-                                </div>
+                        <!-- Color Filter Matrix -->
+                        <div class="space-y-2.5">
+                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Color</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <button v-for="color in availableColors" :key="color" 
+                                        @click="filters.color = (filters.color === color ? '' : color)"
+                                        :class="{'ring-2 ring-rosegold scale-105': filters.color === color}"
+                                        class="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide border uppercase bg-ivory text-gray-700 smooth-transition">
+                                    {{ color }}
+                                </button>
+                            </div>
+                        </div>
 
-                                <div v-if="product.variants && product.variants.length" class="mt-4">
-                                    <p class="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold mb-2">
-                                        Select Colour
-                                    </p>
-                                    <div class="flex flex-wrap gap-2">
-                                        <button v-for="variant in product.variants"
-                                                :key="variant.sku || variant.color"
-                                                @click="selectCardVariant(product, variant)"
-                                                :class="selectedVariantSku(product) === (variant.sku || variant.color)
-                                                    ? 'border-sage-700 bg-sage-700 text-white'
-                                                    : 'border-sage-100 bg-[#fbfaf7] text-gray-700 hover:border-sage-300'"
-                                                class="px-2.5 py-1.5 rounded-lg border text-[10px] font-semibold transition">
-                                            {{ variant.color }}
-                                        </button>
+                        <!-- Availability Status Toggle -->
+                        <div class="space-y-2.5">
+                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Availability</h4>
+                            <label class="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer">
+                                <input type="checkbox" v-model="filters.inStockOnly" class="rounded text-sage-600 focus:ring-sage-600">
+                                <span>Show in-stock products only</span>
+                            </label>
+                        </div>
+                    </aside>
+
+                    <!-- Catalog Workspace Results Grid -->
+                    <div class="flex-grow space-y-6">
+                        <!-- Top Sort Actions Layout -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-xl border border-sage-50/60 gap-4">
+                            <p class="text-xs text-gray-500 font-light">Showing <span class="font-bold text-gray-800">{{ filteredProducts.length }}</span> products matching your selection.</p>
+                            
+                            <div class="flex items-center space-x-3 text-xs self-end sm:self-auto">
+                                <span class="text-gray-400 font-light">Sort by:</span>
+                                <select v-model="sortBy" class="bg-transparent font-semibold text-gray-800 focus:outline-none cursor-pointer">
+                                    <option value="newest">Newest</option>
+                                    <option value="low-high">Price: Low to High</option>
+                                    <option value="high-low">Price: High to Low</option>
+                                    <option value="popular">Popular</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Grid Render Block -->
+                        <div v-if="filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div v-for="product in filteredProducts" :key="product.id" class="group bg-white rounded-2xl p-4 border border-sage-50 shadow-sm hover:shadow-xl smooth-transition relative">
+                                <div class="aspect-[4/5] bg-sage-50 rounded-xl overflow-hidden relative mb-4 flex items-center justify-center">
+                                    <img v-if="product.img" :src="product.img" :alt="product.name" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'">
+                                    <div v-else class="text-5xl">👜</div>
+                                    <span v-if="product.isNew" class="absolute top-3 left-3 bg-sage-600 text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">New</span>
+                                    <span v-if="product.discount" class="absolute top-3 right-3 bg-rosegold text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">-{{ product.discount }}%</span>
+                                    <span v-if="!product.inStock" class="absolute inset-0 bg-white/80 backdrop-blur-[1px] flex items-center justify-center text-xs font-bold uppercase tracking-widest text-rosegold">Awaiting Restock</span>
+                                    
+                                    <button @click="toggleWishlist(product)" class="absolute bottom-3 left-3 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-gray-400 hover:text-rosegold transition z-10">
+                                        <svg class="w-4 h-4" :fill="isInWishlist(product.id) ? '#B76E79' : 'none'" :stroke="isInWishlist(product.id) ? '#B76E79' : 'currentColor'" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
+                                    </button>
+
+                                    <div v-if="product.inStock" class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
+                                        <button @click="openQuickView(product)" class="bg-white text-gray-800 text-xs font-medium px-4 py-2 rounded-full shadow-lg hover:bg-sage-600 hover:text-white transition duration-200">Quick View</button>
                                     </div>
                                 </div>
 
-                                <p class="mt-3 text-[10px]"
-                                   :class="selectedProductStock(product) > 0 ? 'text-sage-600' : 'text-rosegold'">
-                                    {{ selectedProductStock(product) > 0 ? 'Available' : 'Out of stock' }}
-                                </p>
+                                <div class="space-y-1">
+                                    <p class="text-[9px] tracking-wider text-sage-600 uppercase font-bold">{{ product.category }}</p>
+                                    <h3 class="text-xs font-semibold text-gray-800 tracking-wide line-clamp-1">{{ product.name }}</h3>
+                                    <div class="flex items-center space-x-2 pt-0.5">
+                                        <span class="text-xs font-bold text-gray-900">PKR {{ formatPrice(product.price) }}</span>
+                                        <span v-if="product.oldPrice" class="text-[10px] text-gray-400 line-through">PKR {{ formatPrice(product.oldPrice) }}</span>
+                                    </div>
 
-                                <div class="grid grid-cols-2 gap-2 mt-4">
-                                    <button @click="addToCart(product)"
-                                            :disabled="selectedProductStock(product) <= 0"
-                                            class="rounded-xl border border-sage-600 text-sage-700 disabled:border-gray-200 disabled:text-gray-400 px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold hover:bg-sage-50 transition">
-                                        Add to Cart
-                                    </button>
-                                    <button @click="buyNow(product)"
-                                            :disabled="selectedProductStock(product) <= 0"
-                                            class="rounded-xl bg-sage-700 text-white disabled:bg-gray-300 px-3 py-2.5 text-[10px] uppercase tracking-wider font-bold hover:bg-sage-800 transition">
-                                        Buy Now
-                                    </button>
+                                    <div class="pt-3">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <button @click="addToCart(product)" :disabled="!product.inStock" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                                {{ product.inStock ? 'Add To Cart' : 'Restocking' }}
+                                            </button>
+                                            <button @click="buyNow(product)" :disabled="!product.inStock" class="w-full bg-sage-600 text-white hover:bg-sage-700 disabled:bg-gray-300 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                                Buy Now
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </article>
-                    </div>
+                        </div>
 
-                    <div v-else class="bg-white rounded-2xl border border-sage-50 text-center py-20">
-                        <h3 class="font-heading text-2xl text-gray-900">No products found</h3>
-                        <button @click="openCompleteRange"
-                                class="mt-4 text-xs uppercase tracking-wider font-bold text-sage-700 hover:underline">
-                            Return to Complete Range
-                        </button>
+                        <!-- Alternative Empty State Layout -->
+                        <div v-else class="bg-white rounded-2xl p-16 text-center max-w-md mx-auto border border-sage-50 space-y-4">
+                            <span class="text-3xl block">👜</span>
+                            <h4 class="font-heading text-xl font-bold text-gray-900">No Products Found</h4>
+                            <p class="text-xs text-gray-500 font-light">Try changing your filters or resetting the selection.</p>
+                            <button @click="resetFilters" class="mt-2 bg-sage-600 text-white text-xs font-bold uppercase tracking-widest px-6 py-2.5 rounded-lg hover:bg-sage-700 transition">Reset Filters</button>
+                        </div>
                     </div>
-                </section>
+                </div>
             </div>
 
             <!-- PAGE 3: ABOUT MANIFESTO BRAND DETAILS -->
@@ -625,7 +511,7 @@
                         <div class="space-y-2">
                             <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider block">Available Color Matrix</span>
                             <div class="flex space-x-2">
-                                <button v-for="color in availableColorsFor(quickViewProduct)" :key="color" 
+                                <button v-for="color in quickViewProduct.colors" :key="color" 
                                         @click="selectedColor = color"
                                         :class="{'ring-2 ring-sage-600 scale-105': selectedColor === color}"
                                         class="px-3 py-1 bg-ivory text-gray-700 rounded-md border text-[10px] uppercase font-semibold transition">{{ color }}</button>
@@ -644,11 +530,10 @@
                     </div>
 
                     <!-- Primary Actions Core Stack -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-gray-100">
-                        <button @click="addConfiguredToCart" :disabled="!quickViewProduct.inStock" class="w-full bg-white border border-sage-600 text-sage-600 disabled:bg-gray-100 disabled:text-gray-400 text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-sage-50 smooth-transition">Add To Cart</button>
-                        <button @click="buyConfiguredNow" :disabled="!quickViewProduct.inStock" class="w-full bg-sage-600 disabled:bg-gray-300 text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-sage-700 smooth-transition">Buy Now</button>
+                    <div class="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
+                        <button @click="addConfiguredToCart" class="w-full bg-sage-600 text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-sage-700 smooth-transition">Add To Cart</button>
                         <button @click="instantWhatsAppCheckout(quickViewProduct)" class="w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:opacity-90 smooth-transition flex items-center justify-center space-x-1">
-                            <span>WhatsApp</span>
+                            <span>Order WhatsApp</span>
                         </button>
                     </div>
                 </div>
@@ -657,7 +542,7 @@
 
         <!-- Sliding Dynamic Checkout Shopping Cart Side Drawer overlay -->
         <div v-if="cartDrawerOpen" class="fixed inset-0 z-50 overflow-hidden bg-black/30 backdrop-blur-sm flex justify-end animate-fadeIn">
-            <div class="bg-white max-w-md w-full h-full p-6 shadow-2xl border-l border-sage-50 flex flex-col justify-between animate-slideLeft">
+            <div class="bg-white max-w-md w-full h-[100dvh] p-4 sm:p-6 shadow-2xl border-l border-sage-50 flex flex-col overflow-y-auto animate-slideLeft">
                 
                 <div>
                     <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
@@ -667,7 +552,7 @@
 
                     <!-- Cart Item Rows Loop Grid -->
                     <div v-if="cart.length > 0" class="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                        <div v-for="item in cart" :key="item.lineId || (item.id + item.color)" class="flex items-center space-x-4 bg-ivory/50 p-3 rounded-xl border border-sage-50/50">
+                        <div v-for="item in cart" :key="item.id + item.color" class="flex items-center space-x-4 bg-ivory/50 p-3 rounded-xl border border-sage-50/50">
                             <div class="w-16 h-20 bg-sage-100 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center">
                                 <img v-if="item.img" :src="item.img" :alt="item.name" class="w-full h-full object-cover">
                                 <span v-else class="text-2xl">👜</span>
@@ -699,71 +584,82 @@
                     </div>
                 </div>
 
-                <!-- Footer Summary Mathematical Calculation Matrix Block -->
+                <!-- Order Summary & Checkout Choices -->
                 <div v-if="cart.length > 0" class="border-t border-gray-100 pt-4 space-y-4">
-                    <div class="space-y-4">
-                        <div class="rounded-xl border border-sage-100 bg-white p-4">
-                            <h4 class="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-800">Payment Method</h4>
+                    <div class="rounded-xl border border-sage-100 p-4 space-y-4 bg-white">
+                        <div>
+                            <h4 class="text-[10px] uppercase tracking-[0.22em] font-bold text-gray-800">Delivery Method</h4>
                             <div class="mt-3 space-y-2">
-                                <label class="flex items-start gap-3 cursor-pointer rounded-lg border p-3"
-                                       :class="checkout.paymentMethod === 'Advance Payment' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
-                                    <input type="radio" value="Advance Payment" v-model="checkout.paymentMethod" class="mt-0.5">
-                                    <span class="flex-1">
-                                        <span class="block text-xs font-semibold text-gray-800">Advance Payment</span>
-                                        <span class="block text-[10px] text-gray-500 mt-1">Pay through JazzCash, Easypaisa or bank transfer. No extra charges.</span>
+                                <label class="flex items-start gap-3 rounded-lg border p-3 cursor-pointer"
+                                       :class="checkout.delivery === 'Standard Delivery' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
+                                    <input type="radio" value="Standard Delivery" v-model="checkout.delivery" class="mt-0.5">
+                                    <span>
+                                        <span class="block text-xs font-semibold">Standard Delivery</span>
+                                        <span class="block text-[10px] text-gray-500 mt-1">PKR 200 — Free when item total is PKR 1,500 or above</span>
                                     </span>
                                 </label>
+                                <label class="flex items-start gap-3 rounded-lg border p-3 cursor-pointer"
+                                       :class="checkout.delivery === 'Urgent Delivery' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
+                                    <input type="radio" value="Urgent Delivery" v-model="checkout.delivery" class="mt-0.5">
+                                    <span>
+                                        <span class="block text-xs font-semibold">Urgent Delivery</span>
+                                        <span class="block text-[10px] text-gray-500 mt-1">PKR 400 — Urgent delivery is never free</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
 
-                                <div v-if="checkout.paymentMethod === 'Advance Payment'" class="grid grid-cols-3 gap-2 pl-1">
+                        <div>
+                            <h4 class="text-[10px] uppercase tracking-[0.22em] font-bold text-gray-800">Payment Method</h4>
+                            <div class="mt-3 space-y-2">
+                                <label class="flex items-start gap-3 rounded-lg border p-3 cursor-pointer"
+                                       :class="checkout.paymentMethod === 'Advance Payment' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
+                                    <input type="radio" value="Advance Payment" v-model="checkout.paymentMethod" class="mt-0.5">
+                                    <span>
+                                        <span class="block text-xs font-semibold">Advance Payment</span>
+                                        <span class="block text-[10px] text-gray-500 mt-1">JazzCash, Easypaisa or Bank Transfer — no extra charges</span>
+                                    </span>
+                                </label>
+                                <div v-if="checkout.paymentMethod === 'Advance Payment'" class="grid grid-cols-3 gap-2">
                                     <button v-for="channel in ['JazzCash','Easypaisa','Bank Transfer']"
                                             :key="channel"
                                             @click="checkout.advanceChannel = channel"
                                             :class="checkout.advanceChannel === channel ? 'bg-sage-700 text-white border-sage-700' : 'bg-white text-gray-700 border-sage-100'"
-                                            class="border rounded-lg px-2 py-2 text-[9px] font-semibold transition">
+                                            class="border rounded-lg px-2 py-2 text-[9px] font-semibold">
                                         {{ channel }}
                                     </button>
                                 </div>
 
-                                <label class="flex items-start gap-3 cursor-pointer rounded-lg border p-3"
+                                <label class="flex items-start gap-3 rounded-lg border p-3 cursor-pointer"
                                        :class="checkout.paymentMethod === 'Cash on Delivery' ? 'border-sage-500 bg-sage-50' : 'border-gray-100'">
                                     <input type="radio" value="Cash on Delivery" v-model="checkout.paymentMethod" class="mt-0.5">
-                                    <span class="flex-1">
-                                        <span class="block text-xs font-semibold text-gray-800">Cash on Delivery</span>
-                                        <span class="block text-[10px] text-gray-500 mt-1">PKR 200 must be paid in advance. The remaining balance is paid at delivery.</span>
+                                    <span>
+                                        <span class="block text-xs font-semibold">Cash on Delivery</span>
+                                        <span class="block text-[10px] text-gray-500 mt-1">PKR 200 advance required. Remaining balance is paid on delivery.</span>
                                     </span>
                                 </label>
                             </div>
                         </div>
 
-                        <div class="rounded-xl bg-sage-50 border border-sage-100 p-4 text-xs text-gray-700 space-y-2">
+                        <div class="rounded-lg bg-sage-50 p-3 text-xs space-y-2">
                             <div class="flex justify-between"><span>Items Subtotal</span><strong>PKR {{ formatPrice(cartSubtotal) }}</strong></div>
-                            <div class="flex justify-between"><span>Delivery Charges</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
-                            <div class="flex justify-between border-t border-sage-200 pt-2 text-sm text-gray-900">
-                                <span class="font-bold">Order Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong>
-                            </div>
+                            <div class="flex justify-between"><span>Delivery</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
+                            <div class="flex justify-between border-t border-sage-200 pt-2 text-sm"><span class="font-bold">Order Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong></div>
                             <template v-if="checkout.paymentMethod === 'Cash on Delivery'">
-                                <div class="flex justify-between text-sage-700 pt-1">
-                                    <span>Pay Now</span><strong>PKR {{ formatPrice(payableNow) }}</strong>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Balance on Delivery</span><strong>PKR {{ formatPrice(balanceOnDelivery) }}</strong>
-                                </div>
+                                <div class="flex justify-between text-sage-700"><span>Pay Now</span><strong>PKR {{ formatPrice(payableNow) }}</strong></div>
+                                <div class="flex justify-between"><span>Balance on Delivery</span><strong>PKR {{ formatPrice(balanceOnDelivery) }}</strong></div>
                             </template>
                             <template v-else>
-                                <div class="flex justify-between text-sage-700 pt-1">
-                                    <span>Advance via {{ checkout.advanceChannel }}</span><strong>PKR {{ formatPrice(payableNow) }}</strong>
-                                </div>
+                                <div class="flex justify-between text-sage-700"><span>Pay via {{ checkout.advanceChannel }}</span><strong>PKR {{ formatPrice(payableNow) }}</strong></div>
                             </template>
-                        </div>
                         </div>
                     </div>
 
-                    <!-- Checkout Integration Stack Options -->
                     <div class="space-y-2">
-                        <button @click="openCheckout" class="w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:opacity-90 transition flex items-center justify-center space-x-2">
-                            <span>Checkout on WhatsApp</span>
+                        <button @click="openCheckout" class="w-full bg-sage-700 text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg hover:bg-sage-800 transition">
+                            Continue to Delivery Details
                         </button>
-                        <button @click="toggleCartDrawer(false); navigateTo('shop')" class="w-full bg-gray-900 text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-gray-800 transition">
+                        <button @click="toggleCartDrawer(false); navigateTo('shop')" class="w-full bg-white border border-sage-100 text-gray-700 text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-sage-50 transition">
                             Continue Shopping
                         </button>
                     </div>
@@ -773,13 +669,13 @@
         </div>
 
 
-        <!-- WhatsApp Checkout Form -->
+        <!-- Delivery Details Step -->
         <div v-if="checkoutOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm">
             <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 sm:p-8 relative max-h-[92vh] overflow-y-auto">
                 <button @click="checkoutOpen=false" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-gray-900">&times;</button>
                 <span class="text-[10px] tracking-[0.35em] font-bold text-sage-600 uppercase">Secure WhatsApp Order</span>
                 <h3 class="font-heading text-3xl text-gray-900 mt-2">Delivery Details</h3>
-                <p class="text-xs text-gray-500 mt-2 mb-6">Fill in your details. Your order will open in WhatsApp for confirmation.</p>
+                <p class="text-xs text-gray-500 mt-2 mb-6">Enter your delivery details, review the order, then complete checkout through WhatsApp.</p>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label class="text-xs font-semibold text-gray-700">
@@ -794,30 +690,7 @@
                         City *
                         <input v-model.trim="checkout.city" type="text" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="City">
                     </label>
-                    <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <label class="text-xs font-semibold text-gray-700">
-                            Delivery Method
-                            <select v-model="checkout.delivery" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600 bg-white">
-                                <option value="Standard Delivery">Standard Delivery</option>
-                                <option value="Urgent Delivery">Urgent Delivery</option>
-                            </select>
-                        </label>
-                        <label class="text-xs font-semibold text-gray-700">
-                            Payment Method
-                            <select v-model="checkout.paymentMethod" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600 bg-white">
-                                <option value="Advance Payment">Advance Payment — No extra charges</option>
-                                <option value="Cash on Delivery">Cash on Delivery — PKR 200 advance required</option>
-                            </select>
-                        </label>
-                        <label v-if="checkout.paymentMethod === 'Advance Payment'" class="text-xs font-semibold text-gray-700">
-                            Advance Payment Via
-                            <select v-model="checkout.advanceChannel" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600 bg-white">
-                                <option>JazzCash</option>
-                                <option>Easypaisa</option>
-                                <option>Bank Transfer</option>
-                            </select>
-                        </label>
-                    </div>
+
                     <label class="text-xs font-semibold text-gray-700 sm:col-span-2">
                         Complete Address *
                         <textarea v-model.trim="checkout.address" rows="3" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="House/Street, Area, City"></textarea>
@@ -828,18 +701,19 @@
                     </label>
                 </div>
 
-                <div class="mt-6 rounded-xl bg-sage-50 p-4 text-xs">
+                <div class="mt-6 rounded-xl bg-sage-50 p-4 text-xs space-y-2">
                     <div class="flex justify-between"><span>Items Subtotal</span><strong>PKR {{ formatPrice(cartSubtotal) }}</strong></div>
-                    <div class="flex justify-between mt-2"><span>Delivery Charges</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
-                    <div class="flex justify-between mt-2"><span>Payment</span><strong>{{ checkout.paymentMethod }}</strong></div>
-                    <div v-if="checkout.paymentMethod === 'Advance Payment'" class="flex justify-between mt-2"><span>Payment Channel</span><strong>{{ checkout.advanceChannel }}</strong></div>
-                    <div class="flex justify-between mt-3 pt-3 border-t border-sage-200 text-sm"><span class="font-bold">Order Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong></div>
-                    <div v-if="checkout.paymentMethod === 'Cash on Delivery'" class="flex justify-between mt-2 text-sage-700"><span>Pay Now</span><strong>PKR {{ formatPrice(payableNow) }}</strong></div>
-                    <div v-if="checkout.paymentMethod === 'Cash on Delivery'" class="flex justify-between mt-2"><span>Balance on Delivery</span><strong>PKR {{ formatPrice(balanceOnDelivery) }}</strong></div>
+                    <div class="flex justify-between"><span>Delivery Method</span><strong>{{ checkout.delivery }}</strong></div>
+                    <div class="flex justify-between"><span>Delivery Charges</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
+                    <div class="flex justify-between"><span>Payment Method</span><strong>{{ checkout.paymentMethod }}</strong></div>
+                    <div v-if="checkout.paymentMethod === 'Advance Payment'" class="flex justify-between"><span>Payment Channel</span><strong>{{ checkout.advanceChannel }}</strong></div>
+                    <div class="flex justify-between border-t border-sage-200 pt-2 text-sm"><span class="font-bold">Order Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong></div>
+                    <div v-if="checkout.paymentMethod === 'Cash on Delivery'" class="flex justify-between text-sage-700"><span>Pay Now</span><strong>PKR {{ formatPrice(payableNow) }}</strong></div>
+                    <div v-if="checkout.paymentMethod === 'Cash on Delivery'" class="flex justify-between"><span>Balance on Delivery</span><strong>PKR {{ formatPrice(balanceOnDelivery) }}</strong></div>
                 </div>
 
                 <button @click="sendCheckoutToWhatsApp" class="mt-5 w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg hover:opacity-90 transition">
-                    Confirm Order on WhatsApp
+                    Checkout Now via WhatsApp
                 </button>
                 <p class="text-[10px] text-gray-400 text-center mt-3">Cash on Delivery available across Pakistan.</p>
             </div>
@@ -889,19 +763,12 @@
         </section>
 
         <!-- Premium Standard Structural Footer Module -->
-        <footer id="contact-section" class="bg-white border-t border-sage-100 text-gray-600 text-xs py-12">
+        <footer class="bg-white border-t border-sage-100 text-gray-600 text-xs py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-12 gap-8">
                 
                 <!-- Brand Meta Grid Column -->
                 <div class="md:col-span-4 space-y-4">
-                    <div class="flex items-center gap-3">
-                        <img src="logo.png" alt="TREVO logo" class="w-12 h-12 rounded-xl object-contain border border-sage-100 bg-white"
-                             onerror="this.style.display='none'">
-                        <div>
-                            <span class="font-heading text-3xl font-black tracking-widest text-gray-900 block">TREVO</span>
-                            <span class="text-[9px] uppercase tracking-[0.25em] text-rosegold">trevopk.com</span>
-                        </div>
-                    </div>
+                    <span class="font-heading text-3xl font-black tracking-widest text-gray-900">TREVO</span>
                     <p class="text-xs text-gray-400 font-light max-w-xs leading-relaxed">
                         Elegant, affordable handbags selected for everyday confidence and special occasions.
                     </p>
@@ -965,12 +832,6 @@
                 const currentPage = ref('home');
                 const searchQuery = ref('');
                 const sortBy = ref('newest');
-                const activeCollection = ref('All');
-                const shopMode = ref('all');
-                const featuredMenuOpen = ref(false);
-                const mobileMenuOpen = ref(false);
-                const mobileFeaturedOpen = ref(false);
-                const cardVariantSelections = ref({});
                 
                 // Modals Visibility Triggers States
                 const cartDrawerOpen = ref(false);
@@ -992,7 +853,7 @@
                 const selectedColor = ref('');
                 const quantity = ref(1);
                 const firebaseConnected = ref(false);
-                const firebaseMessage = ref('');
+                const firebaseMessage = ref('Connecting to live product catalog…');
 
                 // System Active Configuration Reactive Filter Object Matrix
                 const filters = ref({
@@ -1005,77 +866,17 @@
                 // Structured Static Static Categories Vector Source Array
                 const categoryEmoji = (name) => {
                     const n = String(name || '').toLowerCase();
-                    if (n.includes('cross')) return '✨';
                     if (n.includes('tote')) return '👜';
                     if (n.includes('box')) return '💼';
-                    if (n.includes('lux')) return '👑';
+                    if (n.includes('cross')) return '✨';
+                    if (n.includes('lux') || n.includes('premium')) return '👑';
                     if (n.includes('pearl')) return '🤍';
                     return '👜';
                 };
 
                 const categories = computed(() => {
-                    const order = ['Cross Body', 'Tote Bags', 'Box Bag', 'Luxury Collection'];
-
-                    return order.map(name => {
-                        const categoryProducts = products.value.filter(product => product.category === name);
-                        const imageProduct = categoryProducts.find(product => product.img) || categoryProducts[0];
-
-                        return {
-                            name,
-                            count: categoryProducts.length,
-                            emoji: categoryEmoji(name),
-                            img: imageProduct?.img || '',
-                            productName: imageProduct?.name || name
-                        };
-                    });
-                });
-
-                const collectionTabs = computed(() => {
-                    return [...new Set(
-                        products.value
-                            .map(product => product.collection)
-                            .filter(Boolean)
-                    )].sort((a, b) => a.localeCompare(b));
-                });
-
-                const completeRangeVariants = computed(() => {
-                    return products.value.flatMap(product => {
-                        if (Array.isArray(product.variants) && product.variants.length) {
-                            return product.variants.map(variant => {
-                                const regular = Number(variant.price || product.regularPrice || product.price || 0);
-                                const sale = Number(variant.salePrice || product.salePrice || 0);
-                                const display = sale > 0 && sale < regular ? sale : Number(product.price || regular);
-                                return {
-                                    ...product,
-                                    id: `${product.id}-${variant.sku || variant.color}`,
-                                    parentId: product.id,
-                                    _docId: product._docId,
-                                    sku: variant.sku || product.sku,
-                                    variantSku: variant.sku || '',
-                                    name: `${product.name} - ${variant.color}`,
-                                    colors: [variant.color],
-                                    selectedVariantColor: variant.color,
-                                    variants: [variant],
-                                    availableVariants: Number(variant.stock || 0) > 0 ? [variant] : [],
-                                    quantity: Number(variant.stock || 0),
-                                    inStock: Number(variant.stock || 0) > 0,
-                                    img: variant.img || product.img,
-                                    price: display,
-                                    regularPrice: regular,
-                                    salePrice: sale > 0 ? sale : null,
-                                    oldPrice: sale > 0 && sale < regular ? regular : product.oldPrice,
-                                    discount: sale > 0 && sale < regular && regular > 0
-                                        ? Math.round(((regular - sale) / regular) * 100)
-                                        : product.discount
-                                };
-                            });
-                        }
-                        return [{
-                            ...product,
-                            id: `${product.id}-default`,
-                            parentId: product.id
-                        }];
-                    });
+                    const names = [...new Set(products.value.map(p => p.category).filter(Boolean))];
+                    return names.map(name => ({ name, emoji: categoryEmoji(name) }));
                 });
 
                 // Global Color Options Matrix cataloged across designs
@@ -1083,9 +884,15 @@
                     return [...new Set(products.value.flatMap(p => p.colors || []).filter(Boolean))];
                 });
 
-                // Exact TREVO catalog used while Firebase connects.
-                // Firebase replaces this data in real time when connected.
-                const fallbackProducts = [{"id":"TRV-CW-001","sku":"TRV-CW-001","name":"Trevo Monochrome Cow Print Tote","collection":"Urban Print Collection","category":"Tote Bags","subCategory":"Fashion Tote","style":"Shoulder Tote","colors":["Black & White"],"material":"Textured Faux Leather","pattern":"Cow Print","hardwareColor":"Gold","description":"Bold black-and-white cow-print tote with long shoulder handles and side buckle accents.","features":["Long handles","Side buckle details","Roomy tote shape"],"careInstructions":"Wipe clean with soft cloth; avoid prolonged sunlight.","slug":"trevo-monochrome-cow-print-tote","seoKeywords":"Trevo Monochrome Cow Print Tote, TREVO bags Pakistan, Fashion Tote, Shoulder Tote","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #FashionTote","img":"","variants":[{"sku":"TRV-CW-001-BW","color":"Black & White","barcode":"TRV0100001","stock":0,"status":"Active"}],"price":2600.0,"salePrice":2600.0,"_docId":"TRV-CW-001","regularPrice":3200.0,"oldPrice":3200.0,"discount":19,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Bold black-and-white cow-print tote with long shoulder handles and side buckle accents.","isNew":false,"popular":false},{"id":"TRV-HJ-001","sku":"TRV-HJ-001","name":"Trevo Noor Mini Handbag","collection":"Noor Collection","category":"Box Bag","subCategory":"Mini Handbag","style":"Top Handle","colors":["Mustard","Maroon"],"material":"Faux Leather","pattern":"Illustrated Hijab Print","hardwareColor":"Gold","description":"Compact top-handle handbag featuring an elegant modest-fashion illustration.","features":["Dual handles","Zip closure","Structured body"],"careInstructions":"Wipe gently with a soft dry cloth; keep away from moisture and direct heat.","slug":"trevo-noor-mini-handbag","seoKeywords":"Trevo Noor Mini Handbag, TREVO bags Pakistan, Mini Handbag, Top Handle, women handbags, online bags Pakistan","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #MiniHandbag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_td0mxktd0mxktd0m.png","variants":[{"sku":"TRV-HJ-001-MST","color":"Mustard","barcode":"TRV0010001","stock":0,"status":"Active"},{"sku":"TRV-HJ-001-MRN","color":"Maroon","barcode":"TRV0010002","stock":0,"status":"Active"}],"price":1200.0,"salePrice":1200.0,"_docId":"TRV-HJ-001","regularPrice":1400.0,"oldPrice":1400.0,"discount":14,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Compact top-handle handbag featuring an elegant modest-fashion illustration.","isNew":false,"popular":false},{"id":"TRV-RG-001","sku":"TRV-RG-001","name":"Trevo Marble Ring Handle Bag","collection":"Marble Luxe Collection","category":"Box Bag","subCategory":"Top Handle Bag","style":"Ring Handle","colors":["Ivory","Berry/Maroon","Champagne","Mauve"],"material":"Textured Fabric","pattern":"Marble Vein","hardwareColor":"Gold","description":"Elegant ring-handle handbag with metallic marble-vein detailing.","features":["Round metal handles","Structured body","Formal styling"],"careInstructions":"Spot clean only; protect metallic print from abrasion.","slug":"trevo-marble-ring-handle-bag","seoKeywords":"Trevo Marble Ring Handle Bag, TREVO bags Pakistan, Top Handle Bag, Ring Handle, women handbags","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #TopHandleBag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_8k3y198k3y198k3y.png","variants":[{"sku":"TRV-RG-001-IVR","color":"Ivory","barcode":"TRV0030003","stock":0,"status":"Active"},{"sku":"TRV-RG-001-BRY","color":"Berry/Maroon","barcode":"TRV0030001","stock":0,"status":"Active"},{"sku":"TRV-RG-001-CHP","color":"Champagne","barcode":"TRV0030002","stock":0,"status":"Active"},{"sku":"TRV-RG-001-MVE","color":"Mauve","barcode":"TRV0030004","stock":0,"status":"Active"}],"price":1200.0,"salePrice":1200.0,"_docId":"TRV-RG-001","regularPrice":1400.0,"oldPrice":1400.0,"discount":14,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Elegant ring-handle handbag with metallic marble-vein detailing.","isNew":false,"popular":false},{"id":"TRV-PB-001","sku":"TRV-PB-001","name":"Trevo Forever Young Phone Wallet","collection":"Forever Young Collection","category":"Cross Body","subCategory":"Phone Bag & Wallet","style":"Crossbody Phone Bag","colors":["Lavender","Sky Blue","Dusted Pink"],"material":"PU Leather","pattern":"Solid / Croc Embossed","hardwareColor":"Gold","description":"Two-in-one phone bag and wallet with secure phone pocket and detachable strap.","features":["Phone pocket","Zip wallet","Detachable crossbody strap"],"careInstructions":"Avoid overloading; wipe with soft cloth; keep hardware dry.","slug":"trevo-forever-young-phone-wallet","seoKeywords":"Trevo Forever Young Phone Wallet, TREVO bags Pakistan, Phone Bag, Wallet, Crossbody","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #PhoneBag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.33.06%20PM.jpeg","variants":[{"sku":"TRV-PB-001-LAV","color":"Lavender","barcode":"TRV0080002","stock":0,"status":"Active"},{"sku":"TRV-PB-001-SKY","color":"Sky Blue","barcode":"TRV0080003","stock":0,"status":"Active"},{"sku":"TRV-PB-001-PNK","color":"Dusted Pink","barcode":"TRV0080001","stock":0,"status":"Active"}],"price":1200.0,"salePrice":1200.0,"_docId":"TRV-PB-001","regularPrice":1400.0,"oldPrice":1400.0,"discount":14,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Two-in-one phone bag and wallet with secure phone pocket and detachable strap.","isNew":false,"popular":false},{"id":"TRV-WL-001","sku":"TRV-WL-001","name":"Trevo CK Multi-Compartment Bag","collection":"Cloe Collection","category":"Luxury Collection","subCategory":"Organizer Wallet","style":"Clutch Wallet","colors":["Beige","Yellow","Black"],"material":"Faux Leather","pattern":"Quilted Front Panel","hardwareColor":"Tone-on-tone / Gold","description":"Slim organizer wallet with multiple divided sections and rear slip pocket.","features":["Two inner pockets","Divided sections","Rear slip pocket"],"careInstructions":"Keep dry; clean with non-abrasive cloth; do not overfill.","slug":"trevo-cloe-multi-compartment-wallet","seoKeywords":"Trevo Cloe Multi-Compartment Wallet, TREVO bags Pakistan, Organizer Wallet, Clutch Wallet","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #OrganizerWallet","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.32.44%20PM.jpeg","variants":[{"sku":"TRV-WL-001-BGE","color":"Beige","barcode":"TRV0060002","stock":0,"status":"Active"},{"sku":"TRV-WL-001-YLW","color":"Yellow","barcode":"TRV0060001","stock":0,"status":"Active"},{"sku":"TRV-WL-001-BLK","color":"Black","barcode":"TRV0060003","stock":0,"status":"Active"}],"price":3700.0,"salePrice":3700.0,"_docId":"TRV-WL-001","regularPrice":4700.0,"oldPrice":4700.0,"discount":21,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Slim organizer wallet with multiple divided sections and rear slip pocket.","isNew":false,"popular":false},{"id":"TRV-DT-001","sku":"TRV-DT-001","name":"Trevo Pastel Premium Tote","collection":"Premium Tote Collection","category":"Tote Bags","subCategory":"Tote Bag","style":"Structured Tote","colors":["Pastel Multi","Mint","Aqua","Pink"],"material":"Quilted Faux Leather","pattern":"Pastel Chevron / Abstract","hardwareColor":"Gold / Black","description":"Spacious premium tote with pastel quilted pattern and reinforced handles.","features":["Large capacity","Chain or top handles","Structured base"],"careInstructions":"Wipe clean; do not machine wash; retain shape with stuffing.","slug":"trevo-pastel-premium-tote","seoKeywords":"Trevo Pastel Premium Tote, TREVO bags Pakistan, Tote Bag, Structured Tote, women handbags","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #ToteBag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_qz0oddqz0oddqz0o.png","variants":[{"sku":"TRV-DT-001-PST","color":"Pastel Multi","barcode":"TRV0040001","stock":0,"status":"Active"},{"sku":"TRV-DT-001-MNT","color":"Mint","barcode":"TRV0040004","stock":0,"status":"Active"},{"sku":"TRV-DT-001-AQU","color":"Aqua","barcode":"TRV0040002","stock":0,"status":"Active"},{"sku":"TRV-DT-001-PNK","color":"Pink","barcode":"TRV0040003","stock":0,"status":"Active"}],"price":2200.0,"salePrice":2200.0,"_docId":"TRV-DT-001","regularPrice":2600.0,"oldPrice":2600.0,"discount":15,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Spacious premium tote with pastel quilted pattern and reinforced handles.","isNew":false,"popular":false},{"id":"TRV-PC-001","sku":"TRV-PC-001","name":"Trevo Pearl Grace Shoulder Bag","collection":"Pearl Grace Collection","category":"Luxury Collection","subCategory":"Shoulder Bag","style":"Shoulder / Evening","colors":["Emerald Green","Navy Blue","Black","Plum"],"material":"Fabric / Faux Leather","pattern":"Solid Pleated","hardwareColor":"Gold & Pearl","description":"Soft shoulder bag decorated with pearl and layered chain details.","features":["Pearl chain","Layered metal chains","Compact evening shape"],"careInstructions":"Store in a dust bag; avoid perfume, water and rough surfaces.","slug":"trevo-pearl-grace-shoulder-bag","seoKeywords":"Trevo Pearl Grace Shoulder Bag, TREVO bags Pakistan, Shoulder Bag, women handbags, online bags Pakistan","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #ShoulderBag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_yd44sqyd44sqyd44%20%281%29.png","variants":[{"sku":"TRV-PC-001-EMR","color":"Emerald Green","barcode":"TRV0020003","stock":0,"status":"Active"},{"sku":"TRV-PC-001-NVY","color":"Navy Blue","barcode":"TRV0020002","stock":0,"status":"Active"},{"sku":"TRV-PC-001-BLK","color":"Black","barcode":"TRV0020001","stock":0,"status":"Active"},{"sku":"TRV-PC-001-PLM","color":"Plum","barcode":"TRV0020004","stock":0,"status":"Active"}],"price":1200.0,"salePrice":1200.0,"_docId":"TRV-PC-001","regularPrice":1400.0,"oldPrice":1400.0,"discount":14,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Soft shoulder bag decorated with pearl and layered chain details.","isNew":false,"popular":false},{"id":"TRV-PT-001","sku":"TRV-PT-001","name":"Trevo Heritage Printed Tote","collection":"Heritage Tote Collection","category":"Tote Bags","subCategory":"Printed Tote","style":"Everyday Tote","colors":["City & Sailing","Burgundy Mosaic","Geometric Patchwork","Route 66 Travel","Green Heritage Tile"],"material":"Printed Fabric / Faux Leather","pattern":"Tile / Geometric / Travel / Mosaic","hardwareColor":"Gold / Bronze","description":"Everyday tote collection featuring artistic heritage-inspired prints.","features":["Long handles","Roomy interior","Lightweight body"],"careInstructions":"Use a soft damp cloth on exterior; avoid soaking printed fabric.","slug":"trevo-heritage-printed-tote","seoKeywords":"Trevo Heritage Printed Tote, TREVO bags Pakistan, Printed Tote, Everyday Tote, women handbags","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #PrintedTote","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_a5wgm3a5wgm3a5wg.png","variants":[{"sku":"TRV-PT-001-CTY","color":"City & Sailing","barcode":"TRV0050001","stock":0,"status":"Active"},{"sku":"TRV-PT-001-MOS","color":"Burgundy Mosaic","barcode":"TRV0050002","stock":0,"status":"Active"},{"sku":"TRV-PT-001-GEO","color":"Geometric Patchwork","barcode":"TRV0050003","stock":0,"status":"Active"},{"sku":"TRV-PT-001-R66","color":"Route 66 Travel","barcode":"TRV0050004","stock":0,"status":"Active"},{"sku":"TRV-PT-001-TIL","color":"Green Heritage Tile","barcode":"TRV0050005","stock":0,"status":"Active"}],"price":1200.0,"salePrice":1200.0,"_docId":"TRV-PT-001","regularPrice":1400.0,"oldPrice":1400.0,"discount":14,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Everyday tote collection featuring artistic heritage-inspired prints.","isNew":false,"popular":false},{"id":"TRV-RD-001","sku":"TRV-RD-001","name":"Trevo Mandala Round Art Bag","collection":"Mandala Art Collection","category":"Cross Body","subCategory":"Round Bag","style":"Crossbody","colors":["Grey","Blue","Maroon"],"material":"Textured Fabric","pattern":"Embroidered Mandala","hardwareColor":"Gold","description":"Statement round bag with vibrant mandala-style embroidered artwork.","features":["Round silhouette","Colorful embroidery","Crossbody format"],"careInstructions":"Spot clean embroidery carefully; do not rub or bleach.","slug":"trevo-mandala-round-art-bag","seoKeywords":"Trevo Mandala Round Art Bag, TREVO bags Pakistan, Round Bag, Crossbody, embroidered bag","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #RoundBag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_rw5t4rw5t4rw5t4r.png","variants":[{"sku":"TRV-RD-001-GRY","color":"Grey","barcode":"TRV0090003","stock":0,"status":"Active"},{"sku":"TRV-RD-001-BLU","color":"Blue","barcode":"TRV0090001","stock":0,"status":"Active"},{"sku":"TRV-RD-001-BRG","color":"Maroon","barcode":"TRV0090002","stock":0,"status":"Active"}],"price":1754.0,"salePrice":1754.0,"_docId":"TRV-RD-001","regularPrice":2192.0,"oldPrice":2192.0,"discount":20,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Statement round bag with vibrant mandala-style embroidered artwork.","isNew":false,"popular":false},{"id":"TRV-ST-001","sku":"TRV-ST-001","name":"Trevo Aura Structured Satchel","collection":"Aura Satchel Collection","category":"Luxury Collection","subCategory":"Satchel Bag","style":"Top Handle / Shoulder","colors":["Dark Navy","Crimson Red"],"material":"Pebbled Faux Leather","pattern":"Solid Pebbled","hardwareColor":"Gold","description":"Structured satchel with premium pebbled finish and detachable shoulder strap.","features":["Top handles","Detachable strap","Zip closure","Metal feet"],"careInstructions":"Use leather-safe cleaner only; store upright in dust bag.","slug":"trevo-aura-structured-satchel","seoKeywords":"Trevo Aura Structured Satchel, TREVO bags Pakistan, Satchel Bag, Top Handle, Shoulder","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #SatchelBag","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/WhatsApp%20Image%202026-07-13%20at%2010.42.52%20PM.jpeg","variants":[{"sku":"TRV-ST-001-NVY","color":"Dark Navy","barcode":"TRV0070002","stock":0,"status":"Active"},{"sku":"TRV-ST-001-RED","color":"Crimson Red","barcode":"TRV0070001","stock":0,"status":"Active"}],"price":4600.0,"salePrice":4600.0,"_docId":"TRV-ST-001","regularPrice":5800.0,"oldPrice":5800.0,"discount":21,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Structured satchel with premium pebbled finish and detachable shoulder strap.","isNew":false,"popular":false},{"id":"TRV-TT-001","sku":"TRV-TT-001","name":"Trevo Executive Office Tote","collection":"Executive Collection","category":"Tote Bags","subCategory":"Office Tote","style":"Structured Work Tote","colors":["Pink","Grey","Sage"],"material":"Smooth Faux Leather","pattern":"Solid Minimal","hardwareColor":"Gold","description":"Minimal structured office tote designed for documents, essentials and daily work use.","features":["Multiple compartments","Reinforced handles","Structured profile"],"careInstructions":"Clean with damp cloth; store filled to preserve shape.","slug":"trevo-executive-office-tote","seoKeywords":"Trevo Executive Office Tote, TREVO bags Pakistan, Office Tote, Structured Work Tote","hashtags":"#TREVO #TrevoBags #HandbagsPakistan #OnlineShoppingPakistan #OfficeTote","img":"https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/Gemini_Generated_Image_fqxdxifqxdxifqxd.png","variants":[{"sku":"TRV-TT-001-PNK","color":"Pink","barcode":"TRV0110003","stock":0,"status":"Active"},{"sku":"TRV-TT-001-GRY","color":"Grey","barcode":"TRV0110001","stock":0,"status":"Active"},{"sku":"TRV-TT-001-SGE","color":"Sage","barcode":"TRV0110002","stock":0,"status":"Active"}],"price":2500.0,"salePrice":2500.0,"_docId":"TRV-TT-001","regularPrice":3000.0,"oldPrice":3000.0,"discount":17,"quantity":0,"stock":0,"inStock":false,"availableVariants":[],"desc":"Minimal structured office tote designed for documents, essentials and daily work use.","isNew":false,"popular":false}];
+                // Fallback catalog shown only when Firebase is unavailable or empty
+                const fallbackProducts = [
+                    { id: 101, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2003_56_40%20PM.png', name: 'Aura Classic Textured Tote', category: 'Tote Bags', price: 6800, oldPrice: 8500, discount: 20, isNew: true, inStock: true, colors: ['Sage Green', 'Ivory'], popular: true },
+                    { id: 102, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_41_09%20PM.png', name: 'Seraphina Sculpted Box Bag', category: 'Box Bags', price: 9200, oldPrice: 11000, discount: 15, isNew: true, inStock: true, colors: ['Blush Pink', 'Rose Gold'], popular: true },
+                    { id: 103, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_44_46%20PM.png', name: 'Elysian Minimalist Crossbody', category: 'Crossbody Bags', price: 5400, oldPrice: 5400, discount: 0, isNew: false, inStock: true, colors: ['Ivory', 'Classic Onyx'], popular: false },
+                    { id: 104, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_47_53%20PM.png', name: 'Imperia Gold-Clasp Luxury Satchel', category: 'Luxury Collection', price: 18500, oldPrice: 22000, discount: 16, isNew: true, inStock: true, colors: ['Rose Gold', 'Classic Onyx'], popular: true },
+                    { id: 105, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_50_20%20PM.png', name: 'Heritage Structured Over-Shoulder Tote', category: 'Tote Bags', price: 7900, oldPrice: 7900, discount: 0, isNew: false, inStock: false, colors: ['Sage Green', 'Classic Onyx'], popular: false },
+                    { id: 106, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_51_53%20PM.png', name: 'Monarch Geometric Box Clutch', category: 'Box Bags', price: 12000, oldPrice: 14500, discount: 17, isNew: false, inStock: true, colors: ['Rose Gold', 'Ivory'], popular: true }
+                ];
                 const products = ref([...fallbackProducts]);
 
                 // Static Trusted Testimonial Voice Arrays
@@ -1140,75 +947,27 @@
                     const rawImage =
                         data.img || data.image || data.imageUrl || data.image_url ||
                         (Array.isArray(data.images) ? data.images[0] : '');
-
-                    const regularPrice = Number(data.price || data.regularPrice || data.sellingPrice || 0);
-                    const salePrice = Number(data.salePrice || 0);
-                    const displayPrice = salePrice > 0 && salePrice < regularPrice ? salePrice : regularPrice;
-                    const comparePrice = salePrice > 0 && salePrice < regularPrice ? regularPrice :
-                        Number(data.oldPrice || data.compareAtPrice || 0);
-
-                    const variants = Array.isArray(data.variants)
-                        ? data.variants.map(v => ({
-                            ...v,
-                            sku: String(v.sku || ''),
-                            color: String(v.color || 'Default'),
-                            stock: Math.max(0, Number(v.stock ?? v.quantity ?? 0)),
-                            price: Number(v.price || 0),
-                            salePrice: Number(v.salePrice || 0),
-                            img: cleanImageUrl(v.img || v.image || v.imageUrl || rawImage)
-                        }))
-                        : [];
-
-                    const variantQuantity = variants.reduce((sum, v) => sum + v.stock, 0);
-                    const storedQuantity = Math.max(0, Number(data.quantity ?? data.stock ?? data.inventory ?? 0));
-                    const quantityValue = variants.length ? variantQuantity : storedQuantity;
-                    const availableVariants = variants.filter(v => v.stock > 0);
+                    const price = Number(data.price || data.salePrice || data.sellingPrice || 0);
+                    const oldPrice = Number(data.oldPrice || data.compareAtPrice || data.regularPrice || 0);
+                    const quantityValue = Number(data.quantity ?? data.stock ?? data.inventory ?? 0);
                     const badge = String(data.badge || '').toLowerCase();
 
-                    const colors = variants.length
-                        ? variants.map(v => v.color)
-                        : splitColors(data.colors || data.color);
+                    connectFirebaseProducts();
 
-                    return {
+                return {
                         ...data,
-                        _docId: docId,
-                        id: String(data.id ?? docId ?? index + 1),
-                        sku: String(data.sku || data.id || docId || index + 1),
+                        id: data.id ?? docId ?? index + 1,
                         name: data.name || data.title || 'TREVO Handbag',
-                        category: (() => {
-                            const id = String(data.id || data.sku || docId || '');
-                            const map = {
-                                'TRV-PB-001': 'Cross Body',
-                                'TRV-RD-001': 'Cross Body',
-                                'TRV-CW-001': 'Tote Bags',
-                                'TRV-DT-001': 'Tote Bags',
-                                'TRV-PT-001': 'Tote Bags',
-                                'TRV-TT-001': 'Tote Bags',
-                                'TRV-HJ-001': 'Box Bag',
-                                'TRV-RG-001': 'Box Bag',
-                                'TRV-PC-001': 'Luxury Collection',
-                                'TRV-WL-001': 'Luxury Collection',
-                                'TRV-ST-001': 'Luxury Collection'
-                            };
-                            return map[id] || data.category || 'Luxury Collection';
-                        })(),
-                        price: displayPrice,
-                        regularPrice,
-                        salePrice: salePrice > 0 ? salePrice : null,
-                        oldPrice: comparePrice > displayPrice ? comparePrice : null,
-                        discount: comparePrice > displayPrice && displayPrice > 0
-                            ? Math.round(((comparePrice - displayPrice) / comparePrice) * 100)
-                            : 0,
+                        category: data.category || data.collection || 'Handbags',
+                        price,
+                        oldPrice: oldPrice > price ? oldPrice : null,
+                        discount: oldPrice > price && price > 0 ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0,
                         img: cleanImageUrl(rawImage),
                         desc: data.desc || data.description || '',
-                        colors,
-                        variants,
-                        availableVariants,
+                        colors: splitColors(data.colors || data.color),
                         isNew: data.isNew === true || badge === 'new',
                         popular: data.popular === true || data.featured === true || badge === 'hot',
-                        inStock: data.inStock !== false &&
-                            String(data.availability || '').toLowerCase() !== 'out of stock' &&
-                            quantityValue > 0,
+                        inStock: data.inStock !== false && String(data.availability || '').toLowerCase() !== 'out of stock' && quantityValue !== 0,
                         quantity: quantityValue
                     };
                 };
@@ -1216,7 +975,7 @@
                 const connectFirebaseProducts = () => {
                     if (typeof firebaseReady === 'undefined' || !firebaseReady || typeof db === 'undefined') {
                         firebaseConnected.value = false;
-                        firebaseMessage.value = '';
+                        firebaseMessage.value = 'Firebase is not connected. Showing sample products.';
                         return;
                     }
 
@@ -1226,26 +985,24 @@
                     db.collection(collectionName).onSnapshot(snapshot => {
                         const liveProducts = snapshot.docs
                             .map((doc, index) => normalizeProduct(doc.data(), doc.id, index))
-                            .filter(product => product.name)
-                            .sort((a, b) => a.name.localeCompare(b.name));
+                            .filter(product => product.name && product.price > 0);
 
-                        products.value = liveProducts;
-                        firebaseConnected.value = true;
-
-                        const variantCount = liveProducts.reduce(
-                            (sum, product) => sum + (product.variants?.length || 0), 0
-                        );
-                        firebaseMessage.value = '';
+                        if (liveProducts.length) {
+                            products.value = liveProducts;
+                            firebaseConnected.value = true;
+                            firebaseMessage.value = `${liveProducts.length} live products loaded from TREVO inventory.`;
+                        } else {
+                            products.value = [...fallbackProducts];
+                            firebaseConnected.value = true;
+                            firebaseMessage.value = 'Firebase is connected, but no products were found. Showing sample products.';
+                        }
                     }, error => {
                         console.error('Firebase product listener error:', error);
                         firebaseConnected.value = false;
-                        firebaseMessage.value = '';
+                        firebaseMessage.value = 'Could not load live products. Check Firestore permissions and firebase-config.js.';
                         products.value = [...fallbackProducts];
                     });
                 };
-
-                // Start the real-time product listener once.
-                connectFirebaseProducts();
 
                 // COMPUTED LOGIC ENGINES: Search, Filters, Sort pipelines
                 const filteredProducts = computed(() => {
@@ -1257,10 +1014,7 @@
                         output = output.filter(p => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term));
                     }
 
-                    // 2. Dynamic collection and sidebar filters
-                    if (activeCollection.value && activeCollection.value !== 'All') {
-                        output = output.filter(p => p.collection === activeCollection.value);
-                    }
+                    // 2. Active Sidebar Filters Vector validation
                     if (filters.value.category) {
                         output = output.filter(p => p.category === filters.value.category);
                     }
@@ -1297,13 +1051,6 @@
                     return cartSubtotal.value >= 1500 ? 0 : 200;
                 });
 
-                // COD does not add an extra fee. The customer pays PKR 200 in advance
-                // as delivery security, and the remaining amount is paid on delivery.
-                const codAdvance = computed(() => {
-                    return checkout.value.paymentMethod === 'Cash on Delivery' ? 200 : 0;
-                });
-
-                const codCharge = computed(() => 0);
                 const payableNow = computed(() => {
                     if (checkout.value.paymentMethod === 'Advance Payment') {
                         return cartSubtotal.value + deliveryCharge.value;
@@ -1317,24 +1064,11 @@
                 });
 
                 const cartDiscount = computed(() => 0);
-                const cartTotal = computed(() =>
-                    cartSubtotal.value + deliveryCharge.value
-                );
+                const cartTotal = computed(() => cartSubtotal.value + deliveryCharge.value);
 
                 // SYSTEM ACTION INTERFACE OPERATIONS METHODS
                 const navigateTo = (page) => {
                     currentPage.value = page;
-                    if (page === 'shop') {
-                        shopMode.value = 'all';
-                        searchQuery.value = '';
-                        activeCollection.value = 'All';
-                        filters.value = {
-                            category: '',
-                            priceRange: 25000,
-                            color: '',
-                            inStockOnly: false
-                        };
-                    }
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 };
 
@@ -1346,55 +1080,8 @@
                     }
                 };
 
-                const openCompleteRange = () => {
-                    currentPage.value = 'shop';
-                    shopMode.value = 'complete';
-                    activeCollection.value = 'All';
-                    searchQuery.value = '';
-                    filters.value = {
-                        category: '',
-                        priceRange: 25000,
-                        color: '',
-                        inStockOnly: false
-                    };
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                };
-
-                const openFeaturedCategory = (categoryName) => {
-                    currentPage.value = 'shop';
-                    shopMode.value = 'category';
-                    activeCollection.value = 'All';
-                    searchQuery.value = '';
-                    filters.value = {
-                        category: categoryName,
-                        priceRange: 25000,
-                        color: '',
-                        inStockOnly: false
-                    };
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                };
-
-                const scrollToStoreSection = (id) => {
-                    if (currentPage.value !== 'home') {
-                        currentPage.value = 'home';
-                        setTimeout(() => {
-                            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 120);
-                    } else {
-                        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                };
-
                 const selectCategory = (categoryName) => {
-                    shopMode.value = 'category';
-                    activeCollection.value = 'All';
-                    searchQuery.value = '';
-                    filters.value = {
-                        category: categoryName,
-                        priceRange: 25000,
-                        color: '',
-                        inStockOnly: false
-                    };
+                    filters.value.category = categoryName;
                     currentPage.value = 'shop';
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 };
@@ -1416,184 +1103,55 @@
                 const formatPrice = (value) => new Intl.NumberFormat('en-PK').format(value);
 
                 // Cart Controls implementation
-                const getVariantForColor = (product, color) => {
-                    if (!Array.isArray(product.variants) || !product.variants.length) return null;
-                    return product.variants.find(v => v.color === color) || null;
-                };
-
-                const availableColorsFor = (product) => {
-                    if (Array.isArray(product.availableVariants) && product.availableVariants.length) {
-                        return product.availableVariants.map(v => v.color);
-                    }
-                    return product.inStock ? (product.colors || []) : [];
-                };
-
-                const defaultVariantForProduct = (product) => {
-                    if (!product?.variants?.length) return null;
-                    const savedSku = cardVariantSelections.value[product.id];
-                    return product.variants.find(v => (v.sku || v.color) === savedSku)
-                        || product.variants.find(v => Number(v.stock || 0) > 0)
-                        || product.variants[0];
-                };
-
-                const selectCardVariant = (product, variant) => {
-                    cardVariantSelections.value = {
-                        ...cardVariantSelections.value,
-                        [product.id]: variant.sku || variant.color
-                    };
-                };
-
-                const selectedVariantSku = (product) => {
-                    const variant = defaultVariantForProduct(product);
-                    return variant ? (variant.sku || variant.color) : '';
-                };
-
-                const selectedProductStock = (product) => {
-                    const variant = defaultVariantForProduct(product);
-                    return variant ? Number(variant.stock || 0) : Number(product.quantity || product.stock || 0);
-                };
-
-                const selectedProductPrice = (product) => {
-                    const variant = defaultVariantForProduct(product);
-                    return Number(variant?.salePrice || variant?.price || product.price || 0);
-                };
-
-                const selectedProductImage = (product) => {
-                    const variant = defaultVariantForProduct(product);
-                    return variant?.img || product.img || '';
-                };
-
-                const productWithSelectedVariant = (product) => {
-                    const variant = defaultVariantForProduct(product);
-                    if (!variant) return product;
-                    return {
-                        ...product,
-                        selectedVariantColor: variant.color,
-                        price: Number(variant.salePrice || variant.price || product.price || 0),
-                        quantity: Number(variant.stock || 0),
-                        stock: Number(variant.stock || 0),
-                        inStock: Number(variant.stock || 0) > 0,
-                        img: variant.img || product.img
-                    };
-                };
-
-                const buildCartLine = (product) => {
-                    const selectedProduct = productWithSelectedVariant(product);
-                    const colors = availableColorsFor(selectedProduct);
-                    const chosenColor = selectedProduct.selectedVariantColor || colors[0] || 'Default';
-                    const variant = getVariantForColor(selectedProduct, chosenColor);
-                    const availableQty = Number(variant?.stock ?? selectedProduct.quantity ?? selectedProduct.stock ?? 0);
-                    const productDocId = String(selectedProduct._docId || selectedProduct.parentId || selectedProduct.id || selectedProduct.sku || '');
-                    const variantSku = String(variant?.sku || selectedProduct.variantSku || '');
-                    const lineId = variantSku || `${productDocId}-${chosenColor}`;
-
-                    return {
-                        lineId,
-                        id: productDocId,
-                        productId: productDocId,
-                        parentId: productDocId,
-                        sku: selectedProduct.sku || productDocId,
-                        variantSku,
-                        name: selectedProduct.name,
-                        price: Number(variant?.salePrice || variant?.price || selectedProduct.price || 0),
-                        img: variant?.img || variant?.image || selectedProduct.img || '',
-                        color: chosenColor,
-                        quantity: 1,
-                        availableQty,
-                        inStock: availableQty > 0
-                    };
-                };
-
                 const addToCart = (product) => {
-                    const line = buildCartLine(product);
-
-                    if (!line.inStock) {
-                        alert('This colour is currently out of stock.');
-                        return false;
-                    }
-
-                    const existingItem = cart.value.find(item => item.lineId === line.lineId);
-
+                    const defaultColor = product.colors && product.colors.length > 0 ? product.colors[0] : 'Ivory';
+                    const existingItem = cart.value.find(item => item.id === product.id && item.color === defaultColor);
+                    
                     if (existingItem) {
-                        if (Number(existingItem.quantity) >= line.availableQty) {
-                            alert(`Only ${line.availableQty} unit(s) are available in ${line.color}.`);
-                            return false;
-                        }
-                        existingItem.quantity = Number(existingItem.quantity) + 1;
+                        existingItem.quantity++;
                     } else {
-                        cart.value.push(line);
+                        cart.value.push({
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            img: product.img || '',
+                            color: defaultColor,
+                            quantity: 1
+                        });
                     }
-
                     cartDrawerOpen.value = true;
-                    return true;
                 };
 
                 const buyNow = (product) => {
-                    const line = buildCartLine(product);
-
-                    if (!line.inStock) {
-                        alert('This colour is currently out of stock.');
-                        return;
-                    }
-
-                    // Buy Now always creates a clean one-product checkout.
-                    cart.value = [{ ...line, quantity: 1 }];
-                    cartDrawerOpen.value = false;
-
-                    // Wait for Vue to update totals before displaying checkout.
-                    requestAnimationFrame(() => {
-                        checkoutOpen.value = true;
-                    });
-                };
-
-                const buyConfiguredNow = () => {
-                    const previousCart = [...cart.value];
-                    cart.value = [];
-                    addConfiguredToCart();
-                    if (!cart.value.length) {
-                        cart.value = previousCart;
-                        return;
-                    }
-                    cartDrawerOpen.value = false;
-                    checkoutOpen.value = true;
+                    const defaultColor = Array.isArray(product.colors) && product.colors.length ? product.colors[0] : 'Default';
+                    cart.value = [{
+                        id: product.id,
+                        name: product.name,
+                        price: Number(product.price || 0),
+                        img: product.img || '',
+                        color: defaultColor,
+                        quantity: 1
+                    }];
+                    checkoutOpen.value = false;
+                    cartDrawerOpen.value = true;
                 };
 
                 const addConfiguredToCart = () => {
-                    const product = quickViewProduct.value;
-                    if (!product || !product.inStock) {
-                        alert('This product is currently out of stock.');
-                        return;
+                    if (!selectedColor.value) {
+                        selectedColor.value = quickViewProduct.value.colors[0];
                     }
-
-                    const chosenColor = selectedColor.value || availableColorsFor(product)[0] || 'Default';
-                    const variant = getVariantForColor(product, chosenColor);
-                    const availableQty = variant ? variant.stock : product.quantity;
-
-                    if (quantity.value > availableQty) {
-                        alert(`Only ${availableQty} unit(s) are available in ${chosenColor}.`);
-                        return;
-                    }
-
-                    const lineId = variant?.sku || product.id;
-                    const existingItem = cart.value.find(item => item.lineId === lineId);
+                    const existingItem = cart.value.find(item => item.id === quickViewProduct.value.id && item.color === selectedColor.value);
+                    
                     if (existingItem) {
-                        if (existingItem.quantity + quantity.value > availableQty) {
-                            alert(`Only ${availableQty} unit(s) are available in ${chosenColor}.`);
-                            return;
-                        }
                         existingItem.quantity += quantity.value;
                     } else {
                         cart.value.push({
-                            lineId,
-                            id: product.id,
-                            productId: product._docId || product.id,
-                            variantSku: variant?.sku || '',
-                            name: product.name,
-                            price: variant?.salePrice || variant?.price || product.price,
-                            img: variant?.img || product.img || '',
-                            color: chosenColor,
-                            quantity: quantity.value,
-                            availableQty
+                            id: quickViewProduct.value.id,
+                            name: quickViewProduct.value.name,
+                            price: quickViewProduct.value.price,
+                            img: quickViewProduct.value.img || '',
+                            color: selectedColor.value,
+                            quantity: quantity.value
                         });
                     }
                     closeQuickView();
@@ -1681,14 +1239,14 @@
                         city: checkout.value.city,
                         address: checkout.value.address,
                         deliveryType: checkout.value.delivery,
+                        deliveryCharge: deliveryCharge.value,
+                        paymentMethod: checkout.value.paymentMethod,
+                        advanceChannel: checkout.value.paymentMethod === 'Advance Payment' ? checkout.value.advanceChannel : '',
+                        payableNow: payableNow.value,
+                        balanceOnDelivery: balanceOnDelivery.value,
                         notes: checkout.value.notes || '',
                         items: cart.value.map(item => ({
-                            id: item.productId || item.id,
-                            id: item.productId || item.parentId || item.id,
-                            productId: item.productId || item.parentId || item.id,
-                            parentId: item.productId || item.parentId || item.id,
-                            sku: item.sku || '',
-                            variantSku: item.variantSku || '',
+                            id: item.id,
                             name: item.name,
                             color: item.color,
                             qty: item.quantity,
@@ -1697,20 +1255,10 @@
                             img: item.img || ''
                         })),
                         subtotal: cartSubtotal.value,
-                        discount: cartDiscount.value,
-                        deliveryMethod: checkout.value.delivery,
-                        deliveryCharge: deliveryCharge.value,
-                        paymentMethod: checkout.value.paymentMethod,
-                        advanceChannel: checkout.value.paymentMethod === 'Advance Payment' ? checkout.value.advanceChannel : '',
-                        codAdvance: checkout.value.paymentMethod === 'Cash on Delivery' ? payableNow.value : 0,
-                        payableNow: payableNow.value,
-                        balanceOnDelivery: balanceOnDelivery.value,
-                        codCharge: 0,
+                        discount: 0,
                         total: cartTotal.value,
                         status: 'Pending',
-                        source: 'Website WhatsApp Checkout',
-                        schemaVersion: 2,
-                        createdAt: new Date().toISOString()
+                        source: 'Website WhatsApp Checkout'
                     };
 
                     if (typeof firebaseReady !== 'undefined' && firebaseReady && typeof db !== 'undefined') {
@@ -1725,31 +1273,62 @@
                         }
                     }
 
-                    let text = `👜 *NEW TREVO ORDER*\n`;
-                    text += `Order ID: *${orderId}*\n\n`;
-                    text += `*Customer Details*\n`;
-                    text += `Name: ${checkout.value.name}\n`;
-                    text += `Phone: ${checkout.value.phone}\n`;
-                    text += `City: ${checkout.value.city}\n`;
-                    text += `Address: ${checkout.value.address}\n\n`;
+                    let text = `👜 *NEW TREVO ORDER*
+`;
+                    text += `Order ID: *${orderId}*
 
-                    text += `*Order Items*\n`;
+`;
+                    text += `*Customer Details*
+`;
+                    text += `Name: ${checkout.value.name}
+`;
+                    text += `Phone: ${checkout.value.phone}
+`;
+                    text += `City: ${checkout.value.city}
+`;
+                    text += `Address: ${checkout.value.address}
+`;
+                    text += `Delivery Method: ${checkout.value.delivery}
+`;
+                    text += `Delivery Charges: ${deliveryCharge.value === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge.value)}
+`;
+                    text += `Payment Method: ${checkout.value.paymentMethod}
+`;
+                    if (checkout.value.paymentMethod === 'Advance Payment') {
+                        text += `Advance Via: ${checkout.value.advanceChannel}
+`;
+                    } else {
+                        text += `Pay Now: PKR ${formatPrice(payableNow.value)}
+`;
+                        text += `Balance on Delivery: PKR ${formatPrice(balanceOnDelivery.value)}
+`;
+                    }
+                    if (checkout.value.notes) text += `Notes: ${checkout.value.notes}
+`;
+
+                    text += `
+*Order Items*
+`;
                     cart.value.forEach((item, index) => {
-                        text += `${index + 1}. ${item.name}\n`;
-                        text += `   Colour: ${item.color}\n`;
-                        text += `   Variant SKU: ${item.variantSku || 'N/A'}\n`;
-                        text += `   Qty: ${item.quantity}\n`;
-                        text += `   Amount: PKR ${formatPrice(item.price * item.quantity)}\n`;
+                        text += `${index + 1}. ${item.name}
+`;
+                        text += `   Color: ${item.color}
+`;
+                        text += `   Qty: ${item.quantity}
+`;
+                        text += `   Price: PKR ${formatPrice(item.price * item.quantity)}
+`;
                     });
 
-                    text += `\nItems Subtotal: PKR ${formatPrice(cartSubtotal.value)}\n`;
-                    text += `Delivery Method: ${checkout.value.delivery}\n`;
-                    text += `Delivery Charges: ${deliveryCharge.value === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge.value)}\n`;
-                    text += `Payment Method: ${checkout.value.paymentMethod}\n`;
-                    text += `COD Charges: PKR ${formatPrice(codCharge.value)}\n`;
-                    text += `*Order Total: PKR ${formatPrice(cartTotal.value)}*\n`;
-                    if (checkout.value.notes) text += `Notes: ${checkout.value.notes}\n`;
-                    text += `\nPlease confirm this order.`;
+                    text += `
+Subtotal: PKR ${formatPrice(cartSubtotal.value)}
+`;
+                    text += `Delivery: ${deliveryCharge.value === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge.value)}
+`;
+                    text += `*Order Total: PKR ${formatPrice(cartTotal.value)}*
+
+`;
+                    text += `Please confirm availability and delivery time.`;
 
                     localStorage.setItem('trevoLastOrder', JSON.stringify(orderData));
                     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(text)}`, '_blank');
@@ -1770,14 +1349,13 @@
                 };
 
                 return {
-                    currentPage, searchQuery, sortBy, activeCollection, shopMode, featuredMenuOpen, mobileMenuOpen, mobileFeaturedOpen, cardVariantSelections, collectionTabs, completeRangeVariants, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
+                    currentPage, searchQuery, sortBy, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
                     selectedColor, quantity, filters, categories, availableColors, products, reviews, valueProps,
-                    cart, wishlist, filteredProducts, cartCount, cartSubtotal, cartDiscount, cartTotal,
-                    navigateTo, setFilter, selectCategory, scrollToSection, scrollToStoreSection, openCompleteRange, openFeaturedCategory, formatPrice, selectCardVariant, selectedVariantSku, selectedProductStock, selectedProductPrice, selectedProductImage, addToCart, addConfiguredToCart,
+                    cart, wishlist, filteredProducts, cartCount, cartSubtotal, cartDiscount, deliveryCharge, payableNow, balanceOnDelivery, cartTotal,
+                    navigateTo, setFilter, selectCategory, scrollToSection, formatPrice, addToCart, buyNow, addConfiguredToCart,
                     updateQty, removeFromCart, toggleWishlist, isInWishlist, openQuickView, closeQuickView,
                     toggleCartDrawer, toggleWishlistModal, resetFilters, handleSubscribe, alertModal,
-                    compileAndSendWhatsAppCheckout, openCheckout, sendCheckoutToWhatsApp, instantWhatsAppCheckout, triggerMockSecureCheckout,
-                    availableColorsFor
+                    compileAndSendWhatsAppCheckout, openCheckout, sendCheckoutToWhatsApp, instantWhatsAppCheckout, triggerMockSecureCheckout
                 };
             }
         }).mount('#app');
