@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Vue 3 Production build for reactive frontend state management -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    
+
     <script>
         tailwind.config = {
             theme: {
@@ -60,17 +60,19 @@
             background: #7D8F7A;
             border-radius: 3px;
         }
+        [v-cloak] { display: none; }
+        button, a, input, select, textarea { touch-action: manipulation; }
+        @media (max-width: 767px) {
+            .mobile-safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+        }
     </style>
 </head>
 <body class="bg-ivory text-gray-800 font-sans antialiased selection:bg-blush-200">
 
-    <div id="app" class="min-h-screen flex flex-col justify-between">
+    <div id="app" v-cloak class="min-h-screen flex flex-col justify-between">
         <!-- Top Announcement Bar -->
         <div class="bg-sage-600 text-ivory text-xs tracking-widest uppercase text-center py-2 px-4 font-medium">
-            ✨ Free Nationwide Delivery on All Orders This Week • Order Easily Through WhatsApp
-        </div>
-        <div v-if="firebaseMessage" :class="firebaseConnected ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'" class="text-center text-[11px] py-1.5 px-4 border-b">
-            {{ firebaseMessage }}
+            ✨ Free Standard Delivery on PKR 1,500+ • Urgent Delivery PKR 400 • Order via WhatsApp
         </div>
 
         <!-- Navigation Header -->
@@ -83,39 +85,56 @@
                 </a>
 
                 <!-- Desktop Navigation Links -->
-                <nav class="hidden md:flex space-x-8 text-xs font-semibold uppercase tracking-widest text-gray-600">
+                <nav aria-label="Main navigation" class="hidden md:flex space-x-8 text-xs font-semibold uppercase tracking-widest text-gray-600">
                     <a href="#" @click.prevent="navigateTo('home')" :class="{'text-sage-600 border-b border-sage-600': currentPage === 'home'}" class="pb-1 hover:text-sage-600 transition">Home</a>
                     <a href="#" @click.prevent="navigateTo('shop')" :class="{'text-sage-600 border-b border-sage-600': currentPage === 'shop'}" class="pb-1 hover:text-sage-600 transition">Collections</a>
                     <a href="#" @click.prevent="navigateTo('about')" :class="{'text-sage-600 border-b border-sage-600': currentPage === 'about'}" class="pb-1 hover:text-sage-600 transition">Our Story</a>
                 </nav>
 
                 <!-- Search and Dynamic Utility Actions -->
-                <div class="flex items-center space-x-6">
+                <div class="flex items-center space-x-3 sm:space-x-6">
                     <!-- Search Input Box Wrapper -->
                     <div class="relative hidden sm:block">
-                        <input type="text" v-model="searchQuery" placeholder="Search bags..." 
+                        <input type="text" v-model="searchQuery" placeholder="Search bags..."
                                class="bg-white/60 border border-sage-100 rounded-full pl-4 pr-8 py-1.5 text-xs focus:outline-none focus:border-sage-600 w-44 focus:w-56 transition-all duration-300">
                         <svg class="w-4 h-4 absolute right-3 top-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
 
                     <!-- Wishlist Button Counter -->
-                    <button @click="toggleWishlistModal(true)" class="relative p-1 text-gray-700 hover:text-rosegold transition">
+                    <button type="button" @click="toggleWishlistModal(true)" class="relative p-1 text-gray-700 hover:text-rosegold transition" aria-label="Open wishlist">
                         <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
                         <span v-if="wishlist.length > 0" class="absolute -top-1 -right-1 bg-rosegold text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold">{{ wishlist.length }}</span>
                     </button>
 
                     <!-- Cart Drawer Trigger Counter -->
-                    <button @click="toggleCartDrawer(true)" class="relative p-1 text-gray-700 hover:text-sage-600 transition">
+                    <button type="button" @click="toggleCartDrawer(true)" class="relative p-1 text-gray-700 hover:text-sage-600 transition" aria-label="Open shopping bag">
                         <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007z"></path></svg>
                         <span v-if="cartCount > 0" class="absolute -top-1 -right-1 bg-sage-600 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold">{{ cartCount }}</span>
                     </button>
+
+                    <button type="button" @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden relative p-1 text-gray-700 hover:text-sage-600 transition" :aria-expanded="mobileMenuOpen" aria-label="Open navigation menu">
+                        <svg v-if="!mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
+            </div>
+
+            <div v-if="mobileMenuOpen" class="md:hidden border-t border-sage-100 bg-white/95 px-4 py-4 shadow-lg">
+                <div class="relative mb-4">
+                    <input type="search" v-model="searchQuery" @keyup.enter="navigateTo('shop')" placeholder="Search handbags..." class="w-full rounded-full border border-sage-100 bg-ivory px-4 py-3 pr-10 text-sm focus:outline-none focus:border-sage-600">
+                    <svg class="w-4 h-4 absolute right-4 top-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <nav aria-label="Mobile navigation" class="grid gap-1 text-sm font-semibold uppercase tracking-widest text-gray-700">
+                    <a href="#" @click.prevent="navigateTo('home')" class="rounded-lg px-3 py-3 hover:bg-sage-50">Home</a>
+                    <a href="#" @click.prevent="navigateTo('shop')" class="rounded-lg px-3 py-3 hover:bg-sage-50">Collections</a>
+                    <a href="#" @click.prevent="navigateTo('about')" class="rounded-lg px-3 py-3 hover:bg-sage-50">Our Story</a>
+                </nav>
             </div>
         </header>
 
         <!-- Main Workspace Router -->
         <main class="flex-grow">
-            
+
             <!-- PAGE 1: HOME STATE VIEW -->
             <div v-if="currentPage === 'home'" class="animate-fadeIn">
                 <!-- High-End Editorial Hero Section -->
@@ -130,12 +149,12 @@
                                 Discover elegant handbags designed for every occasion—from everyday essentials to statement pieces.
                             </p>
                             <div class="pt-4 flex flex-wrap justify-center lg:justify-start gap-4">
-                                <button @click="navigateTo('shop')" class="bg-sage-600 text-white text-xs font-semibold tracking-widest uppercase px-6 py-3.5 rounded-sm shadow-md hover:bg-sage-700 smooth-transition">Shop Collection</button>
-                                <button @click="setFilter('filterArrival', 'new')" class="bg-white/80 border border-sage-100 text-gray-800 text-xs font-semibold tracking-widest uppercase px-6 py-3.5 rounded-sm hover:bg-white smooth-transition">New Arrivals</button>
-                                <button @click="scrollToSection('categories')" class="bg-transparent border border-gray-300 text-gray-700 text-xs font-semibold tracking-widest uppercase px-6 py-3.5 rounded-sm hover:bg-gray-900 hover:text-white smooth-transition">Categories</button>
+                                <button type="button" @click="navigateTo('shop')" class="bg-sage-600 text-white text-xs font-semibold tracking-widest uppercase px-6 py-3.5 rounded-sm shadow-md hover:bg-sage-700 smooth-transition">Shop Collection</button>
+                                <button type="button" @click="setFilter('filterArrival', 'new')" class="bg-white/80 border border-sage-100 text-gray-800 text-xs font-semibold tracking-widest uppercase px-6 py-3.5 rounded-sm hover:bg-white smooth-transition">New Arrivals</button>
+                                <button type="button" @click="scrollToSection('categories')" class="bg-transparent border border-gray-300 text-gray-700 text-xs font-semibold tracking-widest uppercase px-6 py-3.5 rounded-sm hover:bg-gray-900 hover:text-white smooth-transition">Categories</button>
                             </div>
                         </div>
-                        
+
                         <!-- Hero Multi-Display Visual Graphics -->
                         <div class="lg:col-span-6 grid grid-cols-12 gap-4 items-center">
                             <div class="col-span-7 space-y-4">
@@ -184,7 +203,7 @@
                     </div>
 
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div v-for="cat in categories" :key="cat.name" 
+                        <div v-for="cat in categories" :key="cat.name"
                              @click="selectCategory(cat.name)"
                              class="group cursor-pointer bg-white rounded-2xl p-4 shadow-sm hover:shadow-xl smooth-transition transform hover:-translate-y-1 border border-sage-50/50">
                             <div class="aspect-square bg-gradient-to-br from-sage-50 to-ivory rounded-xl flex flex-col items-center justify-center relative overflow-hidden mb-4">
@@ -207,12 +226,12 @@
                                 <h2 class="font-heading text-3xl text-gray-900">Trending Masterpieces</h2>
                                 <p class="text-xs text-gray-400 mt-1 font-light">Handpicked luxury expressions capturing timeless seasonal allure.</p>
                             </div>
-                            <button @click="navigateTo('shop')" class="text-xs font-semibold text-rosegold tracking-widest uppercase border-b border-rosegold pb-0.5 hover:text-sage-600 hover:border-sage-600 transition">View Entire Vault &rarr;</button>
+                            <button type="button" @click="navigateTo('shop')" class="text-xs font-semibold text-rosegold tracking-widest uppercase border-b border-rosegold pb-0.5 hover:text-sage-600 hover:border-sage-600 transition">View Entire Vault &rarr;</button>
                         </div>
 
                         <!-- Product Showcase Mapping -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                            <div v-for="product in products.slice(0, 4)" :key="product.id" class="group bg-ivory/50 rounded-2xl p-4 border border-transparent hover:border-sage-100 hover:bg-white shadow-sm hover:shadow-xl smooth-transition relative">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+                            <div v-for="product in products.slice(0, 4)" :key="product.id" class="group bg-ivory/50 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-transparent hover:border-sage-100 hover:bg-white shadow-sm hover:shadow-xl smooth-transition relative">
                                 <!-- Image Sandbox Frame -->
                                 <div class="aspect-[4/5] bg-white rounded-xl overflow-hidden relative mb-4 flex items-center justify-center border border-gray-100/60">
                                     <img v-if="product.img" :src="product.img" :alt="product.name" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'">
@@ -220,15 +239,16 @@
                                     <!-- Dynamic Absolute Badges -->
                                     <span v-if="product.isNew" class="absolute top-3 left-3 bg-sage-600 text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">New</span>
                                     <span v-if="product.discount" class="absolute top-3 right-3 bg-rosegold text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">-{{ product.discount }}%</span>
-                                    
+                                    <span v-if="getProductImages(product).length > 1" class="absolute top-12 right-3 bg-white/90 text-gray-700 text-[9px] font-bold px-2 py-1 rounded-full shadow-sm">{{ getProductImages(product).length }} photos</span>
+
                                     <!-- Wishlist Heart Overlay Action -->
-                                    <button @click="toggleWishlist(product)" class="absolute bottom-3 left-3 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-gray-400 hover:text-rosegold transition">
+                                    <button type="button" @click="toggleWishlist(product)" class="absolute bottom-3 left-3 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-gray-400 hover:text-rosegold transition" :aria-label="'Save ' + product.name + ' to wishlist'">
                                         <svg class="w-4 h-4" :fill="isInWishlist(product.id) ? '#B76E79' : 'none'" :stroke="isInWishlist(product.id) ? '#B76E79' : 'currentColor'" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
                                     </button>
 
                                     <!-- Action Mask Reveal Hover States -->
-                                    <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center gap-2">
-                                        <button @click="openQuickView(product)" class="bg-white text-gray-800 text-xs font-medium px-4 py-2 rounded-full shadow-lg hover:bg-sage-600 hover:text-white transition duration-200">Quick View</button>
+                                    <div class="absolute inset-0 bg-black/5 opacity-100 md:bg-black/20 md:opacity-0 md:group-hover:opacity-100 transition duration-300 flex items-end md:items-center justify-center gap-2 p-2">
+                                        <button type="button" @click="openQuickView(product)" class="bg-white/95 text-gray-800 text-[9px] sm:text-xs font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-lg hover:bg-sage-600 hover:text-white transition duration-200">Quick View</button>
                                     </div>
                                 </div>
 
@@ -236,20 +256,23 @@
                                 <div class="space-y-1">
                                     <p class="text-[10px] tracking-wider text-sage-600 uppercase font-bold">{{ product.category }}</p>
                                     <h3 class="text-sm font-semibold text-gray-800 tracking-wide line-clamp-1">{{ product.name }}</h3>
-                                    
+
                                     <!-- Price Matrix Block -->
                                     <div class="flex items-center space-x-2 pt-1">
                                         <span class="text-sm font-bold text-gray-900">PKR {{ formatPrice(product.price) }}</span>
                                         <span v-if="product.oldPrice" class="text-xs text-gray-400 line-through">PKR {{ formatPrice(product.oldPrice) }}</span>
                                     </div>
+                                    <p class="text-[9px] sm:text-[10px] font-semibold" :class="product.inStock ? 'text-green-700' : 'text-rosegold'">
+                                        {{ product.inStock ? (product.quantityKnown ? product.quantity + ' in stock' : 'In stock') : 'Out of stock' }}
+                                    </p>
 
                                     <!-- Quick Add Action Layer -->
                                     <div class="pt-3">
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <button @click="addToCart(product)" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
-                                                Add To Cart
+                                        <div class="grid grid-cols-1 min-[460px]:grid-cols-2 gap-1.5 sm:gap-2">
+                                            <button type="button" @click="addToCart(product)" :disabled="!product.inStock" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                                {{ product.inStock ? 'Add To Cart' : 'Restocking' }}
                                             </button>
-                                            <button @click="buyNow(product)" class="w-full bg-sage-600 text-white hover:bg-sage-700 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
+                                            <button type="button" @click="buyNow(product)" :disabled="!product.inStock" class="w-full bg-sage-600 text-white hover:bg-sage-700 disabled:bg-gray-300 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
                                                 Buy Now
                                             </button>
                                         </div>
@@ -315,12 +338,17 @@
             <!-- PAGE 2: COLLECTIONS VAULT (SHOP VIEW) -->
             <div v-if="currentPage === 'shop'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fadeIn">
                 <div class="flex flex-col lg:flex-row gap-8">
-                    
+
+                    <button type="button" @click="mobileFiltersOpen = !mobileFiltersOpen" class="lg:hidden w-full flex items-center justify-between rounded-xl border border-sage-100 bg-white px-4 py-3 text-xs font-bold uppercase tracking-widest text-gray-800 shadow-sm">
+                        <span>Filter Products</span>
+                        <span>{{ mobileFiltersOpen ? '−' : '+' }}</span>
+                    </button>
+
                     <!-- Structural Sidebar Filters -->
-                    <aside class="w-full lg:w-64 space-y-8 bg-white p-6 rounded-2xl shadow-sm border border-sage-50 h-fit sticky top-28">
+                    <aside :class="mobileFiltersOpen ? 'block' : 'hidden lg:block'" class="w-full lg:w-64 space-y-8 bg-white p-6 rounded-2xl shadow-sm border border-sage-50 h-fit lg:sticky lg:top-28">
                         <div class="flex items-center justify-between border-b border-gray-100 pb-3">
                             <h3 class="text-xs font-bold tracking-widest uppercase text-gray-900">Filter Products</h3>
-                            <button @click="resetFilters" class="text-[10px] font-semibold text-rosegold uppercase tracking-wider hover:underline">Reset</button>
+                            <button type="button" @click="resetFilters" class="text-[10px] font-semibold text-rosegold uppercase tracking-wider hover:underline">Reset</button>
                         </div>
 
                         <!-- Category Filters -->
@@ -344,14 +372,14 @@
                                 <h4 class="font-bold text-gray-800 uppercase tracking-wide">Maximum Price</h4>
                                 <span class="text-sage-600 font-bold">PKR {{ formatPrice(filters.priceRange) }}</span>
                             </div>
-                            <input type="range" min="3000" max="25000" step="500" v-model="filters.priceRange" class="w-full accent-sage-600">
+                            <input type="range" min="3000" :max="maxCatalogPrice" step="500" v-model.number="filters.priceRange" class="w-full accent-sage-600">
                         </div>
 
                         <!-- Color Filter Matrix -->
                         <div class="space-y-2.5">
                             <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Color</h4>
                             <div class="flex flex-wrap gap-2">
-                                <button v-for="color in availableColors" :key="color" 
+                                <button type="button" v-for="color in availableColors" :key="color"
                                         @click="filters.color = (filters.color === color ? '' : color)"
                                         :class="{'ring-2 ring-rosegold scale-105': filters.color === color}"
                                         class="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide border uppercase bg-ivory text-gray-700 smooth-transition">
@@ -375,7 +403,7 @@
                         <!-- Top Sort Actions Layout -->
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-xl border border-sage-50/60 gap-4">
                             <p class="text-xs text-gray-500 font-light">Showing <span class="font-bold text-gray-800">{{ filteredProducts.length }}</span> products matching your selection.</p>
-                            
+
                             <div class="flex items-center space-x-3 text-xs self-end sm:self-auto">
                                 <span class="text-gray-400 font-light">Sort by:</span>
                                 <select v-model="sortBy" class="bg-transparent font-semibold text-gray-800 focus:outline-none cursor-pointer">
@@ -387,45 +415,59 @@
                             </div>
                         </div>
 
-                        <!-- Grid Render Block -->
-                        <div v-if="filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <div v-for="product in filteredProducts" :key="product.id" class="group bg-white rounded-2xl p-4 border border-sage-50 shadow-sm hover:shadow-xl smooth-transition relative">
-                                <div class="aspect-[4/5] bg-sage-50 rounded-xl overflow-hidden relative mb-4 flex items-center justify-center">
-                                    <img v-if="product.img" :src="product.img" :alt="product.name" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'">
-                                    <div v-else class="text-5xl">👜</div>
-                                    <span v-if="product.isNew" class="absolute top-3 left-3 bg-sage-600 text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">New</span>
-                                    <span v-if="product.discount" class="absolute top-3 right-3 bg-rosegold text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">-{{ product.discount }}%</span>
-                                    <span v-if="!product.inStock" class="absolute inset-0 bg-white/80 backdrop-blur-[1px] flex items-center justify-center text-xs font-bold uppercase tracking-widest text-rosegold">Awaiting Restock</span>
-                                    
-                                    <button @click="toggleWishlist(product)" class="absolute bottom-3 left-3 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-gray-400 hover:text-rosegold transition z-10">
-                                        <svg class="w-4 h-4" :fill="isInWishlist(product.id) ? '#B76E79' : 'none'" :stroke="isInWishlist(product.id) ? '#B76E79' : 'currentColor'" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
-                                    </button>
-
-                                    <div v-if="product.inStock" class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
-                                        <button @click="openQuickView(product)" class="bg-white text-gray-800 text-xs font-medium px-4 py-2 rounded-full shadow-lg hover:bg-sage-600 hover:text-white transition duration-200">Quick View</button>
+                        <!-- Products grouped by their Firebase category -->
+                        <div v-if="groupedProducts.length > 0" class="space-y-10">
+                            <section v-for="group in groupedProducts" :key="group.category" class="space-y-4" :aria-labelledby="'category-' + slugify(group.category)">
+                                <div class="flex items-end justify-between border-b border-sage-100 pb-2">
+                                    <div>
+                                        <span class="text-[9px] uppercase tracking-[0.3em] font-bold text-rosegold">TREVO Collection</span>
+                                        <h2 :id="'category-' + slugify(group.category)" class="font-heading text-xl sm:text-2xl text-gray-900">{{ group.category }}</h2>
                                     </div>
+                                    <span class="text-[10px] font-semibold text-gray-400">{{ group.products.length }} products</span>
                                 </div>
 
-                                <div class="space-y-1">
-                                    <p class="text-[9px] tracking-wider text-sage-600 uppercase font-bold">{{ product.category }}</p>
-                                    <h3 class="text-xs font-semibold text-gray-800 tracking-wide line-clamp-1">{{ product.name }}</h3>
-                                    <div class="flex items-center space-x-2 pt-0.5">
-                                        <span class="text-xs font-bold text-gray-900">PKR {{ formatPrice(product.price) }}</span>
-                                        <span v-if="product.oldPrice" class="text-[10px] text-gray-400 line-through">PKR {{ formatPrice(product.oldPrice) }}</span>
-                                    </div>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
+                                    <article v-for="product in group.products" :key="product.id" class="group bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-sage-50 shadow-sm hover:shadow-xl smooth-transition relative">
+                                        <div class="aspect-[4/5] bg-sage-50 rounded-lg sm:rounded-xl overflow-hidden relative mb-3 flex items-center justify-center">
+                                            <img v-if="product.img" :src="product.img" :alt="product.name" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'">
+                                            <div v-else class="text-4xl sm:text-5xl">👜</div>
+                                            <span v-if="product.isNew" class="absolute top-2 left-2 bg-sage-600 text-white text-[8px] sm:text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full">New</span>
+                                            <span v-if="product.discount" class="absolute top-2 right-2 bg-rosegold text-white text-[8px] sm:text-[9px] font-bold px-2 py-1 rounded-full">-{{ product.discount }}%</span>
+                                            <span v-if="getProductImages(product).length > 1" class="absolute top-9 right-2 bg-white/90 text-gray-700 text-[8px] sm:text-[9px] font-bold px-2 py-1 rounded-full shadow-sm">{{ getProductImages(product).length }} photos</span>
+                                            <span v-if="!product.inStock" class="absolute inset-0 bg-white/85 backdrop-blur-[1px] flex items-center justify-center text-[9px] sm:text-xs font-bold uppercase tracking-wider text-rosegold">Out of Stock</span>
 
-                                    <div class="pt-3">
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <button @click="addToCart(product)" :disabled="!product.inStock" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
-                                                {{ product.inStock ? 'Add To Cart' : 'Restocking' }}
+                                            <button type="button" @click="toggleWishlist(product)" class="absolute bottom-2 left-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shadow-md flex items-center justify-center text-gray-400 hover:text-rosegold transition z-10" :aria-label="'Save ' + product.name + ' to wishlist'">
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" :fill="isInWishlist(product.id) ? '#B76E79' : 'none'" :stroke="isInWishlist(product.id) ? '#B76E79' : 'currentColor'" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path></svg>
                                             </button>
-                                            <button @click="buyNow(product)" :disabled="!product.inStock" class="w-full bg-sage-600 text-white hover:bg-sage-700 disabled:bg-gray-300 text-[10px] font-bold uppercase tracking-wider py-2 rounded-lg smooth-transition">
-                                                Buy Now
-                                            </button>
+
+                                            <div v-if="product.inStock" class="absolute inset-0 bg-black/5 opacity-100 md:bg-black/20 md:opacity-0 md:group-hover:opacity-100 transition duration-300 flex items-end md:items-center justify-center p-2">
+                                                <button type="button" @click="openQuickView(product)" class="bg-white/95 text-gray-800 text-[9px] sm:text-xs font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-lg hover:bg-sage-600 hover:text-white transition duration-200">Quick View</button>
+                                            </div>
                                         </div>
-                                    </div>
+
+                                        <div class="space-y-1">
+                                            <p class="text-[8px] sm:text-[9px] tracking-wider text-sage-600 uppercase font-bold truncate">{{ product.category }}</p>
+                                            <h3 class="text-[11px] sm:text-xs font-semibold text-gray-800 leading-snug line-clamp-2 min-h-[2.4em]">{{ product.name }}</h3>
+                                            <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 pt-0.5">
+                                                <span class="text-[11px] sm:text-xs font-bold text-gray-900">PKR {{ formatPrice(product.price) }}</span>
+                                                <span v-if="product.oldPrice" class="text-[9px] sm:text-[10px] text-gray-400 line-through">PKR {{ formatPrice(product.oldPrice) }}</span>
+                                            </div>
+                                            <p class="text-[8px] sm:text-[9px] font-semibold" :class="product.inStock ? 'text-green-700' : 'text-rosegold'">
+                                                {{ product.inStock ? (product.quantityKnown ? product.quantity + ' available' : 'Available') : 'Out of stock' }}
+                                            </p>
+
+                                            <div class="pt-2 grid grid-cols-1 min-[480px]:grid-cols-2 gap-1.5 sm:gap-2">
+                                                <button type="button" @click="addToCart(product)" :disabled="!product.inStock" class="w-full bg-white border border-sage-600 text-sage-600 hover:bg-sage-600 hover:text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider py-2 rounded-md sm:rounded-lg smooth-transition">
+                                                    {{ product.inStock ? 'Add To Cart' : 'Restocking' }}
+                                                </button>
+                                                <button type="button" @click="buyNow(product)" :disabled="!product.inStock" class="w-full bg-sage-600 text-white hover:bg-sage-700 disabled:bg-gray-300 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider py-2 rounded-md sm:rounded-lg smooth-transition">
+                                                    Buy Now
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </article>
                                 </div>
-                            </div>
+                            </section>
                         </div>
 
                         <!-- Alternative Empty State Layout -->
@@ -433,7 +475,7 @@
                             <span class="text-3xl block">👜</span>
                             <h4 class="font-heading text-xl font-bold text-gray-900">No Products Found</h4>
                             <p class="text-xs text-gray-500 font-light">Try changing your filters or resetting the selection.</p>
-                            <button @click="resetFilters" class="mt-2 bg-sage-600 text-white text-xs font-bold uppercase tracking-widest px-6 py-2.5 rounded-lg hover:bg-sage-700 transition">Reset Filters</button>
+                            <button type="button" @click="resetFilters" class="mt-2 bg-sage-600 text-white text-xs font-bold uppercase tracking-widest px-6 py-2.5 rounded-lg hover:bg-sage-700 transition">Reset Filters</button>
                         </div>
                     </div>
                 </div>
@@ -467,20 +509,23 @@
         </main>
 
         <!-- Dynamic Quick View Detail Overlay Modal -->
-        <div v-if="quickViewProduct" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
+        <div v-if="quickViewProduct" @click.self="closeQuickView" class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
             <div class="bg-white max-w-4xl w-full rounded-2xl overflow-hidden shadow-2xl border border-sage-50 relative grid grid-cols-1 md:grid-cols-12 max-h-[90vh] overflow-y-auto">
-                
-                <button @click="closeQuickView" class="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-ivory text-gray-500 hover:text-gray-800 shadow-sm flex items-center justify-center text-lg">&times;</button>
-                
+
+                <button type="button" @click="closeQuickView" class="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-ivory text-gray-500 hover:text-gray-800 shadow-sm flex items-center justify-center text-lg" aria-label="Close product details">&times;</button>
+
                 <!-- Left Column Dynamic Mock Showcase Image Block -->
-                <div class="md:col-span-6 bg-sage-50 aspect-[4/5] md:aspect-auto flex flex-col items-center justify-center p-8 text-center relative border-b md:border-b-0 md:border-r border-gray-100">
-                    <img v-if="quickViewProduct.img" :src="quickViewProduct.img" :alt="quickViewProduct.name" class="absolute inset-0 w-full h-full object-cover">
+                <div @touchstart.passive="handleGalleryTouchStart" @touchend.passive="handleGalleryTouchEnd" class="md:col-span-6 bg-sage-50 min-h-[360px] md:min-h-[620px] flex flex-col items-center justify-center p-8 text-center relative border-b md:border-b-0 md:border-r border-gray-100 overflow-hidden">
+                    <img v-if="getProductImages(quickViewProduct).length" :src="getProductImages(quickViewProduct)[quickViewImageIndex]" :alt="quickViewProduct.name + ' photo ' + (quickViewImageIndex + 1)" class="absolute inset-0 w-full h-full object-contain bg-white">
                     <div v-else class="text-7xl">👜</div>
-                    
-                    <div class="absolute bottom-4 left-4 flex space-x-2">
-                        <span class="w-2 h-2 rounded-full bg-sage-600"></span>
-                        <span class="w-2 h-2 rounded-full bg-gray-300"></span>
-                        <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+
+                    <button type="button" v-if="getProductImages(quickViewProduct).length > 1" @click="changeQuickViewImage(-1)" class="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-800 hover:bg-white" aria-label="Previous product photo">&#8249;</button>
+                    <button type="button" v-if="getProductImages(quickViewProduct).length > 1" @click="changeQuickViewImage(1)" class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-800 hover:bg-white" aria-label="Next product photo">&#8250;</button>
+
+                    <div v-if="getProductImages(quickViewProduct).length > 1" class="absolute bottom-3 left-3 right-3 flex gap-2 overflow-x-auto rounded-xl bg-white/85 p-2 shadow-lg">
+                        <button type="button" v-for="(image, imageIndex) in getProductImages(quickViewProduct)" :key="image + imageIndex" @click="quickViewImageIndex = imageIndex" :class="quickViewImageIndex === imageIndex ? 'ring-2 ring-sage-600' : 'opacity-75'" class="w-12 h-12 rounded-lg overflow-hidden bg-white flex-shrink-0">
+                            <img :src="image" :alt="quickViewProduct.name + ' thumbnail ' + (imageIndex + 1)" class="w-full h-full object-cover">
+                        </button>
                     </div>
                 </div>
 
@@ -496,10 +541,16 @@
                             <span>PKR {{ formatPrice(quickViewProduct.price) }}</span>
                             <span v-if="quickViewProduct.oldPrice" class="text-sm font-normal text-gray-400 line-through">PKR {{ formatPrice(quickViewProduct.oldPrice) }}</span>
                         </div>
+                        <div class="flex items-center gap-2 text-[10px] font-semibold">
+                            <span class="w-2 h-2 rounded-full" :class="quickViewProduct.inStock ? 'bg-green-500' : 'bg-rosegold'"></span>
+                            <span :class="quickViewProduct.inStock ? 'text-green-700' : 'text-rosegold'">
+                                {{ quickViewProduct.inStock ? (quickViewProduct.quantityKnown ? quickViewProduct.quantity + ' pieces available' : 'Available') : 'Out of stock' }}
+                            </span>
+                        </div>
 
                         <div class="text-xs text-gray-600 font-light leading-relaxed space-y-2">
                             <p>{{ quickViewProduct.desc || 'An ultra-premium composition highlighting meticulously aligned stitch metrics, structured profile baselines, and functional high-capacity storage chambers.' }}</p>
-                            
+
                             <ul class="border-t border-gray-100 pt-3 mt-3 space-y-1 text-[11px] font-medium text-gray-500">
                                 <li><strong>Material Composition:</strong> Top-Grain Premium Synthetic Luxury Polyurethane / Rose Gold Plated Zinc Hardware</li>
                                 <li><strong>Dimensional Metric:</strong> 28cm x 22cm x 12cm</li>
@@ -511,7 +562,7 @@
                         <div class="space-y-2">
                             <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider block">Available Color Matrix</span>
                             <div class="flex space-x-2">
-                                <button v-for="color in quickViewProduct.colors" :key="color" 
+                                <button type="button" v-for="color in quickViewProduct.colors" :key="color"
                                         @click="selectedColor = color"
                                         :class="{'ring-2 ring-sage-600 scale-105': selectedColor === color}"
                                         class="px-3 py-1 bg-ivory text-gray-700 rounded-md border text-[10px] uppercase font-semibold transition">{{ color }}</button>
@@ -522,18 +573,18 @@
                         <div class="space-y-2">
                             <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider block">Quantity</span>
                             <div class="flex items-center space-x-3 border border-gray-200 rounded-lg w-24 px-2 py-1 bg-ivory">
-                                <button @click="quantity > 1 ? quantity-- : null" class="font-bold text-gray-500 hover:text-black">-</button>
+                                <button type="button" @click="quantity > 1 ? quantity-- : null" class="font-bold text-gray-500 hover:text-black">-</button>
                                 <span class="flex-grow text-center text-xs font-semibold">{{ quantity }}</span>
-                                <button @click="quantity++" class="font-bold text-gray-500 hover:text-black">+</button>
+                                <button type="button" @click="incrementQuickQuantity" class="font-bold text-gray-500 hover:text-black">+</button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Primary Actions Core Stack -->
                     <div class="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
-                        <button @click="addConfiguredToCart" class="w-full bg-sage-600 text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-sage-700 smooth-transition">Add To Cart</button>
-                        <button @click="instantWhatsAppCheckout(quickViewProduct)" class="w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:opacity-90 smooth-transition flex items-center justify-center space-x-1">
-                            <span>Order WhatsApp</span>
+                        <button type="button" @click="addConfiguredToCart" class="w-full bg-sage-600 text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-sage-700 smooth-transition">Add To Cart</button>
+                        <button type="button" @click="buyConfiguredNow" class="w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:opacity-90 smooth-transition flex items-center justify-center space-x-1">
+                            <span>Buy Now</span>
                         </button>
                     </div>
                 </div>
@@ -541,38 +592,38 @@
         </div>
 
         <!-- Sliding Dynamic Checkout Shopping Cart Side Drawer overlay -->
-        <div v-if="cartDrawerOpen" class="fixed inset-0 z-50 overflow-hidden bg-black/30 backdrop-blur-sm flex justify-end animate-fadeIn">
-            <div class="bg-white max-w-md w-full h-[100dvh] p-4 sm:p-6 shadow-2xl border-l border-sage-50 flex flex-col overflow-y-auto animate-slideLeft">
-                
+        <div v-if="cartDrawerOpen" @click.self="toggleCartDrawer(false)" class="fixed inset-0 z-50 overflow-hidden bg-black/30 backdrop-blur-sm flex justify-end animate-fadeIn">
+            <div class="bg-white max-w-md w-full h-[100dvh] p-4 sm:p-6 shadow-2xl border-l border-sage-50 flex flex-col overflow-y-auto overscroll-contain mobile-safe-bottom animate-slideLeft">
+
                 <div>
-                    <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+                    <div class="sticky top-0 z-10 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 px-4 sm:px-6 pt-4 sm:pt-6 bg-white flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
                         <h3 class="font-heading text-xl text-gray-900">Your Shopping Bag</h3>
-                        <button @click="toggleCartDrawer(false)" class="text-2xl text-gray-400 hover:text-black">&times;</button>
+                        <button type="button" @click="toggleCartDrawer(false)" class="text-2xl text-gray-400 hover:text-black" aria-label="Close shopping bag">&times;</button>
                     </div>
 
                     <!-- Cart Item Rows Loop Grid -->
-                    <div v-if="cart.length > 0" class="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                    <div v-if="cart.length > 0" class="space-y-4 pr-1">
                         <div v-for="item in cart" :key="item.id + item.color" class="flex items-center space-x-4 bg-ivory/50 p-3 rounded-xl border border-sage-50/50">
                             <div class="w-16 h-20 bg-sage-100 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center">
                                 <img v-if="item.img" :src="item.img" :alt="item.name" class="w-full h-full object-cover">
                                 <span v-else class="text-2xl">👜</span>
                             </div>
-                            
+
                             <div class="flex-grow min-w-0">
                                 <h4 class="text-xs font-semibold text-gray-800 truncate">{{ item.name }}</h4>
                                 <p class="text-[10px] text-gray-400 uppercase font-medium mt-0.5">Color: {{ item.color }}</p>
                                 <div class="flex items-center justify-between mt-2">
                                     <span class="text-xs font-bold text-gray-900">PKR {{ formatPrice(item.price) }}</span>
-                                    
+
                                     <div class="flex items-center space-x-2 border rounded bg-white px-1.5 py-0.5 text-[10px]">
-                                        <button @click="updateQty(item, -1)" class="text-gray-400 hover:text-black">-</button>
+                                        <button type="button" @click="updateQty(item, -1)" class="text-gray-400 hover:text-black">-</button>
                                         <span class="font-bold w-4 text-center">{{ item.quantity }}</span>
-                                        <button @click="updateQty(item, 1)" class="text-gray-400 hover:text-black">+</button>
+                                        <button type="button" @click="updateQty(item, 1)" class="text-gray-400 hover:text-black">+</button>
                                     </div>
                                 </div>
                             </div>
 
-                            <button @click="removeFromCart(item)" class="text-xs text-rosegold hover:text-red-700 font-medium px-2">&times;</button>
+                            <button type="button" @click="removeFromCart(item)" class="text-xs text-rosegold hover:text-red-700 font-medium px-2">&times;</button>
                         </div>
                     </div>
 
@@ -580,7 +631,7 @@
                     <div v-else class="text-center py-16 space-y-3">
                         <span class="text-3xl block">🛒</span>
                         <p class="text-xs text-gray-500 font-light">Your shopping bag is empty.</p>
-                        <button @click="toggleCartDrawer(false); navigateTo('shop')" class="text-xs font-bold text-sage-600 uppercase tracking-wider underline">Browse Handbags</button>
+                        <button type="button" @click="toggleCartDrawer(false); navigateTo('shop')" class="text-xs font-bold text-sage-600 uppercase tracking-wider underline">Browse Handbags</button>
                     </div>
                 </div>
 
@@ -621,7 +672,7 @@
                                     </span>
                                 </label>
                                 <div v-if="checkout.paymentMethod === 'Advance Payment'" class="grid grid-cols-3 gap-2">
-                                    <button v-for="channel in ['JazzCash','Easypaisa','Bank Transfer']"
+                                    <button type="button" v-for="channel in ['JazzCash','Easypaisa','Bank Transfer']"
                                             :key="channel"
                                             @click="checkout.advanceChannel = channel"
                                             :class="checkout.advanceChannel === channel ? 'bg-sage-700 text-white border-sage-700' : 'bg-white text-gray-700 border-sage-100'"
@@ -646,7 +697,7 @@
                             <div class="flex justify-between"><span>Delivery</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
                             <div class="flex justify-between border-t border-sage-200 pt-2 text-sm"><span class="font-bold">Order Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong></div>
                             <template v-if="checkout.paymentMethod === 'Cash on Delivery'">
-                                <div class="flex justify-between text-sage-700"><span>Pay Now</span><strong>PKR {{ formatPrice(payableNow) }}</strong></div>
+                                <div class="flex justify-between text-sage-700"><span>COD Advance</span><strong>PKR {{ formatPrice(payableNow) }}</strong></div>
                                 <div class="flex justify-between"><span>Balance on Delivery</span><strong>PKR {{ formatPrice(balanceOnDelivery) }}</strong></div>
                             </template>
                             <template v-else>
@@ -656,10 +707,13 @@
                     </div>
 
                     <div class="space-y-2">
-                        <button @click="openCheckout" class="w-full bg-sage-700 text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg hover:bg-sage-800 transition">
-                            Continue to Delivery Details
+                        <button type="button" @click="openCheckout('admin')" class="w-full bg-sage-700 text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg hover:bg-sage-800 transition">
+                            Checkout Now
                         </button>
-                        <button @click="toggleCartDrawer(false); navigateTo('shop')" class="w-full bg-white border border-sage-100 text-gray-700 text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-sage-50 transition">
+                        <button type="button" @click="openCheckout('whatsapp')" class="w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg hover:opacity-90 transition">
+                            Checkout via WhatsApp
+                        </button>
+                        <button type="button" @click="toggleCartDrawer(false); navigateTo('shop')" class="w-full bg-white border border-sage-100 text-gray-700 text-xs font-bold uppercase tracking-widest py-3 rounded-lg hover:bg-sage-50 transition">
                             Continue Shopping
                         </button>
                     </div>
@@ -669,61 +723,107 @@
         </div>
 
 
-        <!-- Delivery Details Step -->
-        <div v-if="checkoutOpen" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm">
+        <!-- Validated checkout form and confirmation -->
+        <div v-if="checkoutOpen" @click.self="closeCheckout" class="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-black/45 backdrop-blur-sm">
             <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 sm:p-8 relative max-h-[92vh] overflow-y-auto">
-                <button @click="checkoutOpen=false" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-gray-900">&times;</button>
-                <span class="text-[10px] tracking-[0.35em] font-bold text-sage-600 uppercase">Secure WhatsApp Order</span>
-                <h3 class="font-heading text-3xl text-gray-900 mt-2">Delivery Details</h3>
-                <p class="text-xs text-gray-500 mt-2 mb-6">Enter your delivery details, review the order, then complete checkout through WhatsApp.</p>
+                <button type="button" @click="closeCheckout" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-gray-900" aria-label="Close checkout">&times;</button>
+                <form v-if="!orderConfirmation" @submit.prevent="submitCheckout" novalidate>
+                    <span class="text-[10px] tracking-[0.35em] font-bold text-sage-600 uppercase">{{ checkoutMode === 'whatsapp' ? 'WhatsApp Checkout' : 'Secure Website Checkout' }}</span>
+                    <h3 class="font-heading text-3xl text-gray-900 mt-2">Customer Details</h3>
+                    <p class="text-xs text-gray-500 mt-2 mb-6">Complete the form below. Your order will be saved directly in the TREVO admin order panel.</p>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <label class="text-xs font-semibold text-gray-700">
-                        Full Name *
-                        <input v-model.trim="checkout.name" type="text" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="Your full name">
-                    </label>
-                    <label class="text-xs font-semibold text-gray-700">
-                        Phone Number *
-                        <input v-model.trim="checkout.phone" type="tel" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="03XX XXXXXXX">
-                    </label>
-                    <label class="text-xs font-semibold text-gray-700">
-                        City *
-                        <input v-model.trim="checkout.city" type="text" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="City">
-                    </label>
+                    <div v-if="checkoutErrorMessage" class="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">{{ checkoutErrorMessage }}</div>
 
-                    <label class="text-xs font-semibold text-gray-700 sm:col-span-2">
-                        Complete Address *
-                        <textarea v-model.trim="checkout.address" rows="3" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="House/Street, Area, City"></textarea>
-                    </label>
-                    <label class="text-xs font-semibold text-gray-700 sm:col-span-2">
-                        Order Notes
-                        <textarea v-model.trim="checkout.notes" rows="2" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="Optional color or delivery instructions"></textarea>
-                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label class="text-xs font-semibold text-gray-700">
+                            Full Name *
+                            <input v-model.trim="checkout.name" type="text" autocomplete="name" :aria-invalid="!!checkoutErrors.name" class="mt-1 w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" :class="checkoutErrors.name ? 'border-red-300' : 'border-sage-100'" placeholder="Your full name">
+                            <span v-if="checkoutErrors.name" class="mt-1 block text-[10px] text-red-600">{{ checkoutErrors.name }}</span>
+                        </label>
+                        <label class="text-xs font-semibold text-gray-700">
+                            Email Address *
+                            <input v-model.trim="checkout.email" type="email" autocomplete="email" :aria-invalid="!!checkoutErrors.email" class="mt-1 w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" :class="checkoutErrors.email ? 'border-red-300' : 'border-sage-100'" placeholder="name@example.com">
+                            <span v-if="checkoutErrors.email" class="mt-1 block text-[10px] text-red-600">{{ checkoutErrors.email }}</span>
+                        </label>
+                        <label class="text-xs font-semibold text-gray-700">
+                            Phone Number *
+                            <input v-model.trim="checkout.phone" type="tel" autocomplete="tel" :aria-invalid="!!checkoutErrors.phone" class="mt-1 w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" :class="checkoutErrors.phone ? 'border-red-300' : 'border-sage-100'" placeholder="03XX XXXXXXX">
+                            <span v-if="checkoutErrors.phone" class="mt-1 block text-[10px] text-red-600">{{ checkoutErrors.phone }}</span>
+                        </label>
+                        <label class="text-xs font-semibold text-gray-700">
+                            City *
+                            <input v-model.trim="checkout.city" type="text" autocomplete="address-level2" :aria-invalid="!!checkoutErrors.city" class="mt-1 w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" :class="checkoutErrors.city ? 'border-red-300' : 'border-sage-100'" placeholder="City">
+                            <span v-if="checkoutErrors.city" class="mt-1 block text-[10px] text-red-600">{{ checkoutErrors.city }}</span>
+                        </label>
+                        <label class="text-xs font-semibold text-gray-700">
+                            Province
+                            <input v-model.trim="checkout.province" type="text" autocomplete="address-level1" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="Punjab">
+                        </label>
+                        <label class="text-xs font-semibold text-gray-700">
+                            Postal Code
+                            <input v-model.trim="checkout.postalCode" type="text" inputmode="numeric" autocomplete="postal-code" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="Optional">
+                        </label>
+                        <label class="text-xs font-semibold text-gray-700 sm:col-span-2">
+                            Complete Address *
+                            <textarea v-model.trim="checkout.address" rows="3" autocomplete="street-address" :aria-invalid="!!checkoutErrors.address" class="mt-1 w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" :class="checkoutErrors.address ? 'border-red-300' : 'border-sage-100'" placeholder="House/Street, Area, City"></textarea>
+                            <span v-if="checkoutErrors.address" class="mt-1 block text-[10px] text-red-600">{{ checkoutErrors.address }}</span>
+                        </label>
+                        <label class="text-xs font-semibold text-gray-700 sm:col-span-2">
+                            Order Notes
+                            <textarea v-model.trim="checkout.notes" rows="2" class="mt-1 w-full border border-sage-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-sage-600" placeholder="Optional color or delivery instructions"></textarea>
+                        </label>
+                    </div>
+
+                    <div class="mt-6 rounded-xl bg-sage-50 p-4 text-xs space-y-2">
+                        <div v-for="item in cart" :key="'review-' + item.id + item.color" class="flex justify-between gap-4 text-gray-600">
+                            <span class="truncate">{{ item.name }} × {{ item.quantity }}</span>
+                            <strong class="whitespace-nowrap">PKR {{ formatPrice(item.price * item.quantity) }}</strong>
+                        </div>
+                        <div class="border-t border-sage-200 my-2"></div>
+                        <div class="flex justify-between"><span>Items Subtotal</span><strong>PKR {{ formatPrice(cartSubtotal) }}</strong></div>
+                        <div class="flex justify-between"><span>Delivery Method</span><strong>{{ checkout.delivery }}</strong></div>
+                        <div class="flex justify-between"><span>Delivery Charges</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
+                        <div class="flex justify-between"><span>Payment Method</span><strong>{{ checkout.paymentMethod }}</strong></div>
+                        <div v-if="checkout.paymentMethod === 'Advance Payment'" class="flex justify-between"><span>Payment Channel</span><strong>{{ checkout.advanceChannel }}</strong></div>
+                        <div class="flex justify-between border-t border-sage-200 pt-2 text-sm"><span class="font-bold">Order Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong></div>
+                        <div v-if="checkout.paymentMethod === 'Cash on Delivery'" class="flex justify-between text-sage-700"><span>COD Advance</span><strong>PKR {{ formatPrice(payableNow) }}</strong></div>
+                        <div v-if="checkout.paymentMethod === 'Cash on Delivery'" class="flex justify-between"><span>Balance on Delivery</span><strong>PKR {{ formatPrice(balanceOnDelivery) }}</strong></div>
+                    </div>
+
+                    <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <button type="button" @click="backToOrderSummary" class="w-full bg-white border border-sage-100 text-gray-700 text-[10px] font-bold uppercase tracking-widest py-3.5 rounded-lg hover:bg-sage-50 transition">Back</button>
+                        <button type="submit" :disabled="submittingOrder" :class="checkoutMode === 'whatsapp' ? 'bg-[#25D366]' : 'bg-sage-700 hover:bg-sage-800'" class="sm:col-span-2 w-full disabled:bg-gray-300 text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg hover:opacity-90 transition">
+                            {{ submittingOrder ? 'Submitting Order…' : (checkoutMode === 'whatsapp' ? 'Save & Continue on WhatsApp' : 'Place Order') }}
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-gray-400 text-center mt-3">Your order remains Pending until TREVO confirms availability and payment.</p>
+                </form>
+
+                <div v-else class="py-5 text-center space-y-5">
+                    <div class="mx-auto w-16 h-16 rounded-full bg-green-50 text-green-700 flex items-center justify-center text-3xl">✓</div>
+                    <div>
+                        <span class="text-[10px] tracking-[0.35em] font-bold text-sage-600 uppercase">Order Received</span>
+                        <h3 class="font-heading text-3xl text-gray-900 mt-2">Thank You, {{ orderConfirmation.name }}</h3>
+                        <p class="text-xs text-gray-500 mt-2">Your order has been sent to the TREVO admin panel.</p>
+                    </div>
+                    <div class="rounded-xl bg-sage-50 p-4 text-left text-xs space-y-2">
+                        <div class="flex justify-between"><span>Order Number</span><strong>{{ orderConfirmation.orderId }}</strong></div>
+                        <div class="flex justify-between"><span>Order Total</span><strong>PKR {{ formatPrice(orderConfirmation.total) }}</strong></div>
+                        <div class="flex justify-between"><span>Status</span><strong class="text-amber-700">Pending Confirmation</strong></div>
+                        <div v-if="orderConfirmation.paymentMethod === 'Cash on Delivery'" class="flex justify-between text-sage-700"><span>COD Advance</span><strong>PKR {{ formatPrice(orderConfirmation.payableNow) }}</strong></div>
+                        <div v-else class="flex justify-between text-sage-700"><span>Pay via</span><strong>{{ orderConfirmation.advanceChannel }}</strong></div>
+                    </div>
+                    <p class="text-[11px] text-gray-500">TREVO will confirm product availability, payment details, and delivery time before processing your order.</p>
+                    <button type="button" @click="finishCheckout" class="w-full bg-sage-700 text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg hover:bg-sage-800 transition">Continue Shopping</button>
                 </div>
-
-                <div class="mt-6 rounded-xl bg-sage-50 p-4 text-xs space-y-2">
-                    <div class="flex justify-between"><span>Items Subtotal</span><strong>PKR {{ formatPrice(cartSubtotal) }}</strong></div>
-                    <div class="flex justify-between"><span>Delivery Method</span><strong>{{ checkout.delivery }}</strong></div>
-                    <div class="flex justify-between"><span>Delivery Charges</span><strong>{{ deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(deliveryCharge) }}</strong></div>
-                    <div class="flex justify-between"><span>Payment Method</span><strong>{{ checkout.paymentMethod }}</strong></div>
-                    <div v-if="checkout.paymentMethod === 'Advance Payment'" class="flex justify-between"><span>Payment Channel</span><strong>{{ checkout.advanceChannel }}</strong></div>
-                    <div class="flex justify-between border-t border-sage-200 pt-2 text-sm"><span class="font-bold">Order Total</span><strong>PKR {{ formatPrice(cartTotal) }}</strong></div>
-                    <div v-if="checkout.paymentMethod === 'Cash on Delivery'" class="flex justify-between text-sage-700"><span>Pay Now</span><strong>PKR {{ formatPrice(payableNow) }}</strong></div>
-                    <div v-if="checkout.paymentMethod === 'Cash on Delivery'" class="flex justify-between"><span>Balance on Delivery</span><strong>PKR {{ formatPrice(balanceOnDelivery) }}</strong></div>
-                </div>
-
-                <button @click="sendCheckoutToWhatsApp" class="mt-5 w-full bg-[#25D366] text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg hover:opacity-90 transition">
-                    Checkout Now via WhatsApp
-                </button>
-                <p class="text-[10px] text-gray-400 text-center mt-3">Cash on Delivery available across Pakistan.</p>
             </div>
         </div>
 
         <!-- Wishlist Modal Overlay Layout Component -->
         <div v-if="wishlistModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
             <div class="bg-white max-w-2xl w-full rounded-2xl p-6 shadow-2xl border border-sage-50 max-h-[80vh] overflow-y-auto space-y-6 relative">
-                <button @click="toggleWishlistModal(false)" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-black">&times;</button>
-                
+                <button type="button" @click="toggleWishlistModal(false)" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-black" aria-label="Close wishlist">&times;</button>
+
                 <h3 class="font-heading text-2xl text-gray-900 border-b border-gray-100 pb-3">Your Wishlist</h3>
 
                 <div v-if="wishlist.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -737,8 +837,8 @@
                             <span class="text-xs text-gray-900 font-bold block mt-0.5">PKR {{ formatPrice(product.price) }}</span>
                         </div>
                         <div class="flex flex-col space-y-1">
-                            <button @click="addToCart(product); toggleWishlist(product)" class="text-[10px] font-bold text-sage-600 uppercase tracking-wide bg-white px-2 py-1 rounded border border-sage-100 shadow-sm hover:bg-sage-600 hover:text-white smooth-transition">Move Cart</button>
-                            <button @click="toggleWishlist(product)" class="text-[9px] font-semibold text-rosegold uppercase text-center hover:underline">Remove</button>
+                            <button type="button" @click="addToCart(product); toggleWishlist(product)" class="text-[10px] font-bold text-sage-600 uppercase tracking-wide bg-white px-2 py-1 rounded border border-sage-100 shadow-sm hover:bg-sage-600 hover:text-white smooth-transition">Move Cart</button>
+                            <button type="button" @click="toggleWishlist(product)" class="text-[9px] font-semibold text-rosegold uppercase text-center hover:underline">Remove</button>
                         </div>
                     </div>
                 </div>
@@ -754,7 +854,7 @@
             <div class="max-w-2xl mx-auto px-4 text-center space-y-6">
                 <h3 class="font-heading text-3xl text-gray-900 tracking-wide">Join the TREVO Family</h3>
                 <p class="text-xs text-gray-500 font-light max-w-md mx-auto leading-relaxed">Subscribe for new arrivals, special offers, and handbag styling updates.</p>
-                
+
                 <form @submit.prevent="handleSubscribe" class="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
                     <input type="email" required placeholder="Enter your email address" class="flex-grow bg-white border border-sage-200 text-xs px-4 py-3 rounded-lg focus:outline-none focus:border-sage-600">
                     <button type="submit" class="bg-sage-600 text-white text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-lg hover:bg-sage-700 transition">Subscribe</button>
@@ -765,14 +865,14 @@
         <!-- Premium Standard Structural Footer Module -->
         <footer class="bg-white border-t border-sage-100 text-gray-600 text-xs py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-12 gap-8">
-                
+
                 <!-- Brand Meta Grid Column -->
                 <div class="md:col-span-4 space-y-4">
                     <span class="font-heading text-3xl font-black tracking-widest text-gray-900">TREVO</span>
                     <p class="text-xs text-gray-400 font-light max-w-xs leading-relaxed">
                         Elegant, affordable handbags selected for everyday confidence and special occasions.
                     </p>
-                    
+
                     <!-- Dynamic Social Link Matrices -->
                     <div class="flex space-x-4 pt-2">
                         <a href="https://wa.me/923007041451" target="_blank" class="p-2 bg-sage-50 text-sage-600 rounded-full hover:bg-sage-600 hover:text-white transition">WhatsApp</a>
@@ -824,7 +924,7 @@
 
     <!-- Core Dynamic Application Engine Script Initialization -->
     <script>
-        const { createApp, ref, computed } = Vue;
+        const { createApp, ref, computed, watch, onMounted } = Vue;
 
         createApp({
             setup() {
@@ -832,16 +932,28 @@
                 const currentPage = ref('home');
                 const searchQuery = ref('');
                 const sortBy = ref('newest');
-                
+
                 // Modals Visibility Triggers States
                 const cartDrawerOpen = ref(false);
                 const wishlistModalOpen = ref(false);
                 const quickViewProduct = ref(null);
+                const quickViewImageIndex = ref(0);
+                const galleryTouchStartX = ref(0);
                 const checkoutOpen = ref(false);
+                const checkoutMode = ref('admin');
+                const checkoutErrors = ref({});
+                const checkoutErrorMessage = ref('');
+                const orderConfirmation = ref(null);
+                const mobileMenuOpen = ref(false);
+                const mobileFiltersOpen = ref(false);
+                const submittingOrder = ref(false);
                 const checkout = ref({
                     name: '',
+                    email: '',
                     phone: '',
                     city: '',
+                    province: '',
+                    postalCode: '',
                     address: '',
                     delivery: 'Standard Delivery',
                     paymentMethod: 'Cash on Delivery',
@@ -894,6 +1006,10 @@
                     { id: 106, img: 'https://raw.githubusercontent.com/SmartLiving25/trevo-by-fatima/main/images/ChatGPT%20Image%20Jul%2016%2C%202026%2C%2004_51_53%20PM.png', name: 'Monarch Geometric Box Clutch', category: 'Box Bags', price: 12000, oldPrice: 14500, discount: 17, isNew: false, inStock: true, colors: ['Rose Gold', 'Ivory'], popular: true }
                 ];
                 const products = ref([...fallbackProducts]);
+                const maxCatalogPrice = computed(() => {
+                    const highestPrice = Math.max(0, ...products.value.map(product => Number(product.price || 0)));
+                    return Math.max(25000, Math.ceil(highestPrice / 500) * 500);
+                });
 
                 // Static Trusted Testimonial Voice Arrays
                 const reviews = [
@@ -937,6 +1053,47 @@
                     }
                 };
 
+                const toNumber = (value) => {
+                    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+                    const parsed = Number(String(value ?? '').replace(/[^0-9.-]/g, ''));
+                    return Number.isFinite(parsed) ? parsed : 0;
+                };
+
+                const parseImageValue = (value) => {
+                    if (Array.isArray(value)) return value;
+                    if (!value || typeof value !== 'string') return [];
+                    const trimmed = value.trim();
+                    if (!trimmed) return [];
+                    if (trimmed.startsWith('[')) {
+                        try {
+                            const parsed = JSON.parse(trimmed);
+                            if (Array.isArray(parsed)) return parsed;
+                        } catch (_) {}
+                    }
+                    return trimmed.split(/[\n,|]+/).map(item => item.trim()).filter(Boolean);
+                };
+
+                const collectProductImages = (data) => {
+                    const candidates = [
+                        ...parseImageValue(data.images),
+                        ...parseImageValue(data.additionalImages),
+                        ...parseImageValue(data.additional_image_link),
+                        ...parseImageValue(data.imageUrls),
+                        data.img, data.image, data.imageUrl, data.image_url, data.image_link,
+                        data.image1, data.image2, data.image3, data.image4, data.image5,
+                        data.img1, data.img2, data.img3, data.img4, data.img5,
+                        data.image_url_1, data.image_url_2, data.image_url_3, data.image_url_4, data.image_url_5
+                    ];
+                    return [...new Set(candidates.map(cleanImageUrl).filter(Boolean))];
+                };
+
+                const getProductImages = (product) => {
+                    if (!product) return [];
+                    const images = Array.isArray(product.images) ? product.images.map(cleanImageUrl).filter(Boolean) : [];
+                    const primary = cleanImageUrl(product.img || '');
+                    return [...new Set([primary, ...images].filter(Boolean))];
+                };
+
                 const splitColors = (value) => {
                     if (Array.isArray(value)) return value.filter(Boolean).map(String);
                     if (!value) return ['Default'];
@@ -944,31 +1101,38 @@
                 };
 
                 const normalizeProduct = (data, docId, index) => {
-                    const rawImage =
-                        data.img || data.image || data.imageUrl || data.image_url ||
-                        (Array.isArray(data.images) ? data.images[0] : '');
-                    const price = Number(data.price || data.salePrice || data.sellingPrice || 0);
-                    const oldPrice = Number(data.oldPrice || data.compareAtPrice || data.regularPrice || 0);
-                    const quantityValue = Number(data.quantity ?? data.stock ?? data.inventory ?? 0);
+                    const images = collectProductImages(data);
+                    const basePrice = toNumber(data.price || data.regularPrice || data.sellingPrice || 0);
+                    const explicitSalePrice = toNumber(data.salePrice || data.sale_price || 0);
+                    const price = explicitSalePrice > 0 ? explicitSalePrice : basePrice;
+                    const comparePrice = toNumber(data.oldPrice || data.compareAtPrice || data.regularPrice || (explicitSalePrice > 0 ? basePrice : 0));
+                    const hasQuantity = data.quantity != null || data.stock != null || data.inventory != null;
+                    const quantityValue = toNumber(data.quantity ?? data.stock ?? data.inventory ?? 0);
                     const badge = String(data.badge || '').toLowerCase();
+                    const availability = String(data.availability || '').toLowerCase().replace(/_/g, ' ');
+                    const status = String(data.status || '').toLowerCase();
 
-                    connectFirebaseProducts();
-
-                return {
+                    return {
                         ...data,
                         id: data.id ?? docId ?? index + 1,
+                        sku: data.sku || data.mpn || data.item_group_id || String(data.id ?? docId ?? index + 1),
                         name: data.name || data.title || 'TREVO Handbag',
-                        category: data.category || data.collection || 'Handbags',
+                        category: data.category || data.product_type || data.collection || 'Handbags',
                         price,
-                        oldPrice: oldPrice > price ? oldPrice : null,
-                        discount: oldPrice > price && price > 0 ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0,
-                        img: cleanImageUrl(rawImage),
+                        salePrice: explicitSalePrice > 0 ? explicitSalePrice : null,
+                        regularPrice: comparePrice > price ? comparePrice : price,
+                        oldPrice: comparePrice > price ? comparePrice : null,
+                        discount: comparePrice > price && price > 0 ? Math.round(((comparePrice - price) / comparePrice) * 100) : 0,
+                        img: images[0] || '',
+                        images,
                         desc: data.desc || data.description || '',
                         colors: splitColors(data.colors || data.color),
                         isNew: data.isNew === true || badge === 'new',
                         popular: data.popular === true || data.featured === true || badge === 'hot',
-                        inStock: data.inStock !== false && String(data.availability || '').toLowerCase() !== 'out of stock' && quantityValue !== 0,
-                        quantity: quantityValue
+                        inStock: data.inStock !== false && availability !== 'out of stock' && (!hasQuantity || quantityValue > 0),
+                        quantity: quantityValue,
+                        quantityKnown: hasQuantity,
+                        published: data.published !== false && !['draft', 'inactive', 'archived', 'hidden'].includes(status)
                     };
                 };
 
@@ -985,10 +1149,12 @@
                     db.collection(collectionName).onSnapshot(snapshot => {
                         const liveProducts = snapshot.docs
                             .map((doc, index) => normalizeProduct(doc.data(), doc.id, index))
-                            .filter(product => product.name && product.price > 0);
+                            .filter(product => product.published && product.name && product.price > 0);
 
                         if (liveProducts.length) {
                             products.value = liveProducts;
+                            const liveMaxPrice = Math.max(25000, Math.ceil(Math.max(...liveProducts.map(product => product.price)) / 500) * 500);
+                            if (filters.value.priceRange === 25000) filters.value.priceRange = liveMaxPrice;
                             firebaseConnected.value = true;
                             firebaseMessage.value = `${liveProducts.length} live products loaded from TREVO inventory.`;
                         } else {
@@ -1043,6 +1209,24 @@
                     return output;
                 });
 
+                const slugify = (value) => String(value || 'handbags')
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-|-$/g, '');
+
+                const groupedProducts = computed(() => {
+                    const groups = new Map();
+                    filteredProducts.value.forEach(product => {
+                        const category = product.category || 'Handbags';
+                        if (!groups.has(category)) groups.set(category, []);
+                        groups.get(category).push(product);
+                    });
+                    return [...groups.entries()].map(([category, groupedItems]) => ({
+                        category,
+                        products: groupedItems
+                    }));
+                });
+
                 // Cart Computations aggregates matrix
                 const cartCount = computed(() => cart.value.reduce((total, item) => total + item.quantity, 0));
                 const cartSubtotal = computed(() => cart.value.reduce((total, item) => total + (item.price * item.quantity), 0));
@@ -1069,6 +1253,7 @@
                 // SYSTEM ACTION INTERFACE OPERATIONS METHODS
                 const navigateTo = (page) => {
                     currentPage.value = page;
+                    mobileMenuOpen.value = false;
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 };
 
@@ -1104,19 +1289,26 @@
 
                 // Cart Controls implementation
                 const addToCart = (product) => {
+                    if (!product.inStock) return;
                     const defaultColor = product.colors && product.colors.length > 0 ? product.colors[0] : 'Ivory';
                     const existingItem = cart.value.find(item => item.id === product.id && item.color === defaultColor);
-                    
+
                     if (existingItem) {
+                        if (product.quantityKnown && existingItem.quantity >= product.quantity) {
+                            alert(`Only ${product.quantity} piece(s) of ${product.name} are currently available.`);
+                            return;
+                        }
                         existingItem.quantity++;
                     } else {
                         cart.value.push({
                             id: product.id,
+                            sku: product.sku || String(product.id),
                             name: product.name,
                             price: product.price,
                             img: product.img || '',
                             color: defaultColor,
-                            quantity: 1
+                            quantity: 1,
+                            availableQuantity: product.quantityKnown ? product.quantity : null
                         });
                     }
                     cartDrawerOpen.value = true;
@@ -1126,32 +1318,60 @@
                     const defaultColor = Array.isArray(product.colors) && product.colors.length ? product.colors[0] : 'Default';
                     cart.value = [{
                         id: product.id,
+                        sku: product.sku || String(product.id),
                         name: product.name,
                         price: Number(product.price || 0),
                         img: product.img || '',
                         color: defaultColor,
-                        quantity: 1
+                        quantity: 1,
+                        availableQuantity: product.quantityKnown ? product.quantity : null
                     }];
+                    checkoutOpen.value = false;
+                    cartDrawerOpen.value = true;
+                };
+
+                const buyConfiguredNow = () => {
+                    if (!quickViewProduct.value) return;
+                    const product = quickViewProduct.value;
+                    const chosenColor = selectedColor.value || product.colors?.[0] || 'Default';
+                    cart.value = [{
+                        id: product.id,
+                        sku: product.sku || String(product.id),
+                        name: product.name,
+                        price: Number(product.price || 0),
+                        img: getProductImages(product)[quickViewImageIndex.value] || product.img || '',
+                        color: chosenColor,
+                        quantity: Math.max(1, Number(quantity.value || 1)),
+                        availableQuantity: product.quantityKnown ? product.quantity : null
+                    }];
+                    closeQuickView();
                     checkoutOpen.value = false;
                     cartDrawerOpen.value = true;
                 };
 
                 const addConfiguredToCart = () => {
                     if (!selectedColor.value) {
-                        selectedColor.value = quickViewProduct.value.colors[0];
+                        selectedColor.value = quickViewProduct.value.colors?.[0] || 'Default';
                     }
                     const existingItem = cart.value.find(item => item.id === quickViewProduct.value.id && item.color === selectedColor.value);
-                    
+
                     if (existingItem) {
+                        const requestedQuantity = existingItem.quantity + quantity.value;
+                        if (quickViewProduct.value.quantityKnown && requestedQuantity > quickViewProduct.value.quantity) {
+                            alert(`Only ${quickViewProduct.value.quantity} piece(s) of ${quickViewProduct.value.name} are currently available.`);
+                            return;
+                        }
                         existingItem.quantity += quantity.value;
                     } else {
                         cart.value.push({
                             id: quickViewProduct.value.id,
+                            sku: quickViewProduct.value.sku || String(quickViewProduct.value.id),
                             name: quickViewProduct.value.name,
                             price: quickViewProduct.value.price,
-                            img: quickViewProduct.value.img || '',
+                            img: getProductImages(quickViewProduct.value)[quickViewImageIndex.value] || quickViewProduct.value.img || '',
                             color: selectedColor.value,
-                            quantity: quantity.value
+                            quantity: quantity.value,
+                            availableQuantity: quickViewProduct.value.quantityKnown ? quickViewProduct.value.quantity : null
                         });
                     }
                     closeQuickView();
@@ -1159,6 +1379,10 @@
                 };
 
                 const updateQty = (item, delta) => {
+                    if (delta > 0 && item.availableQuantity != null && item.quantity >= item.availableQuantity) {
+                        alert(`Only ${item.availableQuantity} piece(s) of ${item.name} are currently available.`);
+                        return;
+                    }
                     item.quantity += delta;
                     if (item.quantity <= 0) {
                         removeFromCart(item);
@@ -1169,7 +1393,7 @@
                     cart.value = cart.value.filter(i => !(i.id === item.id && i.color === item.color));
                 };
 
-                // Wishlist Handlers 
+                // Wishlist Handlers
                 const toggleWishlist = (product) => {
                     const idx = wishlist.value.findIndex(i => i.id === product.id);
                     if (idx >= 0) {
@@ -1184,8 +1408,36 @@
                 // Modals Controls toggles
                 const openQuickView = (product) => {
                     quickViewProduct.value = product;
-                    selectedColor.value = product.colors[0];
+                    selectedColor.value = product.colors?.[0] || 'Default';
                     quantity.value = 1;
+                    quickViewImageIndex.value = 0;
+                };
+
+                const changeQuickViewImage = (direction) => {
+                    const imageCount = getProductImages(quickViewProduct.value).length;
+                    if (imageCount < 2) return;
+                    quickViewImageIndex.value = (quickViewImageIndex.value + direction + imageCount) % imageCount;
+                };
+
+                const handleGalleryTouchStart = (event) => {
+                    galleryTouchStartX.value = event.changedTouches?.[0]?.clientX || 0;
+                };
+
+                const handleGalleryTouchEnd = (event) => {
+                    const endX = event.changedTouches?.[0]?.clientX || 0;
+                    const distance = galleryTouchStartX.value - endX;
+                    if (Math.abs(distance) < 40) return;
+                    changeQuickViewImage(distance > 0 ? 1 : -1);
+                };
+
+                const incrementQuickQuantity = () => {
+                    const product = quickViewProduct.value;
+                    if (!product) return;
+                    if (product.quantityKnown && quantity.value >= product.quantity) {
+                        alert(`Only ${product.quantity} piece(s) are currently available.`);
+                        return;
+                    }
+                    quantity.value++;
                 };
 
                 const closeQuickView = () => { quickViewProduct.value = null; };
@@ -1194,7 +1446,7 @@
 
                 const resetFilters = () => {
                     filters.value.category = '';
-                    filters.value.priceRange = 25000;
+                    filters.value.priceRange = maxCatalogPrice.value;
                     filters.value.color = '';
                     filters.value.inStockOnly = false;
                     searchQuery.value = '';
@@ -1207,14 +1459,30 @@
 
                 const alertModal = (msg) => { alert(msg); };
 
-                // WhatsApp checkout
-                const openCheckout = () => {
+                // Checkout entry points: regular admin checkout and WhatsApp checkout
+                const openCheckout = (mode = 'admin') => {
                     if (cart.value.length === 0) {
                         alert('Your shopping bag is empty.');
                         return;
                     }
+                    checkoutMode.value = mode === 'whatsapp' ? 'whatsapp' : 'admin';
+                    checkoutErrors.value = {};
+                    checkoutErrorMessage.value = '';
+                    orderConfirmation.value = null;
                     cartDrawerOpen.value = false;
                     checkoutOpen.value = true;
+                };
+
+                const closeCheckout = () => {
+                    checkoutOpen.value = false;
+                    submittingOrder.value = false;
+                    checkoutErrorMessage.value = '';
+                };
+
+                const backToOrderSummary = () => {
+                    checkoutOpen.value = false;
+                    orderConfirmation.value = null;
+                    cartDrawerOpen.value = true;
                 };
 
                 const sendCheckoutToWhatsApp = async () => {
@@ -1222,6 +1490,21 @@
                         alert('Please complete your name, phone number, city, and address.');
                         return;
                     }
+
+                    const phoneDigits = checkout.value.phone.replace(/\D/g, '');
+                    if (phoneDigits.length < 10 || phoneDigits.length > 13) {
+                        alert('Please enter a valid phone number, for example 0300 1234567.');
+                        return;
+                    }
+
+                    if (checkout.value.paymentMethod === 'Advance Payment' && !checkout.value.advanceChannel) {
+                        alert('Please select JazzCash, Easypaisa, or Bank Transfer.');
+                        return;
+                    }
+
+                    if (submittingOrder.value) return;
+                    submittingOrder.value = true;
+                    const whatsappWindow = window.open('about:blank', '_blank');
 
                     const phoneNumber = "923007041451";
                     const orderId = `TRV-${Date.now().toString().slice(-8)}`;
@@ -1269,7 +1552,11 @@
                         } catch (error) {
                             console.error('Order save error:', error);
                             const proceed = confirm('The order could not be saved to Firebase, but it can still be sent through WhatsApp. Continue?');
-                            if (!proceed) return;
+                            if (!proceed) {
+                                if (whatsappWindow) whatsappWindow.close();
+                                submittingOrder.value = false;
+                                return;
+                            }
                         }
                     }
 
@@ -1331,15 +1618,199 @@ Subtotal: PKR ${formatPrice(cartSubtotal.value)}
                     text += `Please confirm availability and delivery time.`;
 
                     localStorage.setItem('trevoLastOrder', JSON.stringify(orderData));
-                    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(text)}`, '_blank');
+                    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(text)}`;
+                    if (whatsappWindow) {
+                        whatsappWindow.location.href = whatsappUrl;
+                    } else {
+                        window.location.href = whatsappUrl;
+                    }
                     checkoutOpen.value = false;
+                    cart.value = [];
+                    submittingOrder.value = false;
+                };
+
+                const validateCheckout = () => {
+                    const errors = {};
+                    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    const phoneDigits = String(checkout.value.phone || '').replace(/\D/g, '');
+
+                    if (checkout.value.name.trim().length < 2) errors.name = 'Please enter your full name.';
+                    if (!emailPattern.test(checkout.value.email.trim())) errors.email = 'Please enter a valid email address.';
+                    if (phoneDigits.length < 10 || phoneDigits.length > 13) errors.phone = 'Enter a valid phone number, for example 0300 1234567.';
+                    if (checkout.value.city.trim().length < 2) errors.city = 'Please enter your city.';
+                    if (checkout.value.address.trim().length < 10) errors.address = 'Please enter a complete delivery address.';
+                    if (cart.value.length === 0) errors.cart = 'Your shopping bag is empty.';
+                    if (checkout.value.paymentMethod === 'Advance Payment' && !checkout.value.advanceChannel) errors.payment = 'Select an advance-payment channel.';
+
+                    const unavailableItem = cart.value.find(item => item.availableQuantity != null && item.quantity > item.availableQuantity);
+                    if (unavailableItem) errors.cart = `Only ${unavailableItem.availableQuantity} piece(s) of ${unavailableItem.name} are available.`;
+
+                    checkoutErrors.value = errors;
+                    checkoutErrorMessage.value = Object.keys(errors).length
+                        ? (errors.cart || errors.payment || 'Please correct the highlighted customer details.')
+                        : '';
+                    return Object.keys(errors).length === 0;
+                };
+
+                const createOrderData = (source) => {
+                    const now = new Date();
+                    const randomPart = Math.random().toString(36).slice(2, 6).toUpperCase();
+                    const orderId = `TRV-${now.getTime().toString().slice(-8)}-${randomPart}`;
+                    const customer = {
+                        name: checkout.value.name.trim(),
+                        email: checkout.value.email.trim().toLowerCase(),
+                        phone: checkout.value.phone.trim(),
+                        city: checkout.value.city.trim(),
+                        province: checkout.value.province.trim(),
+                        postalCode: checkout.value.postalCode.trim(),
+                        address: checkout.value.address.trim()
+                    };
+
+                    return {
+                        orderId,
+                        idempotencyKey: orderId,
+                        date: now.toISOString(),
+                        createdAtISO: now.toISOString(),
+                        customer,
+                        ...customer,
+                        deliveryType: checkout.value.delivery,
+                        deliveryCharge: deliveryCharge.value,
+                        paymentMethod: checkout.value.paymentMethod,
+                        advanceChannel: checkout.value.paymentMethod === 'Advance Payment' ? checkout.value.advanceChannel : '',
+                        payableNow: payableNow.value,
+                        balanceOnDelivery: balanceOnDelivery.value,
+                        notes: checkout.value.notes.trim(),
+                        items: cart.value.map(item => ({
+                            id: item.id,
+                            sku: item.sku || String(item.id),
+                            name: item.name,
+                            color: item.color,
+                            qty: item.quantity,
+                            quantity: item.quantity,
+                            price: Number(item.price),
+                            lineTotal: Number(item.price) * item.quantity,
+                            img: item.img || ''
+                        })),
+                        subtotal: cartSubtotal.value,
+                        discount: 0,
+                        total: cartTotal.value,
+                        status: 'Pending',
+                        orderStatus: 'Pending',
+                        paymentStatus: 'Pending',
+                        source
+                    };
+                };
+
+                const saveOrderToAdmin = async (orderData) => {
+                    const orderApiUrl = typeof ORDER_API_URL !== 'undefined' ? String(ORDER_API_URL || '').trim() : '';
+                    if (orderApiUrl) {
+                        const response = await fetch(orderApiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(orderData)
+                        });
+                        const payload = await response.json().catch(() => ({}));
+                        if (!response.ok) throw new Error(payload.error || 'The order server rejected this order.');
+                        return { ...orderData, ...(payload.order || {}), orderId: payload.orderId || orderData.orderId };
+                    }
+
+                    if (typeof firebaseReady === 'undefined' || !firebaseReady || typeof db === 'undefined') {
+                        throw new Error('The order system is not connected. Please refresh the page or contact TREVO support.');
+                    }
+
+                    const ordersCollection = typeof ORDERS_COLLECTION !== 'undefined' ? ORDERS_COLLECTION : 'orders';
+                    const orderReference = db.collection(ordersCollection).doc(orderData.orderId);
+                    const serverTimestamp = firebase?.firestore?.FieldValue?.serverTimestamp
+                        ? firebase.firestore.FieldValue.serverTimestamp()
+                        : orderData.date;
+
+                    await db.runTransaction(async transaction => {
+                        const existingOrder = await transaction.get(orderReference);
+                        if (existingOrder.exists) throw new Error('This order was already submitted.');
+                        transaction.set(orderReference, { ...orderData, createdAt: serverTimestamp });
+                    });
+                    return orderData;
+                };
+
+                const buildWhatsAppOrderMessage = (order) => {
+                    const lines = [
+                        '👜 *NEW TREVO ORDER*',
+                        '',
+                        `Order ID: *${order.orderId}*`,
+                        '',
+                        '*Customer Details*',
+                        `Name: ${order.name}`,
+                        `Email: ${order.email}`,
+                        `Phone: ${order.phone}`,
+                        `City: ${order.city}`,
+                        `Address: ${order.address}`,
+                        `Delivery Method: ${order.deliveryType}`,
+                        `Delivery Charges: ${order.deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(order.deliveryCharge)}`,
+                        `Payment Method: ${order.paymentMethod}`
+                    ];
+
+                    if (order.paymentMethod === 'Advance Payment') {
+                        lines.push(`Advance Via: ${order.advanceChannel}`);
+                    } else {
+                        lines.push(`COD Advance: PKR ${formatPrice(order.payableNow)}`);
+                        lines.push(`Balance on Delivery: PKR ${formatPrice(order.balanceOnDelivery)}`);
+                    }
+                    if (order.notes) lines.push(`Notes: ${order.notes}`);
+                    lines.push('', '*Order Items*');
+                    order.items.forEach((item, index) => {
+                        lines.push(`${index + 1}. ${item.name}`);
+                        lines.push(`   SKU: ${item.sku}`);
+                        lines.push(`   Color: ${item.color}`);
+                        lines.push(`   Qty: ${item.quantity}`);
+                        lines.push(`   Price: PKR ${formatPrice(item.lineTotal)}`);
+                    });
+                    lines.push('', `Subtotal: PKR ${formatPrice(order.subtotal)}`);
+                    lines.push(`Delivery: ${order.deliveryCharge === 0 ? 'Free' : 'PKR ' + formatPrice(order.deliveryCharge)}`);
+                    lines.push(`*Order Total: PKR ${formatPrice(order.total)}*`, '', 'Please confirm availability and delivery time.');
+                    return lines.join('\n');
+                };
+
+                const submitCheckout = async () => {
+                    checkoutErrorMessage.value = '';
+                    if (!validateCheckout() || submittingOrder.value) return;
+
+                    submittingOrder.value = true;
+                    const whatsappWindow = checkoutMode.value === 'whatsapp' ? window.open('about:blank', '_blank') : null;
+                    try {
+                        const source = checkoutMode.value === 'whatsapp' ? 'Website WhatsApp Checkout' : 'Website Checkout';
+                        const orderData = createOrderData(source);
+                        const savedOrder = await saveOrderToAdmin(orderData);
+
+                        try { localStorage.setItem('trevoLastOrder', JSON.stringify(savedOrder)); } catch (_) {}
+
+                        if (checkoutMode.value === 'whatsapp') {
+                            const whatsappUrl = `https://wa.me/923007041451?text=${encodeURIComponent(buildWhatsAppOrderMessage(savedOrder))}`;
+                            if (whatsappWindow) whatsappWindow.location.href = whatsappUrl;
+                            else window.location.href = whatsappUrl;
+                        }
+
+                        orderConfirmation.value = savedOrder;
+                        cart.value = [];
+                    } catch (error) {
+                        if (whatsappWindow) whatsappWindow.close();
+                        console.error('Checkout submission error:', error);
+                        checkoutErrorMessage.value = error?.message || 'Your order could not be submitted. Please try again.';
+                    } finally {
+                        submittingOrder.value = false;
+                    }
+                };
+
+                const finishCheckout = () => {
+                    checkoutOpen.value = false;
+                    orderConfirmation.value = null;
+                    navigateTo('shop');
                 };
 
                 const compileAndSendWhatsAppCheckout = openCheckout;
 
                 const instantWhatsAppCheckout = (product) => {
                     const phoneNumber = "923007041451";
-                    const chosenColor = selectedColor.value || product.colors[0];
+                    const chosenColor = selectedColor.value || product.colors?.[0] || 'Default';
                     const text = `👜 *TREVO PRODUCT INQUIRY*\n\nProduct: ${product.name}\nCategory: ${product.category}\nColor: ${chosenColor}\nQuantity: ${quantity.value}\nTotal: PKR ${formatPrice(product.price * quantity.value)}\n\nPlease confirm availability.`;
                     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(text)}`, '_blank');
                 };
@@ -1348,14 +1819,48 @@ Subtotal: PKR ${formatPrice(cartSubtotal.value)}
                     alert(`🔐 Re-routing to premium digital processing center. Your configuration packet values totaling PKR ${formatPrice(cartTotal.value)} are secure.`);
                 };
 
+                watch(cart, value => {
+                    try { localStorage.setItem('trevoCart', JSON.stringify(value)); } catch (_) {}
+                }, { deep: true });
+
+                watch(wishlist, value => {
+                    try { localStorage.setItem('trevoWishlist', JSON.stringify(value)); } catch (_) {}
+                }, { deep: true });
+
+                watch([cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, mobileMenuOpen], () => {
+                    const shouldLock = cartDrawerOpen.value || wishlistModalOpen.value || !!quickViewProduct.value || checkoutOpen.value || mobileMenuOpen.value;
+                    document.body.style.overflow = shouldLock ? 'hidden' : '';
+                });
+
+                onMounted(() => {
+                    try {
+                        const savedCart = JSON.parse(localStorage.getItem('trevoCart') || '[]');
+                        const savedWishlist = JSON.parse(localStorage.getItem('trevoWishlist') || '[]');
+                        if (Array.isArray(savedCart)) cart.value = savedCart;
+                        if (Array.isArray(savedWishlist)) wishlist.value = savedWishlist;
+                    } catch (_) {}
+
+                    connectFirebaseProducts();
+
+                    window.addEventListener('keydown', event => {
+                        if (event.key !== 'Escape') return;
+                        mobileMenuOpen.value = false;
+                        mobileFiltersOpen.value = false;
+                        cartDrawerOpen.value = false;
+                        wishlistModalOpen.value = false;
+                        quickViewProduct.value = null;
+                        checkoutOpen.value = false;
+                    });
+                });
+
                 return {
-                    currentPage, searchQuery, sortBy, cartDrawerOpen, wishlistModalOpen, quickViewProduct, checkoutOpen, checkout, firebaseConnected, firebaseMessage,
-                    selectedColor, quantity, filters, categories, availableColors, products, reviews, valueProps,
-                    cart, wishlist, filteredProducts, cartCount, cartSubtotal, cartDiscount, deliveryCharge, payableNow, balanceOnDelivery, cartTotal,
-                    navigateTo, setFilter, selectCategory, scrollToSection, formatPrice, addToCart, buyNow, addConfiguredToCart,
-                    updateQty, removeFromCart, toggleWishlist, isInWishlist, openQuickView, closeQuickView,
+                    currentPage, searchQuery, sortBy, cartDrawerOpen, wishlistModalOpen, quickViewProduct, quickViewImageIndex, checkoutOpen, checkout, checkoutMode, checkoutErrors, checkoutErrorMessage, orderConfirmation, mobileMenuOpen, mobileFiltersOpen, submittingOrder, firebaseConnected, firebaseMessage,
+                    selectedColor, quantity, filters, categories, availableColors, products, maxCatalogPrice, reviews, valueProps, getProductImages, collectProductImages, normalizeProduct,
+                    cart, wishlist, filteredProducts, groupedProducts, slugify, cartCount, cartSubtotal, cartDiscount, deliveryCharge, payableNow, balanceOnDelivery, cartTotal,
+                    navigateTo, setFilter, selectCategory, scrollToSection, formatPrice, addToCart, buyNow, buyConfiguredNow, addConfiguredToCart,
+                    updateQty, removeFromCart, toggleWishlist, isInWishlist, openQuickView, closeQuickView, changeQuickViewImage, handleGalleryTouchStart, handleGalleryTouchEnd, incrementQuickQuantity,
                     toggleCartDrawer, toggleWishlistModal, resetFilters, handleSubscribe, alertModal,
-                    compileAndSendWhatsAppCheckout, openCheckout, sendCheckoutToWhatsApp, instantWhatsAppCheckout, triggerMockSecureCheckout
+                    compileAndSendWhatsAppCheckout, openCheckout, closeCheckout, backToOrderSummary, submitCheckout, finishCheckout, sendCheckoutToWhatsApp, instantWhatsAppCheckout, triggerMockSecureCheckout
                 };
             }
         }).mount('#app');

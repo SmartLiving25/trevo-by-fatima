@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script>
@@ -28,10 +29,12 @@ tailwind.config={theme:{extend:{fontFamily:{heading:['"Playfair Display"','serif
       <div class="font-heading text-4xl font-black tracking-widest">TREVO</div>
       <div class="text-[10px] tracking-[.35em] text-rosegold uppercase mt-1">Store Management</div>
       <h1 class="font-heading text-2xl mt-8">Welcome Back</h1>
-      <p class="text-sm text-gray-500 mt-2 mb-6">Manage products, pricing, inventory and orders.</p>
+      <p class="text-sm text-gray-500 mt-2 mb-6">Sign in with your Firebase admin account to manage products and orders.</p>
+      <input v-model.trim="email" type="email" autocomplete="username" placeholder="Admin email" class="w-full bg-ivory border border-sage-100 rounded-xl px-4 py-3 outline-none focus:border-sage-600 mb-3">
       <input v-model="password" type="password" placeholder="Admin password" class="w-full bg-ivory border border-sage-100 rounded-xl px-4 py-3 outline-none focus:border-sage-600">
       <p v-if="loginError" class="text-red-600 text-xs mt-3">{{loginError}}</p>
-      <button class="w-full bg-sage-600 hover:bg-sage-700 text-white rounded-xl py-3 mt-5 font-semibold tracking-wider uppercase text-xs">Open Dashboard</button>
+      <button :disabled="loggingIn" class="w-full bg-sage-600 hover:bg-sage-700 disabled:bg-gray-300 text-white rounded-xl py-3 mt-5 font-semibold tracking-wider uppercase text-xs">{{loggingIn?'Signing in…':'Open Dashboard'}}</button>
+      <p class="text-[10px] leading-relaxed text-gray-400 mt-4">This account must have the Firebase custom claim <code>admin: true</code>, matching the TREVO Firestore rules.</p>
     </form>
   </div>
 
@@ -53,10 +56,10 @@ tailwind.config={theme:{extend:{fontFamily:{heading:['"Playfair Display"','serif
     </header>
 
     <div class="max-w-[1500px] mx-auto px-4 lg:px-6 py-6 grid lg:grid-cols-[230px_1fr] gap-6">
-      <aside class="bg-white border border-sage-100 rounded-2xl p-3 h-fit lg:sticky lg:top-28">
+      <aside class="bg-white border border-sage-100 rounded-2xl p-3 h-fit lg:sticky lg:top-28 flex lg:block gap-2 overflow-x-auto">
         <button v-for="item in nav" :key="item.id" @click="tab=item.id"
           :class="tab===item.id?'bg-sage-600 text-white shadow-md':'hover:bg-sage-50 text-gray-600'"
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-left transition">
+          class="shrink-0 lg:w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-left transition">
           <span>{{item.icon}}</span><span>{{item.label}}</span>
         </button>
       </aside>
@@ -122,7 +125,7 @@ tailwind.config={theme:{extend:{fontFamily:{heading:['"Playfair Display"','serif
                     <td class="p-4 text-gray-500">{{p.sku||p.id}}</td><td class="p-4">{{p.category}}</td>
                     <td class="p-4 text-right font-semibold">Rs. {{money(p.price)}}</td><td class="p-4 text-right text-rosegold">{{p.salePrice?('Rs. '+money(p.salePrice)):'—'}}</td>
                     <td class="p-4 text-center"><input type="number" min="0" :value="p.quantity" @change="quickStock(p,$event.target.value)" class="w-20 text-center border border-sage-100 rounded-lg px-2 py-2"></td>
-                    <td class="p-4 text-center"><span :class="p.quantity>0?'bg-green-50 text-green-700':'bg-red-50 text-red-600'" class="text-[10px] font-bold px-3 py-1 rounded-full">{{p.quantity>0?'IN STOCK':'OUT'}}</span></td>
+                    <td class="p-4 text-center"><div class="flex flex-col items-center gap-1"><span :class="p.published&&p.status!=='draft'?'bg-green-50 text-green-700':'bg-gray-100 text-gray-500'" class="text-[10px] font-bold px-3 py-1 rounded-full">{{p.published&&p.status!=='draft'?'LIVE':'DRAFT'}}</span><span :class="p.quantity>0?'text-green-700':'text-red-600'" class="text-[9px] font-bold">{{p.quantity>0?'IN STOCK':'OUT'}}</span></div></td>
                     <td class="p-4 text-right"><button @click="openProduct(p)" class="text-sage-600 font-semibold mr-3">Edit</button><button @click="deleteProduct(p)" class="text-red-500">Delete</button></td>
                   </tr>
                 </tbody>
@@ -161,8 +164,8 @@ tailwind.config={theme:{extend:{fontFamily:{heading:['"Playfair Display"','serif
           <div class="space-y-4">
             <div v-for="o in filteredOrders" :key="o.orderId" class="bg-white border border-sage-100 rounded-2xl p-5">
               <div class="flex flex-wrap justify-between gap-4">
-                <div><div class="font-semibold">{{o.orderId}}</div><div class="text-xs text-gray-400 mt-1">{{customerName(o)}} • {{customerPhone(o)}} • {{o.city||o.customer?.city||''}}</div></div>
-                <div class="text-right"><div class="font-heading text-xl">Rs. {{money(o.total)}}</div><select :value="o.status||'Pending'" @change="changeOrderStatus(o,$event.target.value)" class="mt-2 border border-sage-100 rounded-lg px-3 py-2 text-xs"><option v-for="s in statuses" :key="s">{{s}}</option></select></div>
+                <div><div class="flex flex-wrap items-center gap-2"><div class="font-semibold">{{o.orderId}}</div><span class="bg-sage-50 text-sage-700 rounded-full px-2 py-1 text-[9px] font-bold uppercase">{{o.source||'Website Checkout'}}</span></div><div class="text-xs text-gray-400 mt-1">{{customerName(o)}} • {{customerPhone(o)}} • {{o.city||o.customer?.city||''}} • {{formatOrderDate(o)}}</div></div>
+                <div class="text-right"><div class="font-heading text-xl">Rs. {{money(o.total)}}</div><div class="flex flex-wrap justify-end gap-2 mt-2"><select :value="o.status||o.orderStatus||'Pending'" @change="changeOrderStatus(o,$event.target.value)" class="border border-sage-100 rounded-lg px-3 py-2 text-xs"><option v-for="s in statuses" :key="s">{{s}}</option></select><button @click="selectedOrder=o" class="bg-sage-600 text-white rounded-lg px-4 py-2 text-xs font-semibold">View details</button></div></div>
               </div>
               <div class="grid md:grid-cols-2 gap-3 mt-4">
                 <div v-for="item in o.items||[]" :key="item.id+item.color" class="bg-ivory rounded-xl p-3 text-sm flex justify-between"><span>{{item.name}} <span class="text-gray-400">× {{item.qty||item.quantity||1}}</span></span><span>Rs. {{money(Number(item.price||0)*Number(item.qty||item.quantity||1))}}</span></div>
@@ -195,9 +198,13 @@ tailwind.config={theme:{extend:{fontFamily:{heading:['"Playfair Display"','serif
       <form @submit.prevent="saveProduct" class="p-6 space-y-7">
         <div class="grid md:grid-cols-[220px_1fr] gap-6">
           <div>
-            <img :src="editing.img||fallbackImage" class="w-full aspect-square object-cover rounded-2xl bg-sage-50 border border-sage-100">
+            <img :src="editing.img||editing.images?.[0]||fallbackImage" class="w-full aspect-square object-cover rounded-2xl bg-sage-50 border border-sage-100">
             <button type="button" @click="imagePicker=true" class="w-full mt-3 border border-sage-100 rounded-xl py-3 text-xs font-semibold">Choose from Image Library</button>
-            <input v-model="editing.img" placeholder="Or paste image URL" class="w-full mt-2 border border-sage-100 rounded-xl px-3 py-3 text-xs">
+            <input v-model="editing.img" placeholder="Primary image URL" class="w-full mt-2 border border-sage-100 rounded-xl px-3 py-3 text-xs">
+            <label class="block text-xs mt-4">Gallery Images (one URL per line)
+              <textarea v-model="editing.imagesText" rows="7" placeholder="Paste 4–5 image URLs" class="mt-1 w-full border border-sage-100 rounded-xl px-3 py-3 text-xs"></textarea>
+            </label>
+            <p class="text-[10px] text-gray-400 mt-2">The first image is used on product cards; all images appear in Quick View.</p>
           </div>
           <div class="grid sm:grid-cols-2 gap-4">
             <label class="sm:col-span-2 text-xs">Product Name<input required v-model="editing.name" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
@@ -209,6 +216,8 @@ tailwind.config={theme:{extend:{fontFamily:{heading:['"Playfair Display"','serif
             <label class="text-xs">Sale Price (PKR)<input type="number" min="0" v-model.number="editing.salePrice" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
             <label class="text-xs">Wholesale Cost<input type="number" min="0" v-model.number="editing.wholesaleCost" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
             <label class="text-xs">Stock Quantity<input type="number" min="0" v-model.number="editing.quantity" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
+            <label class="text-xs">Store Visibility<select v-model="editing.status" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"><option value="active">Active / Visible</option><option value="draft">Draft / Hidden</option><option value="inactive">Inactive / Hidden</option><option value="archived">Archived / Hidden</option></select></label>
+            <label class="text-xs flex items-center gap-3 mt-6"><input type="checkbox" v-model="editing.published" class="h-4 w-4 accent-[#7D8F7A]"> Published on storefront</label>
             <label class="text-xs sm:col-span-2">Colors (comma separated)<input v-model="editing.colorsText" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
             <label class="text-xs sm:col-span-2">Description<textarea v-model="editing.description" rows="3" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></textarea></label>
             <label class="text-xs">Material<input v-model="editing.material" class="mt-1 w-full border border-sage-100 rounded-xl px-4 py-3 text-sm"></label>
@@ -240,6 +249,65 @@ tailwind.config={theme:{extend:{fontFamily:{heading:['"Playfair Display"','serif
     </div>
   </div>
 
+  <!-- Complete order detail panel: matches the storefront checkout payload -->
+  <div v-if="selectedOrder" class="fixed inset-0 z-[60] bg-black/50 p-3 sm:p-6 overflow-y-auto" @click.self="selectedOrder=null">
+    <div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden fade">
+      <div class="bg-gradient-to-r from-sage-50 to-blush-50 border-b border-sage-100 p-6 flex justify-between gap-4">
+        <div><p class="text-[10px] tracking-[.3em] uppercase text-rosegold font-bold">Order Details</p><h2 class="font-heading text-2xl">{{selectedOrder.orderId}}</h2><p class="text-xs text-gray-500 mt-1">{{formatOrderDate(selectedOrder)}} • {{selectedOrder.source||'Website Checkout'}}</p></div>
+        <button @click="selectedOrder=null" class="text-2xl text-gray-400" aria-label="Close order details">×</button>
+      </div>
+      <div class="p-6 space-y-6">
+        <div class="grid md:grid-cols-2 gap-4">
+          <section class="bg-ivory rounded-2xl p-5">
+            <h3 class="font-heading text-lg mb-3">Customer & Delivery</h3>
+            <dl class="space-y-2 text-sm">
+              <div class="flex justify-between gap-4"><dt class="text-gray-400">Name</dt><dd class="text-right font-medium">{{customerName(selectedOrder)}}</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-gray-400">Email</dt><dd class="text-right break-all">{{customerField(selectedOrder,'email')||'—'}}</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-gray-400">Phone</dt><dd class="text-right">{{customerPhone(selectedOrder)||'—'}}</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-gray-400">City</dt><dd class="text-right">{{customerField(selectedOrder,'city')||'—'}}</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-gray-400">Province</dt><dd class="text-right">{{customerField(selectedOrder,'province')||'—'}}</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-gray-400">Postal code</dt><dd class="text-right">{{customerField(selectedOrder,'postalCode')||'—'}}</dd></div>
+            </dl>
+            <div class="border-t border-sage-100 mt-4 pt-4"><p class="text-[10px] uppercase tracking-widest text-gray-400">Address</p><p class="text-sm mt-1 whitespace-pre-line">{{customerField(selectedOrder,'address')||'—'}}</p></div>
+          </section>
+          <section class="bg-ivory rounded-2xl p-5">
+            <h3 class="font-heading text-lg mb-3">Payment & Fulfilment</h3>
+            <dl class="space-y-2 text-sm">
+              <div class="flex justify-between gap-4"><dt class="text-gray-400">Delivery</dt><dd class="text-right font-medium">{{selectedOrder.deliveryType||'Standard Delivery'}}</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-gray-400">Payment method</dt><dd class="text-right">{{selectedOrder.paymentMethod||'—'}}</dd></div>
+              <div v-if="selectedOrder.advanceChannel" class="flex justify-between gap-4"><dt class="text-gray-400">Advance via</dt><dd class="text-right">{{selectedOrder.advanceChannel}}</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-gray-400">Payable now</dt><dd class="text-right">Rs. {{money(selectedOrder.payableNow)}}</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-gray-400">Balance on delivery</dt><dd class="text-right">Rs. {{money(selectedOrder.balanceOnDelivery)}}</dd></div>
+            </dl>
+            <label class="block text-xs mt-4">Payment Status
+              <select :value="selectedOrder.paymentStatus||'Pending'" @change="changePaymentStatus(selectedOrder,$event.target.value)" class="mt-1 w-full border border-sage-100 bg-white rounded-xl px-3 py-2.5 text-sm"><option v-for="s in paymentStatuses" :key="s">{{s}}</option></select>
+            </label>
+            <label class="block text-xs mt-3">Order Status
+              <select :value="selectedOrder.status||selectedOrder.orderStatus||'Pending'" @change="changeOrderStatus(selectedOrder,$event.target.value)" class="mt-1 w-full border border-sage-100 bg-white rounded-xl px-3 py-2.5 text-sm"><option v-for="s in statuses" :key="s">{{s}}</option></select>
+            </label>
+          </section>
+        </div>
+        <section>
+          <h3 class="font-heading text-xl mb-3">Items</h3>
+          <div class="space-y-3">
+            <div v-for="(item,i) in selectedOrder.items||[]" :key="`${item.id||item.sku}-${item.color||i}`" class="border border-sage-100 rounded-2xl p-3 flex gap-3 items-center">
+              <img :src="item.img||fallbackImage" class="w-16 h-16 rounded-xl object-cover bg-sage-50">
+              <div class="min-w-0 flex-1"><p class="font-semibold truncate">{{item.name}}</p><p class="text-xs text-gray-400">{{item.sku||item.id}}<span v-if="item.color"> • {{item.color}}</span> • Qty {{item.qty||item.quantity||1}}</p></div>
+              <div class="text-right text-sm font-semibold">Rs. {{money(item.lineTotal||Number(item.price||0)*Number(item.qty||item.quantity||1))}}</div>
+            </div>
+          </div>
+        </section>
+        <section class="bg-sage-50 rounded-2xl p-5 ml-auto max-w-md text-sm space-y-2">
+          <div class="flex justify-between"><span>Subtotal</span><span>Rs. {{money(selectedOrder.subtotal)}}</span></div>
+          <div class="flex justify-between"><span>Discount</span><span>− Rs. {{money(selectedOrder.discount)}}</span></div>
+          <div class="flex justify-between"><span>Delivery</span><span>Rs. {{money(selectedOrder.deliveryCharge)}}</span></div>
+          <div class="flex justify-between border-t border-sage-100 pt-2 font-bold text-base"><span>Total</span><span>Rs. {{money(selectedOrder.total)}}</span></div>
+        </section>
+        <section v-if="selectedOrder.notes" class="border border-sage-100 rounded-2xl p-4"><p class="text-[10px] uppercase tracking-widest text-gray-400">Customer notes</p><p class="text-sm mt-1 whitespace-pre-line">{{selectedOrder.notes}}</p></section>
+      </div>
+    </div>
+  </div>
+
   <!-- Image Picker -->
   <div v-if="imagePicker" class="fixed inset-0 z-[60] bg-black/50 p-4 overflow-y-auto" @click.self="imagePicker=false">
     <div class="max-w-5xl mx-auto bg-white rounded-3xl p-6">
@@ -261,45 +329,87 @@ const ADMIN_HASH='11b1545980adcbeeec9672ef356395b20d2b0fe9edd486e2e5e3ed864a7a29
 
 createApp({
 setup(){
-  const loggedIn=ref(sessionStorage.getItem('trevoAdmin')==='1'),password=ref(''),loginError=ref('');
+  const loggedIn=ref(false),email=ref(localStorage.getItem('trevoAdminEmail')||''),password=ref(''),loginError=ref(''),loggingIn=ref(false);
   const firebaseConnected=ref(false),tab=ref('dashboard'),products=ref([]),orders=ref([]),toast=ref('');
-  const productModal=ref(false),imagePicker=ref(false),saving=ref(false),editing=ref({});
+  const productModal=ref(false),imagePicker=ref(false),saving=ref(false),editing=ref({}),selectedOrder=ref(null);
   const productSearch=ref(''),categoryFilter=ref(''),orderSearch=ref(''),orderFilter=ref('');
-  const statuses=['Pending','Confirmed','Shipped','Delivered','Cancelled'];
+  const statuses=['Pending','Confirmed','Processing','Shipped','Delivered','Cancelled'];
+  const paymentStatuses=['Pending','Advance Paid','Paid','Refunded'];
   const nav=[{id:'dashboard',icon:'✦',label:'Dashboard'},{id:'products',icon:'👜',label:'Products & Prices'},{id:'inventory',icon:'📦',label:'Inventory & Variants'},{id:'orders',icon:'🧾',label:'Orders'},{id:'images',icon:'🖼️',label:'Image Library'}];
   const imageLibrary=APPROVED_IMAGES;
   const fallbackImage='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500"><rect width="100%" height="100%" fill="#f4f6f4"/><text x="50%" y="48%" text-anchor="middle" font-size="70">👜</text><text x="50%" y="62%" text-anchor="middle" font-family="Arial" font-size="18" fill="#7D8F7A">Choose product image</text></svg>`);
   let unProducts=null,unOrders=null;
 
   const dbReady=()=>typeof firebaseReady!=='undefined'&&firebaseReady&&typeof db!=='undefined';
+  const authReady=()=>typeof firebase!=='undefined'&&firebase.apps?.length&&typeof firebase.auth==='function';
+  const legacyMode=()=>typeof ADMIN_ALLOW_LEGACY_LOGIN!=='undefined'&&ADMIN_ALLOW_LEGACY_LOGIN===true;
   const pCollection=()=>typeof PRODUCTS_COLLECTION!=='undefined'?PRODUCTS_COLLECTION:'products';
   const oCollection=()=>typeof ORDERS_COLLECTION!=='undefined'?ORDERS_COLLECTION:'orders';
 
   async function hash(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-  async function login(){if(await hash(password.value)===ADMIN_HASH){loggedIn.value=true;sessionStorage.setItem('trevoAdmin','1');connect()}else{loginError.value='Incorrect password.'}}
-  function logout(){sessionStorage.removeItem('trevoAdmin');location.reload()}
+  async function verifyAdminUser(user){
+    const token=await user.getIdTokenResult(true);
+    if(token.claims.admin!==true)throw new Error('This Firebase account does not have the admin claim.');
+    return true;
+  }
+  async function login(){
+    loginError.value='';loggingIn.value=true;
+    try{
+      if(authReady()){
+        if(!email.value||!password.value)throw new Error('Enter your admin email and password.');
+        const credential=await firebase.auth().signInWithEmailAndPassword(email.value,password.value);
+        await verifyAdminUser(credential.user);
+        localStorage.setItem('trevoAdminEmail',email.value);loggedIn.value=true;password.value='';connect();return;
+      }
+      if(legacyMode()&&await hash(password.value)===ADMIN_HASH){loggedIn.value=true;sessionStorage.setItem('trevoAdmin','1');connect();return}
+      throw new Error('Firebase Authentication is not connected. Check firebase-config.js.');
+    }catch(e){
+      if(authReady()&&firebase.auth().currentUser)await firebase.auth().signOut().catch(()=>{});
+      loggedIn.value=false;loginError.value=e?.message||'Sign-in failed.';
+    }finally{loggingIn.value=false}
+  }
+  async function logout(){
+    sessionStorage.removeItem('trevoAdmin');
+    if(authReady())await firebase.auth().signOut().catch(()=>{});
+    loggedIn.value=false;password.value='';products.value=[];orders.value=[];
+  }
   function notify(msg){toast.value=msg;setTimeout(()=>toast.value='',2600)}
   function money(v){return Math.round(Number(v||0)).toLocaleString('en-PK')}
   function customerName(o){return o.name||o.customer?.name||'Customer'}
   function customerPhone(o){return o.phone||o.customer?.phone||''}
+  function customerField(o,key){return o?.[key]??o?.customer?.[key]??''}
+  function orderTime(o){
+    const value=o?.createdAt?.toDate?.()||o?.createdAtISO||o?.date||o?.createdAt||0;
+    const time=new Date(value).getTime();return Number.isFinite(time)?time:0;
+  }
+  function formatOrderDate(o){const t=orderTime(o);return t?new Date(t).toLocaleString('en-PK',{dateStyle:'medium',timeStyle:'short'}):'Date unavailable'}
+
+  function parseImages(value){
+    const source=Array.isArray(value)?value:String(value||'').split(/[\n,|]+/);
+    return [...new Set(source.map(x=>String(x||'').trim()).filter(x=>/^https?:\/\//i.test(x)||x.startsWith('data:image/')))];
+  }
 
   function normalizeProduct(d,id){
     const variants=Array.isArray(d.variants)?d.variants:[];
     const variantStock=variants.reduce((s,v)=>s+Number(v.stock||v.quantity||0),0);
     const explicit=Number(d.quantity??d.stock??0);
-    return {...d,_docId:id,id:d.id||id,sku:d.sku||d.id||id,price:Number(d.price||d.sellingPrice||0),salePrice:Number(d.salePrice||0)||null,
+    const images=parseImages([...(Array.isArray(d.images)?d.images:parseImages(d.images)),...parseImages(d.additionalImages),...parseImages(d.additional_image_link),...parseImages(d.imageUrls),d.img,d.image,d.imageUrl,d.image_url,d.image_link,d.image1,d.image2,d.image3,d.image4,d.image5,d.img1,d.img2,d.img3,d.img4,d.img5]);
+    const status=String(d.status||((d.published===false)?'draft':'active')).toLowerCase();
+    return {...d,_docId:id,id:d.id||id,sku:d.sku||d.mpn||d.item_group_id||d.id||id,price:Number(d.price||d.regularPrice||d.sellingPrice||0),salePrice:Number(d.salePrice||d.sale_price||0)||null,
       quantity:variants.length?variantStock:explicit,stock:variants.length?variantStock:explicit,variants,
       colors:Array.isArray(d.colors)?d.colors:String(d.color||'').split(/[,/|]/).map(x=>x.trim()).filter(Boolean),
-      img:d.img||d.image||d.imageUrl||d.image_url||(Array.isArray(d.images)?d.images[0]:'')};
+      img:images[0]||'',images,status,published:d.published!==false&&!['draft','inactive','archived','hidden'].includes(status)};
   }
   function connect(){
     if(!dbReady()){firebaseConnected.value=false;return}
     firebaseConnected.value=true;
     if(unProducts)unProducts(); if(unOrders)unOrders();
     unProducts=db.collection(pCollection()).onSnapshot(s=>{products.value=s.docs.map(x=>normalizeProduct(x.data(),x.id)).sort((a,b)=>a.name.localeCompare(b.name))},e=>{console.error(e);firebaseConnected.value=false});
-    unOrders=db.collection(oCollection()).orderBy('date','desc').onSnapshot(s=>orders.value=s.docs.map(x=>({...x.data(),_docId:x.id,orderId:x.data().orderId||x.id})),e=>{
-      console.warn(e);db.collection(oCollection()).onSnapshot(s=>orders.value=s.docs.map(x=>({...x.data(),_docId:x.id,orderId:x.data().orderId||x.id})))
-    });
+    unOrders=db.collection(oCollection()).onSnapshot(s=>{
+      const list=s.docs.map(x=>({...x.data(),_docId:x.id,orderId:x.data().orderId||x.id})).sort((a,b)=>orderTime(b)-orderTime(a));
+      orders.value=list;
+      if(selectedOrder.value){const fresh=list.find(o=>o._docId===selectedOrder.value._docId);if(fresh)selectedOrder.value=fresh}
+    },e=>{console.error(e);firebaseConnected.value=false});
   }
 
   const totalUnits=computed(()=>products.value.reduce((s,p)=>s+Number(p.quantity||0),0));
@@ -315,35 +425,48 @@ setup(){
   ]);
   const categories=computed(()=>[...new Set(products.value.map(p=>p.category).filter(Boolean))]);
   const filteredProducts=computed(()=>{const q=productSearch.value.toLowerCase();return products.value.filter(p=>(!categoryFilter.value||p.category===categoryFilter.value)&&(!q||`${p.name} ${p.sku} ${p.category}`.toLowerCase().includes(q)))});
-  const filteredOrders=computed(()=>{const q=orderSearch.value.toLowerCase();return orders.value.filter(o=>(!orderFilter.value||(o.status||'Pending')===orderFilter.value)&&(!q||`${o.orderId} ${customerName(o)} ${customerPhone(o)}`.toLowerCase().includes(q)))});
+  const filteredOrders=computed(()=>{const q=orderSearch.value.toLowerCase();return orders.value.filter(o=>(!orderFilter.value||(o.status||o.orderStatus||'Pending')===orderFilter.value)&&(!q||`${o.orderId} ${customerName(o)} ${customerPhone(o)} ${customerField(o,'email')} ${customerField(o,'city')}`.toLowerCase().includes(q)))});
 
   function openProduct(p=null){
-    const base=p?JSON.parse(JSON.stringify(p)):{name:'',sku:'',category:'Handbags',collection:'',style:'',price:0,salePrice:null,wholesaleCost:0,quantity:0,img:'',description:'',material:'',pattern:'',careInstructions:'',seoKeywords:'',colors:[],features:[],variants:[]};
+    const base=p?JSON.parse(JSON.stringify(p)):{name:'',sku:'',category:'Handbags',collection:'',style:'',price:0,salePrice:null,wholesaleCost:0,quantity:0,img:'',images:[],description:'',material:'',pattern:'',careInstructions:'',seoKeywords:'',colors:[],features:[],variants:[],status:'active',published:true};
     base.colorsText=(base.colors||[]).join(', ');
     base.featuresText=(base.features||[]).join('; ');
+    base.status=String(base.status||'active').toLowerCase();
+    base.published=base.published!==false&&!['draft','inactive','archived','hidden'].includes(base.status);
+    base.imagesText=parseImages([base.img,...(base.images||[])]).join('\n');
     editing.value=base;productModal.value=true;
   }
   function closeProduct(){productModal.value=false;imagePicker.value=false}
   function addVariant(){editing.value.variants.push({color:'',sku:'',barcode:'',stock:0,status:'Active'})}
-  function selectImage(url){editing.value.img=url;imagePicker.value=false}
+  function selectImage(url){
+    const images=parseImages(editing.value.imagesText);
+    if(!editing.value.img)editing.value.img=url;
+    editing.value.imagesText=parseImages([editing.value.img,...images,url]).join('\n');
+    imagePicker.value=false;
+  }
   async function saveProduct(){
     if(!dbReady()){alert('Firebase is not connected.');return}
     saving.value=true;
     try{
-      const old=editing.value._docId?products.value.find(p=>p._docId===editing.value._docId):null;
+      const name=String(editing.value.name||'').trim(),sku=String(editing.value.sku||'').trim(),category=String(editing.value.category||'').trim();
+      const regularPrice=Number(editing.value.price||0),salePrice=Number(editing.value.salePrice||0);
+      if(name.length<2||!sku||!category||regularPrice<=0)throw new Error('Name, SKU, category and a regular price above zero are required.');
+      if(salePrice>0&&salePrice>=regularPrice)throw new Error('Sale price must be lower than the regular price.');
+      const images=parseImages([editing.value.img,...parseImages(editing.value.imagesText)]);
+      if(!images.length)throw new Error('Add at least one valid http(s) product image URL.');
       const variants=(editing.value.variants||[]).map(v=>({...v,stock:Math.max(0,Number(v.stock||0))}));
       const quantity=variants.length?variants.reduce((s,v)=>s+v.stock,0):Math.max(0,Number(editing.value.quantity||0));
       const docId=String(editing.value._docId||editing.value.sku||editing.value.id||('TRV-'+Date.now()));
-      const data={...editing.value,id:editing.value.id||editing.value.sku||docId,sku:editing.value.sku||docId,
+      const status=String(editing.value.status||'active').toLowerCase(),published=editing.value.published!==false&&!['draft','inactive','archived','hidden'].includes(status);
+      const data={...editing.value,id:editing.value.id||sku||docId,sku,name,category,
         colors:String(editing.value.colorsText||'').split(',').map(x=>x.trim()).filter(Boolean),
         features:String(editing.value.featuresText||'').split(';').map(x=>x.trim()).filter(Boolean),
-        variants,quantity,stock:quantity,inStock:quantity>0,price:Number(editing.value.price||0),salePrice:Number(editing.value.salePrice||0)||null,
+        variants,quantity,stock:quantity,inStock:quantity>0,price:regularPrice,regularPrice,salePrice:salePrice||null,
+        img:images[0],image:images[0],imageUrl:images[0],images,image1:images[0]||'',image2:images[1]||'',image3:images[2]||'',image4:images[3]||'',image5:images[4]||'',
+        status,published,
         updatedAt:new Date().toISOString()};
-      delete data._docId;delete data.colorsText;delete data.featuresText;
+      delete data._docId;delete data.colorsText;delete data.featuresText;delete data.imagesText;
       await db.collection(pCollection()).doc(docId).set(data,{merge:true});
-      if(old&&Number(old.price)!==Number(data.price)){
-        await db.collection('price_history').add({productId:docId,sku:data.sku,name:data.name,oldPrice:Number(old.price||0),newPrice:Number(data.price||0),changedAt:new Date().toISOString()});
-      }
       notify('Product saved to Firebase');closeProduct();
     }catch(e){console.error(e);alert('Save failed: '+e.message)}finally{saving.value=false}
   }
@@ -352,7 +475,6 @@ setup(){
     const qty=Math.max(0,Number(val||0));
     if(p.variants?.length){alert('This product uses color variants. Edit the product and update each variant stock.');return}
     await db.collection(pCollection()).doc(p._docId).update({quantity:qty,stock:qty,inStock:qty>0,updatedAt:new Date().toISOString()});
-    await db.collection('inventory_movements').add({productId:p._docId,sku:p.sku,name:p.name,type:'Manual adjustment',quantityAfter:qty,date:new Date().toISOString()});
     notify('Stock updated');
   }
   async function deleteProduct(p){if(!confirm(`Delete "${p.name}"?`))return;await db.collection(pCollection()).doc(p._docId).delete();notify('Product deleted')}
@@ -365,8 +487,10 @@ setup(){
       const existing=products.value.find(p=>p._docId===raw.id||p.sku===raw.sku);
       const variants=(raw.variants||[]).map(v=>({...v,image:raw.img||''}));
       const qty=existing?Number(existing.quantity||0):variants.reduce((s,v)=>s+Number(v.stock||0),0);
-      batch.set(ref,{...raw,variants,price:Number(existing?.price||raw.price||0),salePrice:Number(existing?.salePrice||raw.salePrice||0)||null,wholesaleCost:Number(existing?.wholesaleCost||raw.wholesaleCost||0),
-        quantity:qty,stock:qty,inStock:qty>0,publishStatus:existing?.publishStatus||'Draft',updatedAt:new Date().toISOString()},{merge:true});
+      const images=parseImages([raw.img,...(raw.images||[])]);
+      batch.set(ref,{...raw,variants,price:Number(existing?.price||raw.price||0),regularPrice:Number(existing?.price||raw.price||0),salePrice:Number(existing?.salePrice||raw.salePrice||0)||null,wholesaleCost:Number(existing?.wholesaleCost||raw.wholesaleCost||0),
+        img:images[0]||'',image:images[0]||'',imageUrl:images[0]||'',images,image1:images[0]||'',image2:images[1]||'',image3:images[2]||'',image4:images[3]||'',image5:images[4]||'',
+        quantity:qty,stock:qty,inStock:qty>0,status:existing?.status||'draft',published:existing?.published??false,updatedAt:new Date().toISOString()},{merge:true});
     }
     await batch.commit();notify('Workbook catalog imported successfully');
   }
@@ -377,47 +501,71 @@ setup(){
       await db.runTransaction(async tx=>{
         const os=await tx.get(orderRef);if(!os.exists)throw new Error('Order not found');
         const live=os.data(),items=live.items||[],changes=[];
-        if(newStatus==='Confirmed'&&!live.inventoryAdjusted){
+        const reservesInventory=['Confirmed','Processing','Shipped','Delivered'].includes(newStatus);
+        if(reservesInventory&&!live.inventoryAdjusted){
           for(const item of items){
-            const id=String(item.id||item.productId||'');if(!id)continue;
-            const pr=db.collection(pCollection()).doc(id),ps=await tx.get(pr);if(!ps.exists)continue;
+            const key=String(item.id||item.productId||item.sku||'');if(!key)continue;
+            const known=products.value.find(p=>[p._docId,p.id,p.sku].map(String).includes(key));
+            const pr=db.collection(pCollection()).doc(String(known?._docId||key)),ps=await tx.get(pr);
+            if(!ps.exists)throw new Error(`Product not found for ${item.name||key}. Check its product ID/SKU.`);
             const p=normalizeProduct(ps.data(),ps.id),qty=Number(item.qty||item.quantity||1);
             if(p.quantity<qty)throw new Error(`Not enough stock for ${item.name}. Available: ${p.quantity}`);
             if(p.variants?.length&&item.color){
-              const variants=p.variants.map(v=>v.color===item.color?{...v,stock:Math.max(0,Number(v.stock||0)-qty)}:v);
+              const match=p.variants.some(v=>String(v.color).toLowerCase()===String(item.color).toLowerCase());
+              if(!match)throw new Error(`Colour variant "${item.color}" was not found for ${item.name}.`);
+              const variants=p.variants.map(v=>String(v.color).toLowerCase()===String(item.color).toLowerCase()?{...v,stock:Math.max(0,Number(v.stock||0)-qty)}:v);
               const total=variants.reduce((s,v)=>s+Number(v.stock||0),0);changes.push({ref:pr,data:{variants,quantity:total,stock:total,inStock:total>0}});
             }else changes.push({ref:pr,data:{quantity:p.quantity-qty,stock:p.quantity-qty,inStock:p.quantity-qty>0}});
           }
           changes.forEach(c=>tx.update(c.ref,{...c.data,updatedAt:new Date().toISOString()}));
-          tx.update(orderRef,{status:newStatus,inventoryAdjusted:true,inventoryAdjustedAt:new Date().toISOString()});
+          tx.update(orderRef,{status:newStatus,orderStatus:newStatus,inventoryAdjusted:true,inventoryAdjustedAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
         }else if(newStatus==='Cancelled'&&live.inventoryAdjusted){
           for(const item of items){
-            const id=String(item.id||item.productId||'');if(!id)continue;
-            const pr=db.collection(pCollection()).doc(id),ps=await tx.get(pr);if(!ps.exists)continue;
+            const key=String(item.id||item.productId||item.sku||'');if(!key)continue;
+            const known=products.value.find(p=>[p._docId,p.id,p.sku].map(String).includes(key));
+            const pr=db.collection(pCollection()).doc(String(known?._docId||key)),ps=await tx.get(pr);if(!ps.exists)continue;
             const p=normalizeProduct(ps.data(),ps.id),qty=Number(item.qty||item.quantity||1);
             if(p.variants?.length&&item.color){
-              const variants=p.variants.map(v=>v.color===item.color?{...v,stock:Number(v.stock||0)+qty}:v);
+              const variants=p.variants.map(v=>String(v.color).toLowerCase()===String(item.color).toLowerCase()?{...v,stock:Number(v.stock||0)+qty}:v);
               const total=variants.reduce((s,v)=>s+Number(v.stock||0),0);changes.push({ref:pr,data:{variants,quantity:total,stock:total,inStock:true}});
             }else changes.push({ref:pr,data:{quantity:p.quantity+qty,stock:p.quantity+qty,inStock:true}});
           }
           changes.forEach(c=>tx.update(c.ref,{...c.data,updatedAt:new Date().toISOString()}));
-          tx.update(orderRef,{status:newStatus,inventoryAdjusted:false,inventoryRestoredAt:new Date().toISOString()});
-        }else tx.update(orderRef,{status:newStatus,updatedAt:new Date().toISOString()});
-      });notify('Order status updated');
+          tx.update(orderRef,{status:newStatus,orderStatus:newStatus,inventoryAdjusted:false,inventoryRestoredAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+        }else tx.update(orderRef,{status:newStatus,orderStatus:newStatus,updatedAt:new Date().toISOString()});
+      });
+      if(selectedOrder.value?._docId===order._docId)selectedOrder.value={...selectedOrder.value,status:newStatus,orderStatus:newStatus,inventoryAdjusted:newStatus==='Cancelled'?false:(['Confirmed','Processing','Shipped','Delivered'].includes(newStatus)?true:selectedOrder.value.inventoryAdjusted)};
+      notify('Order status updated');
     }catch(e){alert(e.message)}
   }
+  async function changePaymentStatus(order,newStatus){
+    if(!dbReady())return;
+    try{
+      await db.collection(oCollection()).doc(order._docId).update({paymentStatus:newStatus,paymentUpdatedAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+      if(selectedOrder.value?._docId===order._docId)selectedOrder.value={...selectedOrder.value,paymentStatus:newStatus};
+      notify('Payment status updated');
+    }catch(e){alert('Payment update failed: '+e.message)}
+  }
   function exportProducts(){
-    const rows=[['SKU','Product Name','Category','Regular Price','Sale Price','Stock','Image URL'],...products.value.map(p=>[p.sku,p.name,p.category,p.price,p.salePrice||'',p.quantity,p.img||''])];
+    const rows=[['SKU','Product Name','Category','Regular Price','Sale Price','Stock','Status','Published','Image URLs'],...products.value.map(p=>[p.sku,p.name,p.category,p.price,p.salePrice||'',p.quantity,p.status,p.published?'Yes':'No',(p.images||[p.img]).join(' | ')])];
     const csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='TREVO_Firebase_Products.csv';a.click();
   }
   async function copyUrl(url){await navigator.clipboard.writeText(url);notify('Image URL copied')}
 
-  onMounted(()=>{if(loggedIn.value)connect()});
-  return{loggedIn,password,loginError,login,logout,firebaseConnected,tab,nav,products,orders,statuses,imageLibrary,fallbackImage,
+  onMounted(()=>{
+    if(authReady()){
+      firebase.auth().onAuthStateChanged(async user=>{
+        if(!user){loggedIn.value=false;return}
+        try{await verifyAdminUser(user);loggedIn.value=true;email.value=user.email||email.value;connect()}
+        catch(e){loggedIn.value=false;loginError.value=e.message;await firebase.auth().signOut().catch(()=>{})}
+      });
+    }else if(legacyMode()&&sessionStorage.getItem('trevoAdmin')==='1'){loggedIn.value=true;connect()}
+  });
+  return{loggedIn,email,password,loginError,loggingIn,login,logout,firebaseConnected,tab,nav,products,orders,statuses,paymentStatuses,imageLibrary,fallbackImage,
     productSearch,categoryFilter,orderSearch,orderFilter,kpis,categories,filteredProducts,filteredOrders,totalUnits,retailValue,lowStockProducts,
-    productModal,imagePicker,editing,saving,toast,money,customerName,customerPhone,openProduct,closeProduct,addVariant,selectImage,saveProduct,
-    quickStock,deleteProduct,importWorkbookCatalog,changeOrderStatus,exportProducts,copyUrl};
+    productModal,imagePicker,editing,saving,toast,selectedOrder,money,customerName,customerPhone,customerField,formatOrderDate,openProduct,closeProduct,addVariant,selectImage,saveProduct,
+    quickStock,deleteProduct,importWorkbookCatalog,changeOrderStatus,changePaymentStatus,exportProducts,copyUrl};
 }}).mount('#app');
 </script>
 </body>
